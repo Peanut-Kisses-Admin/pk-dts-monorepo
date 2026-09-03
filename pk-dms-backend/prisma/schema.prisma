@@ -508,9 +508,9 @@ model HardcopyTransferRequest {
   destination_location       Location?                 @relation("HardcopyTransferDestinationLocation", fields: [destination_location_id], references: [location_id], onDelete: SetNull)
   destination_sequence_id    BigInt?
   destination_sequence       Sequence?                 @relation("HardcopyTransferDestinationSequence", fields: [destination_sequence_id], references: [sequence_id], onDelete: SetNull)
-  document_copy_number       String                    @db.VarChar(100)
+  document_copy_number       String?                   @db.VarChar(100)
   current_holder             String?                   @db.VarChar(220)
-  transfer_to                String                    @db.VarChar(220)
+  transfer_to                String?                   @db.VarChar(220)
   requested_by_user_id       BigInt
   requester                  User                      @relation("TransferRequesters", fields: [requested_by_user_id], references: [user_id], onDelete: Restrict)
   reason                     String                    @db.Text

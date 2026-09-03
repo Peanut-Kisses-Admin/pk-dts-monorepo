@@ -66,9 +66,9 @@ export class HardcopyTransfersService {
           destination_asset_id: destination.asset_id,
           destination_location_id: destination.location_id,
           destination_sequence_id: destination.sequence_id,
-          document_copy_number: dto.document_copy_number.trim(),
+          document_copy_number: dto.document_copy_number?.trim() || null,
           current_holder: [holder.firstname, holder.lastname].filter(Boolean).join(" ") || null,
-          transfer_to: dto.transfer_to.trim(),
+          transfer_to: dto.transfer_to?.trim() || null,
           requested_by_user_id: actorId,
           reason: dto.reason.trim(),
           approver_user_id: approverId,
@@ -206,7 +206,7 @@ export class HardcopyTransfersService {
       }
       const updated = await tx.hardcopyTransferRequest.update({
         where: { transfer_request_id: transferId },
-        data: { status: HardcopyTransferStatus.Completed, recipient_acceptance: RecipientAcceptanceStatus.ACCEPTED, accepted_by_user_id: actorId, acceptance_at: new Date(), current_holder: transfer.transfer_to, comments: comments?.trim() || transfer.comments },
+        data: { status: HardcopyTransferStatus.Completed, recipient_acceptance: RecipientAcceptanceStatus.ACCEPTED, accepted_by_user_id: actorId, acceptance_at: new Date(), current_holder: transfer.current_holder ?? transfer.transfer_to, comments: comments?.trim() || transfer.comments },
       });
       await this.recordHistory(tx, transferId, transfer.status, updated.status, "accept", actor, comments);
       return updated;

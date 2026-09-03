@@ -12,7 +12,7 @@ export class HardcopyTransfersService {
     private http = inject(HttpClient);
     mine() { return this.http.get<Envelope<HardcopyTransferRequest[]>>(`${API}/mine`).pipe(map(this.unwrap)); }
     pending() { return this.http.get<Envelope<HardcopyTransferRequest[]>>(`${API}/pending`).pipe(map(this.unwrap)); }
-    create(payload: { document_id: string; document_copy_number: string; current_holder_user_id?: string; transfer_to: string; reason: string; destination_area_id?: string; destination_specific_id?: string; destination_asset_id?: string; destination_location_id: string; destination_sequence_id?: string; comments?: string }) { return this.http.post<Envelope<HardcopyTransferRequest>>(API, payload).pipe(map(this.unwrap)); }
+    create(payload: { document_id: string; current_holder_user_id?: string; reason: string; destination_area_id?: string; destination_specific_id?: string; destination_asset_id?: string; destination_location_id: string; destination_sequence_id?: string; comments?: string }) { return this.http.post<Envelope<HardcopyTransferRequest>>(API, payload).pipe(map(this.unwrap)); }
     submit(id: string) { return this.http.post<Envelope<HardcopyTransferRequest>>(`${API}/${id}/submit`, {}).pipe(map(this.unwrap)); }
     approve(id: string, comments = '') { return this.http.post<Envelope<HardcopyTransferRequest>>(`${API}/${id}/approve`, { remarks: comments }).pipe(map(this.unwrap)); }
     returnForCorrection(id: string, comments: string) { return this.http.post<Envelope<HardcopyTransferRequest>>(`${API}/${id}/return`, { remarks: comments }).pipe(map(this.unwrap)); }

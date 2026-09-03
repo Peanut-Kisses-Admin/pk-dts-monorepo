@@ -3,10 +3,10 @@ export type HardcopyTransferStatus = 'Draft' | 'ForApproval' | 'Approved' | 'For
 export interface HardcopyTransferRequest {
     transfer_request_id: string;
     document_id: string;
-    document_copy_number: string;
+    document_copy_number?: string | null;
     current_holder?: string | null;
     current_holder_user_id?: string | null;
-    transfer_to: string;
+    transfer_to?: string | null;
     from_area_id?: string | null;
     from_specific_id?: string | null;
     from_asset_id?: string | null;

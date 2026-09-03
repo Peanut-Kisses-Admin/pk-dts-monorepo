@@ -32,20 +32,20 @@ export class CreateHardcopyTransferDto {
   @IsString()
   destination_sequence_id?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: "Legacy field retained for older integrations; storage transfers do not require a copy number." })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  document_copy_number: string;
+  document_copy_number?: string;
 
   @ApiPropertyOptional({ description: "Current holder user ID. Used only by administrators when the document has no assigned holder." })
   @IsOptional()
   @IsString()
   current_holder_user_id?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: "Legacy field retained for older integrations; the destination is a storage classification." })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  transfer_to: string;
+  transfer_to?: string;
 
   @ApiProperty()
   @IsString()
