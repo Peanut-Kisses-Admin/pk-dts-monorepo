@@ -3601,17 +3601,25 @@ export class DocumentsService {
       );
     }
 
-    const softcopy =
-      document.softcopy ??
-      (await this.prisma.softcopyDocument.create({
-        data: {
-          document_id,
-          softcopy_category_id: await this.resolveSoftcopyCategoryId(
-            this.prisma,
-          ),
-        },
+    let softcopy = document.softcopy;
+    if (dto.softcopy_category_id) {
+      const categoryId = await this.resolveSoftcopyCategoryId(this.prisma, dto.softcopy_category_id);
+      softcopy = document.softcopy
+        ? await this.prisma.softcopyDocument.update({
+            where: { softcopy_id: document.softcopy.softcopy_id },
+            data: { softcopy_category_id: categoryId },
+            include: { category: true },
+          })
+        : await this.prisma.softcopyDocument.create({
+            data: { document_id, softcopy_category_id: categoryId },
+            include: { category: true },
+          });
+    } else if (!softcopy) {
+      softcopy = await this.prisma.softcopyDocument.create({
+        data: { document_id, softcopy_category_id: await this.resolveSoftcopyCategoryId(this.prisma) },
         include: { category: true },
-      }));
+      });
+    }
 
     const categoryFolder = softcopy.category.folder_name;
     const seriesNumber = dto.series_number?.trim();

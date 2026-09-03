@@ -68,6 +68,14 @@ export class CreateRevisionDto {
   @IsString()
   set_as_current?: string;
 
+  @ApiPropertyOptional({
+    example: '1',
+    description: 'Main folder or subfolder where the revision and supporting attachments are stored.',
+  })
+  @IsOptional()
+  @IsString()
+  softcopy_category_id?: string;
+
   @ApiPropertyOptional({ description: 'Revision ID being corrected or replaced. The prior file remains preserved.' })
   @IsOptional()
   @IsString()
