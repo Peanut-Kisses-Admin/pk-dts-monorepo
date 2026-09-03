@@ -1,0 +1,2 @@
+ALTER TABLE `document_access_requests`
+    MODIFY `status` ENUM('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED') NOT NULL DEFAULT 'PENDING';

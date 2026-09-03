@@ -1,0 +1,943 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id                 BigInt  @id @default(autoincrement())
+  firstname               String  @db.VarChar(100)
+  lastname                String  @db.VarChar(100)
+  middlename              String? @db.VarChar(100)
+  age                     Int?
+  address                 String? @db.Text
+  phone_number            String? @db.VarChar(20)
+  email                   String  @unique @db.VarChar(150)
+  position_title          String? @db.VarChar(100)
+  password                String  @db.VarChar(255)
+  require_password_change Boolean @default(false)
+
+  role_id BigInt
+  role    Role   @relation(fields: [role_id], references: [role_id])
+
+  leader_id   BigInt?
+  leader      User?   @relation("UserLeaders", fields: [leader_id], references: [user_id], onDelete: SetNull)
+  noted_users User[]  @relation("UserLeaders")
+
+  created_documents                 Document[]                      @relation("CreatedDocuments")
+  requested_documents               Document[]                      @relation("RequestedDocuments")
+  disposed_documents                Document[]                      @relation("DisposedDocuments")
+  disposal_requests                 DocumentDisposalRequest[]       @relation("DisposalRequesters")
+  disposal_request_reviews          DocumentDisposalRequest[]       @relation("DisposalRequestReviewers")
+  reviewed_documents                Document[]                      @relation("ReviewedDocuments")
+  document_status_history           DocumentStatusHistory[]         @relation("DocumentStatusActors")
+  uploaded_revisions                DocumentRevision[]              @relation("UploadedRevisions")
+  approved_revisions                DocumentRevision[]              @relation("ApprovedRevisions")
+  uploaded_softcopy_attachments     SoftcopyAttachment[]            @relation("UploadedSoftcopyAttachments")
+  approved_softcopy_attachments     SoftcopyAttachment[]            @relation("ApprovedSoftcopyAttachments")
+  rejected_softcopy_attachments     SoftcopyAttachment[]            @relation("RejectedSoftcopyAttachments")
+  uploaded_hardcopy_attachments     HardcopyAttachment[]            @relation("UploadedHardcopyAttachments")
+  document_assignments              DocumentAssignment[]            @relation("AssignedDocuments")
+  assigned_documents                DocumentAssignment[]            @relation("DocumentAssignmentActors")
+  document_access_requests          DocumentAccessRequest[]         @relation("DocumentAccessRequesters")
+  access_request_histories          DocumentAccessRequestHistory[]  @relation("AccessRequestHistoryActors")
+  reviewed_document_access_requests DocumentAccessRequest[]         @relation("DocumentAccessReviewers")
+  access_request_approvals          DocumentAccessRequest[]         @relation("DocumentAccessRequestApprovers")
+  created_softcopy_categories       SoftcopyCategory[]              @relation("CreatedSoftcopyCategories")
+  reviewed_registration_requests    AccountRegistrationRequest[]    @relation("RegistrationReviewer")
+  notification_reads                NotificationRead[]
+  audit_logs                        AuditLog[]
+  approval_assignments              DocumentWorkflowStep[]          @relation("WorkflowStepAssignees")
+  approval_actions                  DocumentWorkflowStep[]          @relation("WorkflowStepActors")
+  approver_configurations           DocumentApproverConfiguration[] @relation("ConfiguredApprovers")
+  configured_document_approvers     DocumentApproverConfiguration[] @relation("DocumentApproverOwners")
+  transfer_requests_requested       HardcopyTransferRequest[]       @relation("TransferRequesters")
+  transfer_requests_approved        HardcopyTransferRequest[]       @relation("TransferApprovers")
+  transfer_requests_recipients      HardcopyTransferRequest[]       @relation("TransferRecipients")
+  transfer_acceptances              HardcopyTransferRequest[]       @relation("TransferAcceptors")
+  transfer_history                  HardcopyTransferHistory[]       @relation("TransferHistoryActors")
+  workflow_definitions_created      WorkflowDefinition[]            @relation("WorkflowDefinitionCreators")
+  workflow_versions_created         WorkflowVersion[]               @relation("WorkflowVersionCreators")
+  workflow_versions_published       WorkflowVersion[]               @relation("WorkflowVersionPublishers")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Role {
+  role_id     BigInt  @id @default(autoincrement())
+  role_name   String  @unique @db.VarChar(100)
+  description String? @db.Text
+
+  users                           User[]
+  role_permissions                RolePermission[]
+  workflow_step_assignments       DocumentWorkflowStep[]       @relation("WorkflowStepAssignedRoles")
+  requested_registration_requests AccountRegistrationRequest[] @relation("RequestedRegistrationRole")
+  assigned_registration_requests  AccountRegistrationRequest[] @relation("AssignedRegistrationRole")
+
+  @@map("roles")
+}
+
+model AccountRegistrationRequest {
+  registration_id   BigInt             @id @default(autoincrement())
+  reference_code    String             @unique @db.VarChar(40)
+  firstname         String             @db.VarChar(100)
+  lastname          String             @db.VarChar(100)
+  middlename        String?            @db.VarChar(100)
+  email             String             @db.VarChar(150)
+  phone_number      String?            @db.VarChar(20)
+  position_title    String?            @db.VarChar(100)
+  applicant_remarks String?            @db.Text
+  password_hash     String             @db.VarChar(255)
+  status            RegistrationStatus @default(PENDING)
+  review_remarks    String?            @db.Text
+
+  requested_role_id   BigInt
+  requested_role      Role    @relation("RequestedRegistrationRole", fields: [requested_role_id], references: [role_id])
+  assigned_role_id    BigInt?
+  assigned_role       Role?   @relation("AssignedRegistrationRole", fields: [assigned_role_id], references: [role_id])
+  reviewed_by_user_id BigInt?
+  reviewed_by         User?   @relation("RegistrationReviewer", fields: [reviewed_by_user_id], references: [user_id])
+
+  reviewed_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@index([email, status])
+  @@index([status, created_at])
+  @@map("account_registration_requests")
+}
+
+model Permission {
+  permission_id   BigInt  @id @default(autoincrement())
+  permission_name String  @unique @db.VarChar(120)
+  module_key      String  @db.VarChar(100)
+  module_label    String  @db.VarChar(150)
+  action_key      String  @db.VarChar(100)
+  action_label    String  @db.VarChar(150)
+  description     String? @db.Text
+
+  role_permissions RolePermission[]
+
+  @@unique([module_key, action_key])
+  @@map("permissions")
+}
+
+model RolePermission {
+  role_permission_id BigInt @id @default(autoincrement())
+
+  role_id BigInt
+  role    Role   @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+
+  permission_id BigInt
+  permission    Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+  @@map("role_permissions")
+}
+
+model Area {
+  area_id   BigInt @id @default(autoincrement())
+  area_name String @db.VarChar(150)
+
+  specifics                  Specific[]
+  hardcopies                 HardcopyDocument[]
+  transfer_from_areas        HardcopyTransferRequest[] @relation("HardcopyTransferFromArea")
+  transfer_destination_areas HardcopyTransferRequest[] @relation("HardcopyTransferDestinationArea")
+
+  @@map("areas")
+}
+
+model Specific {
+  specific_id   BigInt @id @default(autoincrement())
+  specific_name String @db.VarChar(150)
+
+  area_id BigInt?
+  area    Area?   @relation(fields: [area_id], references: [area_id], onDelete: SetNull)
+
+  hardcopies                     HardcopyDocument[]
+  assets                         AssetNumber[]
+  locations                      Location[]
+  transfer_from_specifics        HardcopyTransferRequest[] @relation("HardcopyTransferFromSpecific")
+  transfer_destination_specifics HardcopyTransferRequest[] @relation("HardcopyTransferDestinationSpecific")
+
+  @@map("specifics")
+}
+
+model Location {
+  location_id   BigInt    @id @default(autoincrement())
+  location_name String    @unique @db.VarChar(150)
+  location_code String?   @unique @db.VarChar(20)
+  is_active     Boolean   @default(true)
+  archived_at   DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now()) @updatedAt
+
+  asset_id BigInt?
+  asset    AssetNumber? @relation(fields: [asset_id], references: [asset_id], onDelete: SetNull)
+
+  specific_id BigInt?
+  specific    Specific? @relation(fields: [specific_id], references: [specific_id], onDelete: SetNull)
+
+  hardcopies                     HardcopyDocument[]
+  transfer_from_locations        HardcopyTransferRequest[] @relation("HardcopyTransferFromLocation")
+  transfer_destination_locations HardcopyTransferRequest[] @relation("HardcopyTransferDestinationLocation")
+
+  @@index([asset_id])
+  @@index([specific_id])
+  @@map("locations")
+}
+
+model SystemSequenceState {
+  sequence_key String @id @db.VarChar(100)
+  next_value   BigInt @default(0)
+
+  @@map("system_sequence_states")
+}
+
+model Sequence {
+  sequence_id   BigInt @id @default(autoincrement())
+  sequence_code String @unique @db.VarChar(50)
+
+  hardcopies                     HardcopyDocument[]
+  transfer_from_sequences        HardcopyTransferRequest[] @relation("HardcopyTransferFromSequence")
+  transfer_destination_sequences HardcopyTransferRequest[] @relation("HardcopyTransferDestinationSequence")
+
+  @@map("sequences")
+}
+
+model AssetNumber {
+  asset_id     BigInt   @id @default(autoincrement())
+  asset_number String   @unique @db.VarChar(100)
+  created_at   DateTime @default(now())
+
+  specific_id BigInt?
+  specific    Specific?  @relation(fields: [specific_id], references: [specific_id], onDelete: SetNull)
+  locations   Location[]
+
+  hardcopies                  HardcopyDocument[]        @relation("AssetHardcopy")
+  transfer_from_assets        HardcopyTransferRequest[] @relation("HardcopyTransferFromAsset")
+  transfer_destination_assets HardcopyTransferRequest[] @relation("HardcopyTransferDestinationAsset")
+
+  @@index([specific_id])
+  @@map("asset_numbers")
+}
+
+model Document {
+  document_id             BigInt                  @id @default(autoincrement())
+  document_title          String                  @db.VarChar(255)
+  document_type           DocumentType
+  status                  DocumentStatus          @default(Draft)
+  request_date            DateTime                @default(now())
+  department              String?                 @db.VarChar(150)
+  business_document_type  DocumentBusinessType?
+  action_requested        DocumentActionRequested @default(CREATE_REVISE)
+  from_party              String?                 @db.VarChar(150)
+  to_party                String?                 @db.VarChar(150)
+  reason_for_change       DocumentChangeReason?
+  brief_description       String?                 @db.Text
+  proposed_change         String?                 @db.Text
+  revision_level_from     String?                 @db.VarChar(50)
+  revision_level_to       String?                 @db.VarChar(50)
+  previous_effective_date DateTime?
+  new_effective_date      DateTime?
+  date_received           DateTime?
+  date_released           DateTime?
+  approval_date           DateTime?
+  legacy_imported         Boolean                 @default(false)
+  creation_source         String                  @default("DCR") @db.VarChar(30)
+  creation_reason         String?                 @db.Text
+  direct_created_at       DateTime?
+  legacy_import_note      String?                 @db.Text
+  status_before_disposal  DocumentStatus?
+  requested_by_name       String?                 @db.VarChar(150)
+  disposal_remarks        String?                 @db.Text
+  disposal_action         DisposalAction?
+  disposal_action_other   String?                 @db.VarChar(150)
+  disposed_at             DateTime?
+  disposed_by_name        String?                 @db.VarChar(150)
+
+  created_by BigInt
+  creator    User   @relation("CreatedDocuments", fields: [created_by], references: [user_id])
+
+  requested_by_user_id BigInt?
+  requester            User?   @relation("RequestedDocuments", fields: [requested_by_user_id], references: [user_id])
+
+  disposed_by_user_id       BigInt?
+  disposer                  User?                          @relation("DisposedDocuments", fields: [disposed_by_user_id], references: [user_id])
+  reviewed_by_user_id       BigInt?
+  reviewer                  User?                          @relation("ReviewedDocuments", fields: [reviewed_by_user_id], references: [user_id])
+  reviewed_at               DateTime?
+  reviewer_remarks          String?                        @db.Text
+  status_history            DocumentStatusHistory[]
+  assignments               DocumentAssignment[]
+  access_requests           DocumentAccessRequest[]
+  disposal_requests         DocumentDisposalRequest[]
+  workflow_steps            DocumentWorkflowStep[]
+  workflow_version_id       BigInt?
+  workflow_version          WorkflowVersion?               @relation(fields: [workflow_version_id], references: [workflow_version_id], onDelete: SetNull)
+  workflow_snapshot         Json?
+  workflow_current_node_key String?                        @db.VarChar(100)
+  approver_configuration    DocumentApproverConfiguration?
+  transfer_requests         HardcopyTransferRequest[]
+
+  hardcopy HardcopyDocument?
+  softcopy SoftcopyDocument?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([status, created_at])
+  @@map("documents")
+}
+
+model DocumentDisposalRequest {
+  disposal_request_id   BigInt                @id @default(autoincrement())
+  document_id           BigInt
+  document              Document              @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  requested_by_user_id  BigInt
+  requester             User                  @relation("DisposalRequesters", fields: [requested_by_user_id], references: [user_id], onDelete: Restrict)
+  disposal_remarks      String                @db.Text
+  disposal_action       DisposalAction        @default(Other)
+  disposal_action_other String?               @db.VarChar(150)
+  status                DisposalRequestStatus @default(Pending)
+  reviewed_by_user_id   BigInt?
+  reviewer              User?                 @relation("DisposalRequestReviewers", fields: [reviewed_by_user_id], references: [user_id], onDelete: SetNull)
+  reviewer_remarks      String?               @db.Text
+  reviewed_at           DateTime?
+  created_at            DateTime              @default(now())
+  updated_at            DateTime              @updatedAt
+
+  @@index([status, created_at])
+  @@index([document_id, status])
+  @@map("document_disposal_requests")
+}
+
+model AuditLog {
+  audit_log_id     BigInt   @id @default(autoincrement())
+  user_id          BigInt?
+  user             User?    @relation(fields: [user_id], references: [user_id], onDelete: SetNull)
+  user_name        String   @db.VarChar(220)
+  user_email       String   @db.VarChar(150)
+  role_name        String   @db.VarChar(100)
+  action           String   @db.VarChar(30)
+  module           String   @db.VarChar(100)
+  description      String   @db.VarChar(500)
+  method           String   @db.VarChar(10)
+  path             String   @db.VarChar(500)
+  entity_id        String?  @db.VarChar(100)
+  metadata         Json?
+  before_state     Json?
+  after_state      Json?
+  reason           String?  @db.Text
+  workflow_context Json?
+  ip_address       String?  @db.VarChar(100)
+  user_agent       String?  @db.VarChar(500)
+  created_at       DateTime @default(now())
+
+  @@index([user_id, created_at])
+  @@index([module, created_at])
+  @@index([entity_id, created_at])
+  @@map("audit_logs")
+}
+
+model NotificationRead {
+  notification_read_id BigInt   @id @default(autoincrement())
+  user_id              BigInt
+  user                 User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  event_key            String   @db.VarChar(180)
+  read_at              DateTime @default(now())
+
+  @@unique([user_id, event_key])
+  @@index([user_id, read_at])
+  @@map("notification_reads")
+}
+
+model DocumentAssignment {
+  document_assignment_id BigInt   @id @default(autoincrement())
+  document_id            BigInt
+  document               Document @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  user_id                BigInt
+  user                   User     @relation("AssignedDocuments", fields: [user_id], references: [user_id], onDelete: Cascade)
+  assigned_by            BigInt
+  assigner               User     @relation("DocumentAssignmentActors", fields: [assigned_by], references: [user_id], onDelete: Restrict)
+  assigned_at            DateTime @default(now())
+
+  @@unique([document_id, user_id])
+  @@index([user_id, document_id])
+  @@map("document_assignments")
+}
+
+model DocumentAccessRequest {
+  access_request_id    BigInt                         @id @default(autoincrement())
+  document_id          BigInt
+  document             Document                       @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  requested_by_user_id BigInt
+  requester            User                           @relation("DocumentAccessRequesters", fields: [requested_by_user_id], references: [user_id], onDelete: Cascade)
+  request_reason       String?                        @db.Text
+  status               DocumentAccessRequestStatus    @default(PENDING)
+  reviewed_by_user_id  BigInt?
+  reviewer             User?                          @relation("DocumentAccessReviewers", fields: [reviewed_by_user_id], references: [user_id], onDelete: SetNull)
+  approver_user_id     BigInt?
+  approver             User?                          @relation("DocumentAccessRequestApprovers", fields: [approver_user_id], references: [user_id], onDelete: SetNull)
+  reviewer_remarks     String?                        @db.Text
+  reviewed_at          DateTime?
+  approval_stage       String?                        @db.VarChar(60)
+  granted_at           DateTime?
+  revoked_at           DateTime?
+  expires_at           DateTime?
+  history              DocumentAccessRequestHistory[]
+  created_at           DateTime                       @default(now())
+  updated_at           DateTime                       @updatedAt
+
+  @@index([requested_by_user_id, status, created_at])
+  @@index([status, created_at])
+  @@index([document_id, requested_by_user_id, status])
+  @@map("document_access_requests")
+}
+
+model DocumentAccessRequestHistory {
+  access_history_id    BigInt                       @id @default(autoincrement())
+  access_request_id    BigInt
+  access_request       DocumentAccessRequest        @relation(fields: [access_request_id], references: [access_request_id], onDelete: Cascade)
+  action               String                       @db.VarChar(40)
+  previous_status      DocumentAccessRequestStatus?
+  new_status           DocumentAccessRequestStatus
+  performed_by_user_id BigInt
+  actor                User                         @relation("AccessRequestHistoryActors", fields: [performed_by_user_id], references: [user_id], onDelete: Restrict)
+  comments             String?                      @db.Text
+  created_at           DateTime                     @default(now())
+
+  @@index([access_request_id, created_at])
+  @@map("document_access_request_history")
+}
+
+model DocumentStatusHistory {
+  history_id      BigInt          @id @default(autoincrement())
+  document_id     BigInt
+  document        Document        @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  previous_status DocumentStatus?
+  new_status      DocumentStatus
+  action          String          @db.VarChar(50)
+  performed_by    BigInt
+  actor           User            @relation("DocumentStatusActors", fields: [performed_by], references: [user_id])
+  remarks         String?         @db.Text
+  created_at      DateTime        @default(now())
+
+  @@index([document_id, created_at])
+  @@map("document_status_history")
+}
+
+model HardcopyDocument {
+  hardcopy_id BigInt @id @default(autoincrement())
+
+  document_id BigInt   @unique
+  document    Document @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+
+  asset_id BigInt?
+  asset    AssetNumber? @relation("AssetHardcopy", fields: [asset_id], references: [asset_id], onDelete: SetNull)
+
+  area_id BigInt
+  area    Area   @relation(fields: [area_id], references: [area_id])
+
+  specific_id BigInt?
+  specific    Specific? @relation(fields: [specific_id], references: [specific_id])
+
+  location_id BigInt
+  location    Location @relation(fields: [location_id], references: [location_id])
+
+  sequence_id BigInt?
+  sequence    Sequence? @relation(fields: [sequence_id], references: [sequence_id])
+
+  retention_enabled    Boolean   @default(false)
+  retention_start_date DateTime?
+  retention_end_date   DateTime?
+
+  attachments       HardcopyAttachment[]
+  transfer_requests HardcopyTransferRequest[]
+
+  created_at DateTime @default(now())
+
+  @@map("hardcopy_documents")
+}
+
+model HardcopyAttachment {
+  attachment_id BigInt           @id @default(autoincrement())
+  hardcopy_id   BigInt
+  hardcopy      HardcopyDocument @relation(fields: [hardcopy_id], references: [hardcopy_id], onDelete: Cascade)
+  file_name     String           @db.VarChar(255)
+  file_path     String           @db.VarChar(500)
+  file_size     BigInt?
+  mime_type     String?          @db.VarChar(100)
+  uploaded_by   BigInt
+  uploader      User             @relation("UploadedHardcopyAttachments", fields: [uploaded_by], references: [user_id])
+  created_at    DateTime         @default(now())
+
+  @@index([hardcopy_id, created_at])
+  @@map("hardcopy_attachments")
+}
+
+model HardcopyTransferRequest {
+  transfer_request_id        BigInt                    @id @default(autoincrement())
+  document_id                BigInt
+  document                   Document                  @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  hardcopy_id                BigInt
+  hardcopy                   HardcopyDocument          @relation(fields: [hardcopy_id], references: [hardcopy_id], onDelete: Cascade)
+  from_area_id               BigInt?
+  from_area                  Area?                     @relation("HardcopyTransferFromArea", fields: [from_area_id], references: [area_id], onDelete: SetNull)
+  from_specific_id           BigInt?
+  from_specific              Specific?                 @relation("HardcopyTransferFromSpecific", fields: [from_specific_id], references: [specific_id], onDelete: SetNull)
+  from_asset_id              BigInt?
+  from_asset                 AssetNumber?              @relation("HardcopyTransferFromAsset", fields: [from_asset_id], references: [asset_id], onDelete: SetNull)
+  from_location_id           BigInt?
+  from_location              Location?                 @relation("HardcopyTransferFromLocation", fields: [from_location_id], references: [location_id], onDelete: SetNull)
+  from_sequence_id           BigInt?
+  from_sequence              Sequence?                 @relation("HardcopyTransferFromSequence", fields: [from_sequence_id], references: [sequence_id], onDelete: SetNull)
+  destination_area_id        BigInt?
+  destination_area           Area?                     @relation("HardcopyTransferDestinationArea", fields: [destination_area_id], references: [area_id], onDelete: SetNull)
+  destination_specific_id    BigInt?
+  destination_specific       Specific?                 @relation("HardcopyTransferDestinationSpecific", fields: [destination_specific_id], references: [specific_id], onDelete: SetNull)
+  destination_asset_id       BigInt?
+  destination_asset          AssetNumber?              @relation("HardcopyTransferDestinationAsset", fields: [destination_asset_id], references: [asset_id], onDelete: SetNull)
+  destination_location_id    BigInt?
+  destination_location       Location?                 @relation("HardcopyTransferDestinationLocation", fields: [destination_location_id], references: [location_id], onDelete: SetNull)
+  destination_sequence_id    BigInt?
+  destination_sequence       Sequence?                 @relation("HardcopyTransferDestinationSequence", fields: [destination_sequence_id], references: [sequence_id], onDelete: SetNull)
+  document_copy_number       String                    @db.VarChar(100)
+  current_holder             String?                   @db.VarChar(220)
+  transfer_to                String                    @db.VarChar(220)
+  requested_by_user_id       BigInt
+  requester                  User                      @relation("TransferRequesters", fields: [requested_by_user_id], references: [user_id], onDelete: Restrict)
+  reason                     String                    @db.Text
+  approver_user_id           BigInt?
+  approver                   User?                     @relation("TransferApprovers", fields: [approver_user_id], references: [user_id], onDelete: SetNull)
+  approval_date              DateTime?
+  transfer_date              DateTime?
+  assigned_recipient_user_id BigInt
+  assigned_recipient         User                      @relation("TransferRecipients", fields: [assigned_recipient_user_id], references: [user_id], onDelete: Restrict)
+  recipient_acceptance       RecipientAcceptanceStatus @default(PENDING)
+  accepted_by_user_id        BigInt?
+  accepted_by                User?                     @relation("TransferAcceptors", fields: [accepted_by_user_id], references: [user_id], onDelete: SetNull)
+  acceptance_at              DateTime?
+  comments                   String?                   @db.Text
+  status                     HardcopyTransferStatus    @default(Draft)
+  created_at                 DateTime                  @default(now())
+  updated_at                 DateTime                  @updatedAt
+  history                    HardcopyTransferHistory[]
+
+  @@index([document_id, status])
+  @@index([assigned_recipient_user_id, recipient_acceptance])
+  @@map("hardcopy_transfer_requests")
+}
+
+model HardcopyTransferHistory {
+  transfer_history_id  BigInt                  @id @default(autoincrement())
+  transfer_request_id  BigInt
+  transfer_request     HardcopyTransferRequest @relation(fields: [transfer_request_id], references: [transfer_request_id], onDelete: Cascade)
+  action               String                  @db.VarChar(40)
+  previous_status      HardcopyTransferStatus?
+  new_status           HardcopyTransferStatus
+  performed_by_user_id BigInt
+  performed_by         User                    @relation("TransferHistoryActors", fields: [performed_by_user_id], references: [user_id], onDelete: Restrict)
+  comments             String?                 @db.Text
+  created_at           DateTime                @default(now())
+
+  @@index([transfer_request_id, created_at])
+  @@map("hardcopy_transfer_history")
+}
+
+model SoftcopyCategory {
+  softcopy_category_id BigInt             @id @default(autoincrement())
+  category_name        String             @db.VarChar(150)
+  folder_name          String             @unique @db.VarChar(160)
+  description          String?            @db.Text
+  is_active            Boolean            @default(true)
+  parent_category_id   BigInt?
+  created_by_user_id   BigInt?
+  creator              User?              @relation("CreatedSoftcopyCategories", fields: [created_by_user_id], references: [user_id], onDelete: SetNull)
+  parent               SoftcopyCategory?  @relation("SoftcopyCategoryHierarchy", fields: [parent_category_id], references: [softcopy_category_id], onDelete: Restrict)
+  subcategories        SoftcopyCategory[] @relation("SoftcopyCategoryHierarchy")
+  softcopies           SoftcopyDocument[]
+  created_at           DateTime           @default(now())
+  updated_at           DateTime           @updatedAt
+
+  @@unique([parent_category_id, category_name])
+  @@index([parent_category_id])
+  @@index([created_by_user_id])
+  @@map("softcopy_categories")
+}
+
+model SoftcopyDocument {
+  softcopy_id BigInt @id @default(autoincrement())
+
+  document_number String? @db.VarChar(100)
+  series_number   String? @db.VarChar(50)
+
+  document_id BigInt   @unique
+  document    Document @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+
+  softcopy_category_id BigInt
+  category             SoftcopyCategory @relation(fields: [softcopy_category_id], references: [softcopy_category_id], onDelete: Restrict)
+
+  current_revision_id BigInt?
+  current_revision    DocumentRevision? @relation("CurrentRevision", fields: [current_revision_id], references: [revision_id])
+
+  revisions   DocumentRevision[]   @relation("DocumentRevisions")
+  attachments SoftcopyAttachment[]
+
+  created_at DateTime @default(now())
+
+  @@map("softcopy_documents")
+}
+
+model SoftcopyAttachment {
+  attachment_id       BigInt                   @id @default(autoincrement())
+  softcopy_id         BigInt
+  softcopy            SoftcopyDocument         @relation(fields: [softcopy_id], references: [softcopy_id], onDelete: Cascade)
+  file_name           String                   @db.VarChar(255)
+  file_path           String                   @db.VarChar(500)
+  file_size           BigInt?
+  mime_type           String?                  @db.VarChar(100)
+  uploaded_by         BigInt
+  uploader            User                     @relation("UploadedSoftcopyAttachments", fields: [uploaded_by], references: [user_id])
+  status              SoftcopyAttachmentStatus @default(PendingApproval)
+  approved_by_user_id BigInt?
+  approved_by         User?                    @relation("ApprovedSoftcopyAttachments", fields: [approved_by_user_id], references: [user_id], onDelete: SetNull)
+  approved_at         DateTime?
+  rejected_by_user_id BigInt?
+  rejected_by         User?                    @relation("RejectedSoftcopyAttachments", fields: [rejected_by_user_id], references: [user_id], onDelete: SetNull)
+  rejected_at         DateTime?
+  rejection_reason    String?                  @db.Text
+  created_at          DateTime                 @default(now())
+
+  @@index([softcopy_id, created_at])
+  @@map("softcopy_attachments")
+}
+
+model DocumentRevision {
+  revision_id BigInt @id @default(autoincrement())
+
+  softcopy_id BigInt
+  softcopy    SoftcopyDocument @relation("DocumentRevisions", fields: [softcopy_id], references: [softcopy_id], onDelete: Cascade)
+
+  revision_number         String    @db.VarChar(50)
+  reason_of_revision      String?   @db.Text
+  effective_date          DateTime?
+  page_number             String?   @db.VarChar(50)
+  series_number           String?   @db.VarChar(50)
+  document_title          String    @default("") @db.VarChar(255)
+  revision_level_from     String?   @db.VarChar(50)
+  revision_level_to       String?   @db.VarChar(50)
+  previous_effective_date DateTime?
+  new_effective_date      DateTime?
+  date_received           DateTime?
+  date_released           DateTime?
+  approval_date           DateTime?
+  is_current              Boolean   @default(false)
+  is_historical           Boolean   @default(false)
+  approved_by_user_id     BigInt?
+  approver                User?     @relation("ApprovedRevisions", fields: [approved_by_user_id], references: [user_id], onDelete: SetNull)
+  approved_at             DateTime?
+
+  file_name                 String             @db.VarChar(255)
+  file_path                 String             @db.VarChar(500)
+  file_size                 BigInt?
+  mime_type                 String?            @db.VarChar(100)
+  superseded_by_revision_id BigInt?
+  superseded_by_revision    DocumentRevision?  @relation("RevisionCorrections", fields: [superseded_by_revision_id], references: [revision_id], onDelete: SetNull)
+  correction_revisions      DocumentRevision[] @relation("RevisionCorrections")
+  correction_reason         String?            @db.Text
+
+  uploaded_by BigInt
+  uploader    User   @relation("UploadedRevisions", fields: [uploaded_by], references: [user_id])
+
+  current_for_documents SoftcopyDocument[]         @relation("CurrentRevision")
+  artifacts             SoftcopyRevisionArtifact[]
+
+  created_at DateTime @default(now())
+
+  @@unique([softcopy_id, revision_number])
+  @@map("document_revisions")
+}
+
+model SoftcopyRevisionArtifact {
+  artifact_id        BigInt               @id @default(autoincrement())
+  revision_id        BigInt
+  revision           DocumentRevision     @relation(fields: [revision_id], references: [revision_id], onDelete: Cascade)
+  artifact_type      SoftcopyArtifactType
+  file_name          String               @db.VarChar(255)
+  file_path          String               @db.VarChar(500)
+  file_size          BigInt
+  mime_type          String               @db.VarChar(100)
+  source_fingerprint String               @db.VarChar(128)
+  generator_version  String               @db.VarChar(50)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+
+  @@unique([revision_id, artifact_type])
+  @@index([source_fingerprint])
+  @@map("softcopy_revision_artifacts")
+}
+
+enum DocumentType {
+  SOFTCOPY
+  HARDCOPY
+}
+
+enum SoftcopyArtifactType {
+  CONTROLLED
+  UNCONTROLLED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DocumentStatus {
+  Draft
+  PendingApproval
+  ForNotedBy
+  ForPlantManagerApproval
+  ForDocumentControllerAdmin
+  ForApproval
+  ForTransfer
+  Transferred
+  PendingRecipientAcceptance
+  Approved
+  Completed
+  ReturnedForCorrection
+  Cancelled
+  Rejected
+  ForRevision
+  Disposed
+}
+
+enum SoftcopyAttachmentStatus {
+  PendingApproval
+  Approved
+  Rejected
+  Cancelled
+}
+
+enum DocumentBusinessType {
+  Forms
+  Manual
+  Procedures
+  WorkInstruction
+  Monitoring
+  Others
+}
+
+enum DocumentActionRequested {
+  CREATE_REVISE
+  CANCELLATION
+}
+
+enum DocumentChangeReason {
+  Improvement
+  CorrectionOfPreviousReleases
+  Others
+}
+
+enum DocumentWorkflowStage {
+  DRAFT
+  NOTED_BY
+  PLANT_MANAGER
+  DOCUMENT_CONTROLLER_ADMIN
+  HARDCOPY_APPROVAL
+  COMPLETED
+  CUSTOM
+}
+
+enum WorkflowStepStatus {
+  QUEUED
+  PENDING
+  APPROVED
+  RETURNED
+  REJECTED
+  CANCELLED
+}
+
+model DocumentWorkflowStep {
+  workflow_step_id                 BigInt                              @id @default(autoincrement())
+  document_id                      BigInt
+  document                         Document                            @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  stage                            DocumentWorkflowStage
+  node_key                         String?                             @db.VarChar(100)
+  sequence                         Int
+  assigned_user_id                 BigInt?
+  assignee                         User?                               @relation("WorkflowStepAssignees", fields: [assigned_user_id], references: [user_id], onDelete: SetNull)
+  stage_label                      String?                             @db.VarChar(150)
+  assignment_source                String?                             @db.VarChar(50)
+  assignment_type                  String?                             @db.VarChar(30)
+  assigned_role_id                 BigInt?
+  assigned_role                    Role?                               @relation("WorkflowStepAssignedRoles", fields: [assigned_role_id], references: [role_id], onDelete: SetNull)
+  required_permission              String?                             @db.VarChar(120)
+  condition_json                   Json?
+  on_approve_node_key              String?                             @db.VarChar(100)
+  on_reject_node_key               String?                             @db.VarChar(100)
+  on_return_node_key               String?                             @db.VarChar(100)
+  assigned_user_name_snapshot      String?                             @db.VarChar(255)
+  assigned_position_title_snapshot String?                             @db.VarChar(150)
+  assigned_at                      DateTime                            @default(now())
+  status                           WorkflowStepStatus                  @default(PENDING)
+  acted_by_user_id                 BigInt?
+  actor                            User?                               @relation("WorkflowStepActors", fields: [acted_by_user_id], references: [user_id], onDelete: SetNull)
+  decision                         String?                             @db.VarChar(30)
+  comments                         String?                             @db.Text
+  acted_at                         DateTime?
+  acted_user_name_snapshot         String?                             @db.VarChar(255)
+  acted_position_title_snapshot    String?                             @db.VarChar(150)
+  assignment_history               DocumentWorkflowAssignmentHistory[]
+  created_at                       DateTime                            @default(now())
+
+  @@unique([document_id, node_key])
+  @@index([assigned_user_id, status])
+  @@index([assigned_role_id, status])
+  @@map("document_workflow_steps")
+}
+
+model DocumentWorkflowAssignmentHistory {
+  assignment_history_id BigInt               @id @default(autoincrement())
+  workflow_step_id      BigInt
+  workflow_step         DocumentWorkflowStep @relation(fields: [workflow_step_id], references: [workflow_step_id], onDelete: Cascade)
+  previous_user_id      BigInt?
+  new_user_id           BigInt
+  changed_by_user_id    BigInt
+  previous_user_name    String?              @db.VarChar(255)
+  new_user_name         String               @db.VarChar(255)
+  new_position_title    String?              @db.VarChar(150)
+  reason                String               @db.Text
+  changed_at            DateTime             @default(now())
+
+  @@index([workflow_step_id, changed_at])
+  @@map("document_workflow_assignment_history")
+}
+
+model DocumentApproverConfiguration {
+  approver_configuration_id   BigInt   @id @default(autoincrement())
+  document_id                 BigInt   @unique
+  document                    Document @relation(fields: [document_id], references: [document_id], onDelete: Cascade)
+  noted_by_user_id            BigInt?
+  plant_manager_user_id       BigInt?
+  document_controller_user_id BigInt?
+  hardcopy_approver_user_id   BigInt?
+  access_approver_user_id     BigInt?
+  document_owner_user_id      BigInt?
+  workflow_name               String?  @db.VarChar(150)
+  workflow_version            Int      @default(1)
+  workflow_plan               Json?
+  configured_by_user_id       BigInt
+  configured_by               User     @relation("ConfiguredApprovers", fields: [configured_by_user_id], references: [user_id], onDelete: Restrict)
+  document_owner              User?    @relation("DocumentApproverOwners", fields: [document_owner_user_id], references: [user_id], onDelete: SetNull)
+  created_at                  DateTime @default(now())
+  updated_at                  DateTime @updatedAt
+
+  @@map("document_approver_configurations")
+}
+
+enum WorkflowVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model WorkflowDefinition {
+  workflow_definition_id BigInt            @id @default(autoincrement())
+  workflow_key           String            @unique @db.VarChar(100)
+  name                   String            @db.VarChar(150)
+  description            String?           @db.Text
+  document_type          DocumentType?
+  is_active              Boolean           @default(true)
+  created_by_user_id     BigInt
+  created_by             User              @relation("WorkflowDefinitionCreators", fields: [created_by_user_id], references: [user_id], onDelete: Restrict)
+  versions               WorkflowVersion[]
+  created_at             DateTime          @default(now())
+  updated_at             DateTime          @updatedAt
+
+  @@index([document_type, is_active])
+  @@map("workflow_definitions")
+}
+
+model WorkflowVersion {
+  workflow_version_id    BigInt                @id @default(autoincrement())
+  workflow_definition_id BigInt
+  workflow_definition    WorkflowDefinition    @relation(fields: [workflow_definition_id], references: [workflow_definition_id], onDelete: Restrict)
+  version_number         Int
+  status                 WorkflowVersionStatus @default(DRAFT)
+  graph                  Json
+  created_by_user_id     BigInt
+  created_by             User                  @relation("WorkflowVersionCreators", fields: [created_by_user_id], references: [user_id], onDelete: Restrict)
+  published_by_user_id   BigInt?
+  published_by           User?                 @relation("WorkflowVersionPublishers", fields: [published_by_user_id], references: [user_id], onDelete: SetNull)
+  published_at           DateTime?
+  documents              Document[]
+  created_at             DateTime              @default(now())
+  updated_at             DateTime              @updatedAt
+
+  @@unique([workflow_definition_id, version_number])
+  @@index([status, published_at])
+  @@map("workflow_versions")
+}
+
+enum HardcopyTransferStatus {
+  Draft
+  ForApproval
+  Approved
+  ForTransfer
+  Transferred
+  PendingRecipientAcceptance
+  Completed
+  Returned
+  Rejected
+  Cancelled
+}
+
+enum RecipientAcceptanceStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+}
+
+enum DisposalRequestStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum DisposalAction {
+  Shred
+  Scratch
+  Reuse
+  Other
+}
+
+enum DocumentAccessRequestStatus {
+  PENDING
+  ForAccessApproval
+  APPROVED
+  AccessGranted
+  RETURNED
+  REJECTED
+  CANCELLED
+  REVOKED
+  EXPIRED
+}
+
+model SystemAppearanceSetting {
+  id            Int      @id @default(1)
+  theme_scope   String   @default("device") @db.VarChar(20)
+  color_mode    String   @default("light") @db.VarChar(20)
+  color_theme   String   @default("default") @db.VarChar(30)
+  settings_json Json?
+  updated_at    DateTime @updatedAt
+
+  @@map("system_appearance_settings")
+}

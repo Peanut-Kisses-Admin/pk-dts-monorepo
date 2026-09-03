@@ -1,0 +1,298 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { AlertModalComponent } from '@/app/shared/components/alert-modal/alert-modal.component';
+import { PaginationComponent } from '@/app/shared/components/pagination/pagination.component';
+import { TableShellComponent } from '@/app/shared/components/table-shell/table-shell.component';
+import { DataViewMode, DataViewSwitchComponent } from '@/app/shared/components/data-view-switch/data-view-switch.component';
+import { RecordCardComponent, RecordGridComponent } from '@/app/shared/components/record-grid/record-grid.component';
+import { DocumentDetailDialogComponent } from '../documents/components/document-detail-dialog/document-detail-dialog.component';
+import { LoadingShimmerComponent } from '@/app/shared/components/loading-shimmer/loading-shimmer.component';
+import { DocumentsService } from '../documents/documents.service';
+import { DocumentDetail, DocumentSummary, RevisionSummary } from '../documents/documents.types';
+import { AuthService } from '@/app/auth/auth.service';
+import { AlertDialogService } from '@/app/shared/services/alert-dialog.service';
+import { SystemSettingsService } from '@/app/shared/services/system-settings.service';
+
+type NoticeSeverity = 'success' | 'error' | 'warning' | 'info';
+
+@Component({
+    selector: 'app-document-disposal-page',
+    standalone: true,
+    imports: [CommonModule, FormsModule, ButtonModule, PaginationComponent, TableShellComponent, DataViewSwitchComponent, RecordGridComponent, RecordCardComponent, AlertModalComponent, DocumentDetailDialogComponent, LoadingShimmerComponent],
+    template: `
+        <app-loading-shimmer *ngIf="loading()" label="Loading disposed documents" [columns]="7" />
+        <section class="space-y-6" [style.display]="loading() ? 'none' : null">
+            <article class="surface-card p-5 sm:p-6">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h1 class="m-0 text-3xl font-black tracking-tight text-slate-900">Disposed documents</h1>
+                        <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                            Review disposed records, disposal remarks, the responsible account or manual name, and restore records when needed.
+                        </p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Disposed records</div>
+                        <div class="stat-value">{{ disposedDocuments().length }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid gap-4 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))]">
+                    <div class="field">
+                        <label for="disposal-search">Search</label>
+                        <input id="disposal-search" [(ngModel)]="searchTerm" (ngModelChange)="resetPagination()" class="text-field" placeholder="Search number, title, remarks, disposer, area, or location..." />
+                    </div>
+                    <div class="field">
+                        <label for="disposed-by-filter">Disposed by</label>
+                        <input id="disposed-by-filter" [(ngModel)]="disposedByFilter" (ngModelChange)="resetPagination()" class="text-field" placeholder="Filter by account or manual name" />
+                    </div>
+                    <div class="field">
+                        <label>&nbsp;</label>
+                        <p-button label="Reset filters" severity="secondary" text icon="pi pi-refresh" (onClick)="resetFilters()" />
+                    </div>
+                </div>
+
+                <app-data-view-switch [(mode)]="viewMode" title="Disposed document results" />
+
+                <app-table-shell *ngIf="viewMode === 'list'" class="mt-5" minWidth="80rem">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-3">Document</th>
+                                <th class="px-4 py-3">Disposal action</th>
+                                <th class="px-4 py-3">Disposed by</th>
+                                <th class="px-4 py-3">Disposed date</th>
+                                <th class="px-4 py-3">Remarks</th>
+                                <th class="px-4 py-3">Storage</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr *ngFor="let document of pagedDocuments(); trackBy: trackDocument">
+                                <td class="px-4 py-4">
+                                    <div class="font-black text-slate-900">{{ document.document_type === 'HARDCOPY' ? document.document_title : (document.document_number || 'No document number') }}</div>
+                                    <div class="mt-1 text-sm text-slate-600">{{ document.document_title }}</div>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <div class="font-bold text-slate-700">{{ document.disposal_action || 'Other' }}</div>
+                                    <div class="mt-1 text-xs text-slate-400">{{ document.disposal_action_other || 'Method recorded' }}</div>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <div class="text-slate-700">{{ document.disposed_by_name || fullName(document.disposer) || 'Unknown' }}</div>
+                                    <div class="mt-1 text-xs text-slate-400">{{ fullName(document.disposer) || 'No account captured' }}</div>
+                                </td>
+                                <td class="px-4 py-4 text-slate-600">{{ formatDate(document.disposed_at || undefined) }}</td>
+                                <td class="px-4 py-4 text-slate-600">{{ document.disposal_remarks || 'No remarks recorded' }}</td>
+                                <td class="px-4 py-4 text-slate-600">
+                                    <div>Area: {{ document.hardcopy?.area?.area_name || 'N/A' }}</div>
+                                    <div>Location: {{ document.hardcopy?.location?.location_name || 'N/A' }}</div>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <div class="flex justify-end gap-2">
+                                        <p-button icon="pi pi-eye" [rounded]="true" [outlined]="true" (onClick)="openDetail(document)" />
+                                        <p-button *ngIf="canRestore()" icon="pi pi-replay" [rounded]="true" [outlined]="true" severity="success" (onClick)="restore(document)" />
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngIf="!pagedDocuments().length">
+                                <td colspan="7" class="px-4 py-10 text-center text-slate-500">No disposed documents match the current filters.</td>
+                            </tr>
+                        </tbody>
+                </app-table-shell>
+
+                <app-record-grid *ngIf="viewMode === 'grid'" [empty]="!pagedDocuments().length" emptyTitle="No disposed documents found" emptyMessage="No disposed documents match the current filters.">
+                    <app-record-card *ngFor="let document of pagedDocuments(); trackBy: trackDocument" icon="pi pi-trash" eyebrow="Disposed document" [title]="document.document_type === 'HARDCOPY' ? document.document_title : (document.document_number || 'No document number')" [subtitle]="document.document_title">
+                        <div record-badges><span>Disposed</span></div>
+                        <div record-details>
+                            <div><span>Disposed by</span><strong>{{ document.disposed_by_name || fullName(document.disposer) || 'Unknown' }}</strong><small>{{ fullName(document.disposer) || 'No account captured' }}</small></div>
+                            <div><span>Disposal action</span><strong>{{ document.disposal_action || 'Other' }}</strong><small>{{ document.disposal_action_other || 'Method recorded' }}</small></div>
+                            <div><span>Disposed date</span><strong>{{ formatDate(document.disposed_at || undefined) }}</strong></div>
+                            <div class="wide"><span>Remarks</span><strong>{{ document.disposal_remarks || 'No remarks recorded' }}</strong></div>
+                            <div><span>Area</span><strong>{{ document.hardcopy?.area?.area_name || 'N/A' }}</strong></div>
+                            <div><span>Location</span><strong>{{ document.hardcopy?.location?.location_name || 'N/A' }}</strong></div>
+                        </div>
+                        <div record-actions>
+                            <p-button label="View" icon="pi pi-eye" size="small" [outlined]="true" (onClick)="openDetail(document)" />
+                            <p-button *ngIf="canRestore()" label="Restore" icon="pi pi-replay" size="small" [outlined]="true" severity="success" (onClick)="restore(document)" />
+                        </div>
+                    </app-record-card>
+                </app-record-grid>
+
+                <div *ngIf="disposedDocuments().length" class="pagination-footer mt-5 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="text-sm text-slate-500">
+                        Showing <span class="font-bold text-slate-900">{{ pageStart() }}</span> to <span class="font-bold text-slate-900">{{ pageEnd() }}</span>
+                        of <span class="font-bold text-slate-900">{{ disposedDocuments().length }}</span> disposed records
+                    </div>
+                    <app-pagination
+                        [first]="first"
+                        [rows]="rows"
+                        [totalRecords]="disposedDocuments().length"
+                        [rowsPerPageOptions]="rowsPerPageOptions"
+                        [pageLinkSize]="4"
+                        [showCurrentPageReport]="false"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} disposed records"
+                        (pageChange)="onPageChange($event)"
+                    />
+                </div>
+            </article>
+        </section>
+
+        <app-document-detail-dialog [(visible)]="detailVisible" [document]="detail()" [revisions]="revisions()" [canAccessFiles]="canDownload()" />
+        <app-alert-modal [(visible)]="noticeVisible" [severity]="noticeSeverity()" [title]="noticeTitle()" [message]="noticeMessage()" />
+    `,
+    styles: [
+        `
+            .surface-card { border: 1px solid rgba(148,163,184,.18); border-radius: 1.75rem; background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,250,252,.96)); box-shadow: 0 24px 64px rgba(15,23,42,.08), 0 2px 8px rgba(15,23,42,.04); }
+            .stat-card { border: 1px solid rgba(226,232,240,1); border-radius: 1.35rem; background: linear-gradient(180deg,#fff 0%,#f8fafc 100%); padding: 1rem 1.1rem; min-width: 13rem; }
+            .stat-label { font-size:.75rem; font-weight:800; letter-spacing:.18em; text-transform:uppercase; color:#64748b; }
+            .stat-value { margin-top:.55rem; font-size:2rem; line-height:1; font-weight:900; color:#111827; }
+            .field { display:flex; flex-direction:column; gap:.55rem; }
+            .field label { font-size:.84rem; font-weight:700; color:#475569; }
+            .text-field { min-height:2.75rem; width:100%; border-radius:.85rem; border:1px solid #cbd5e1; background:#fff; padding:.75rem .9rem; color:#0f172a; outline:none; }
+            .text-field:focus { border-color:#0f172a; }
+        `
+    ]
+})
+export class DocumentDisposalPage implements OnInit {
+    private documentsService = inject(DocumentsService);
+    private auth = inject(AuthService);
+    private alerts = inject(AlertDialogService);
+    private systemSettings = inject(SystemSettingsService);
+    canRestore = () => this.auth.hasAnyPermission('documents.restore', 'document-disposal.restore', 'document-disposal.manage');
+    canDownload = () => this.auth.hasPermission('documents.download');
+
+    documents = signal<DocumentSummary[]>([]);
+    detail = signal<DocumentDetail | null>(null);
+    revisions = signal<RevisionSummary[]>([]);
+    detailVisible = false;
+    noticeVisible = false;
+    noticeSeverity = signal<NoticeSeverity>('info');
+    noticeTitle = signal('Notice');
+    noticeMessage = signal('');
+    loading = signal(true);
+
+    searchTerm = '';
+    disposedByFilter = '';
+    first = 0;
+    rows = 10;
+    rowsPerPageOptions = [10, 20, 50];
+    viewMode: DataViewMode = 'list';
+
+    ngOnInit() {
+        this.viewMode = this.systemSettings.defaultDataView();
+        this.rows = this.systemSettings.defaultRowsPerPage();
+        this.loadData();
+    }
+
+    disposedDocuments() {
+        const search = this.searchTerm.trim().toLowerCase();
+        const disposedBy = this.disposedByFilter.trim().toLowerCase();
+        return this.documents()
+            .filter((document) => document.status === 'Disposed')
+            .filter((document) => {
+                const haystack = [
+                    document.document_number,
+                    document.document_title,
+                    document.disposal_remarks || '',
+                    document.disposed_by_name || '',
+                    this.fullName(document.disposer),
+                    document.hardcopy?.area?.area_name || '',
+                    document.hardcopy?.location?.location_name || '',
+                ].join(' ').toLowerCase();
+
+                const matchesSearch = !search || haystack.includes(search);
+                const matchesDisposedBy = !disposedBy || [document.disposed_by_name || '', this.fullName(document.disposer)].join(' ').toLowerCase().includes(disposedBy);
+                return matchesSearch && matchesDisposedBy;
+            });
+    }
+
+    pagedDocuments() {
+        return this.disposedDocuments().slice(this.first, this.first + this.rows);
+    }
+
+    pageStart() {
+        return this.disposedDocuments().length === 0 ? 0 : this.first + 1;
+    }
+
+    pageEnd() {
+        return Math.min(this.first + this.rows, this.disposedDocuments().length);
+    }
+
+    onPageChange(event: { first?: number; rows?: number }) {
+        this.first = event.first ?? 0;
+        this.rows = event.rows ?? this.rows;
+    }
+
+    resetPagination() {
+        this.first = 0;
+    }
+
+    resetFilters() {
+        this.searchTerm = '';
+        this.disposedByFilter = '';
+        this.resetPagination();
+    }
+
+    openDetail(document: DocumentSummary) {
+        this.documentsService.getDocument(document.document_id).subscribe({
+            next: (detail) => {
+                if (!detail) {
+                    return;
+                }
+                this.detail.set(detail);
+                this.documentsService.listRevisions(document.document_id).subscribe({
+                    next: (revisions) => {
+                        this.revisions.set(revisions ?? []);
+                        this.detailVisible = true;
+                    }
+                });
+            }
+        });
+    }
+
+    restore(document: DocumentSummary) {
+        this.documentsService.restoreDocument(document.document_id).subscribe({
+            next: () => {
+                this.noticeSeverity.set('success');
+                this.noticeTitle.set('Document restored');
+                this.noticeMessage.set(`${document.document_number || document.document_title} was restored successfully.`);
+                this.noticeVisible = false;
+                this.alerts.success(this.noticeTitle(), this.noticeMessage());
+                this.loadData();
+            },
+            error: () => {
+                this.noticeSeverity.set('error');
+                this.noticeTitle.set('Restore failed');
+                this.noticeMessage.set('The document could not be restored right now.');
+                this.noticeVisible = false;
+                this.alerts.error(this.noticeTitle(), this.noticeMessage());
+            }
+        });
+    }
+
+
+    fullName(user?: { firstname?: string; lastname?: string } | null) {
+        return [user?.firstname, user?.lastname].filter(Boolean).join(' ');
+    }
+
+    formatDate(value?: string) {
+        if (!value) {
+            return 'N/A';
+        }
+        const parsedDate = new Date(value);
+        return Number.isNaN(parsedDate.getTime()) ? value : parsedDate.toLocaleString();
+    }
+
+    trackDocument = (_index: number, document: DocumentSummary) => document.document_id;
+
+    private loadData() {
+        this.loading.set(true);
+        this.documentsService.listDisposedDocuments().subscribe({
+            next: (documents) => {
+                this.documents.set(documents ?? []);
+                this.loading.set(false);
+            },
+            error: () => this.loading.set(false)
+        });
+    }
+}

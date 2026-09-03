@@ -1,0 +1,6 @@
+.env
+.move-remnants/
+data/
+backups/
+.DS_Store
+Thumbs.db

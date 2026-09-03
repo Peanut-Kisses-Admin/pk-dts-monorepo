@@ -1,0 +1,711 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-07-09T05:46:49.312Z",
+  "created_by": "admin@document-tracking.com",
+  "summary": {
+    "permissions": 45,
+    "roles": 2,
+    "role_permissions": 54,
+    "areas": 1,
+    "specifics": 1,
+    "locations": 1,
+    "sequences": 1,
+    "system_sequence_states": 1,
+    "asset_numbers": 1,
+    "users": 2,
+    "documents": 1,
+    "hardcopies": 1,
+    "softcopies": 0,
+    "revisions": 0
+  },
+  "data": {
+    "permissions": [
+      {
+        "permission_name": "documents.view",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View documents."
+      },
+      {
+        "permission_name": "documents.dispose",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "dispose",
+        "action_label": "Dispose",
+        "description": "Dispose documents."
+      },
+      {
+        "permission_name": "documents.import",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "import",
+        "action_label": "Import",
+        "description": "Import document records."
+      },
+      {
+        "permission_name": "dashboard.view",
+        "module_key": "dashboard",
+        "module_label": "Dashboard",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View the dashboard module and its authorized summaries."
+      },
+      {
+        "permission_name": "documents.create",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "create",
+        "action_label": "Create",
+        "description": "Create documents."
+      },
+      {
+        "permission_name": "documents.search",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "search",
+        "action_label": "Search",
+        "description": "Search documents."
+      },
+      {
+        "permission_name": "documents.edit",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "edit",
+        "action_label": "Edit",
+        "description": "Edit documents."
+      },
+      {
+        "permission_name": "document-disposal.view",
+        "module_key": "document-disposal",
+        "module_label": "Document Disposal",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View disposed documents."
+      },
+      {
+        "permission_name": "documents.delete",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "delete",
+        "action_label": "Delete",
+        "description": "Delete documents."
+      },
+      {
+        "permission_name": "document-disposal.dispose",
+        "module_key": "document-disposal",
+        "module_label": "Document Disposal",
+        "action_key": "dispose",
+        "action_label": "Dispose",
+        "description": "Dispose documents."
+      },
+      {
+        "permission_name": "document-disposal.restore",
+        "module_key": "document-disposal",
+        "module_label": "Document Disposal",
+        "action_key": "restore",
+        "action_label": "Restore",
+        "description": "Restore disposed documents."
+      },
+      {
+        "permission_name": "storage-classification.create",
+        "module_key": "storage-classification",
+        "module_label": "Storage and Classification",
+        "action_key": "create",
+        "action_label": "Create",
+        "description": "Create storage and classification records."
+      },
+      {
+        "permission_name": "document-disposal.manage",
+        "module_key": "document-disposal",
+        "module_label": "Document Disposal",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage document disposal workflows."
+      },
+      {
+        "permission_name": "documents.export",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "export",
+        "action_label": "Export",
+        "description": "Export document records."
+      },
+      {
+        "permission_name": "storage-classification.edit",
+        "module_key": "storage-classification",
+        "module_label": "Storage and Classification",
+        "action_key": "edit",
+        "action_label": "Edit",
+        "description": "Edit storage and classification records."
+      },
+      {
+        "permission_name": "storage-classification.view",
+        "module_key": "storage-classification",
+        "module_label": "Storage and Classification",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View storage and classification catalogs."
+      },
+      {
+        "permission_name": "documents.download",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "download",
+        "action_label": "Download",
+        "description": "Download document files."
+      },
+      {
+        "permission_name": "storage-classification.delete",
+        "module_key": "storage-classification",
+        "module_label": "Storage and Classification",
+        "action_key": "delete",
+        "action_label": "Delete",
+        "description": "Delete storage and classification records."
+      },
+      {
+        "permission_name": "location-management.manage",
+        "module_key": "location-management",
+        "module_label": "Location Management",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage locations."
+      },
+      {
+        "permission_name": "storage-classification.manage",
+        "module_key": "storage-classification",
+        "module_label": "Storage and Classification",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage storage and classification catalogs."
+      },
+      {
+        "permission_name": "batch-import.import",
+        "module_key": "batch-import",
+        "module_label": "Batch Import",
+        "action_key": "import",
+        "action_label": "Import",
+        "description": "Run batch imports."
+      },
+      {
+        "permission_name": "batch-import.view",
+        "module_key": "batch-import",
+        "module_label": "Batch Import",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View batch import screens and results."
+      },
+      {
+        "permission_name": "location-management.view",
+        "module_key": "location-management",
+        "module_label": "Location Management",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View locations."
+      },
+      {
+        "permission_name": "batch-import.manage",
+        "module_key": "batch-import",
+        "module_label": "Batch Import",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage batch import workflows."
+      },
+      {
+        "permission_name": "user-accounts.view",
+        "module_key": "user-accounts",
+        "module_label": "User Accounts",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View user accounts."
+      },
+      {
+        "permission_name": "location-management.create",
+        "module_key": "location-management",
+        "module_label": "Location Management",
+        "action_key": "create",
+        "action_label": "Create",
+        "description": "Create locations."
+      },
+      {
+        "permission_name": "user-accounts.create",
+        "module_key": "user-accounts",
+        "module_label": "User Accounts",
+        "action_key": "create",
+        "action_label": "Create",
+        "description": "Create user accounts."
+      },
+      {
+        "permission_name": "activity-logs.view_logs",
+        "module_key": "activity-logs",
+        "module_label": "Activity Logs",
+        "action_key": "view_logs",
+        "action_label": "View Logs",
+        "description": "View activity logs."
+      },
+      {
+        "permission_name": "location-management.edit",
+        "module_key": "location-management",
+        "module_label": "Location Management",
+        "action_key": "edit",
+        "action_label": "Edit",
+        "description": "Edit locations."
+      },
+      {
+        "permission_name": "backup-restore.view",
+        "module_key": "backup-restore",
+        "module_label": "Backup and Restore",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View backup and restore pages."
+      },
+      {
+        "permission_name": "backup-restore.create_backup",
+        "module_key": "backup-restore",
+        "module_label": "Backup and Restore",
+        "action_key": "create_backup",
+        "action_label": "Create Backup",
+        "description": "Create backups."
+      },
+      {
+        "permission_name": "location-management.archive",
+        "module_key": "location-management",
+        "module_label": "Location Management",
+        "action_key": "archive",
+        "action_label": "Archive",
+        "description": "Archive locations."
+      },
+      {
+        "permission_name": "backup-restore.download_backup",
+        "module_key": "backup-restore",
+        "module_label": "Backup and Restore",
+        "action_key": "download_backup",
+        "action_label": "Download Backup",
+        "description": "Download backups."
+      },
+      {
+        "permission_name": "user-accounts.edit",
+        "module_key": "user-accounts",
+        "module_label": "User Accounts",
+        "action_key": "edit",
+        "action_label": "Edit",
+        "description": "Edit user accounts."
+      },
+      {
+        "permission_name": "backup-restore.restore_backup",
+        "module_key": "backup-restore",
+        "module_label": "Backup and Restore",
+        "action_key": "restore_backup",
+        "action_label": "Restore Backup",
+        "description": "Restore backups."
+      },
+      {
+        "permission_name": "user-accounts.delete",
+        "module_key": "user-accounts",
+        "module_label": "User Accounts",
+        "action_key": "delete",
+        "action_label": "Delete",
+        "description": "Delete user accounts."
+      },
+      {
+        "permission_name": "backup-restore.delete_backup",
+        "module_key": "backup-restore",
+        "module_label": "Backup and Restore",
+        "action_key": "delete_backup",
+        "action_label": "Delete Backup",
+        "description": "Delete backups."
+      },
+      {
+        "permission_name": "user-accounts.manage",
+        "module_key": "user-accounts",
+        "module_label": "User Accounts",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage user accounts."
+      },
+      {
+        "permission_name": "ai-document-assistant.search",
+        "module_key": "ai-document-assistant",
+        "module_label": "AI Document Assistant",
+        "action_key": "search",
+        "action_label": "Search",
+        "description": "Search through the AI document assistant."
+      },
+      {
+        "permission_name": "roles-permissions.view",
+        "module_key": "roles-permissions",
+        "module_label": "Roles and Permissions",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View roles and permissions."
+      },
+      {
+        "permission_name": "ai-document-assistant.manage",
+        "module_key": "ai-document-assistant",
+        "module_label": "AI Document Assistant",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage AI assistant settings and access."
+      },
+      {
+        "permission_name": "roles-permissions.manage",
+        "module_key": "roles-permissions",
+        "module_label": "Roles and Permissions",
+        "action_key": "manage",
+        "action_label": "Manage",
+        "description": "Manage roles and permission assignments."
+      },
+      {
+        "permission_name": "backup-restore.view_logs",
+        "module_key": "backup-restore",
+        "module_label": "Backup and Restore",
+        "action_key": "view_logs",
+        "action_label": "View Backup Logs",
+        "description": "View backup logs."
+      },
+      {
+        "permission_name": "ai-document-assistant.view",
+        "module_key": "ai-document-assistant",
+        "module_label": "AI Document Assistant",
+        "action_key": "view",
+        "action_label": "View",
+        "description": "View the AI document assistant."
+      },
+      {
+        "permission_name": "documents.restore",
+        "module_key": "documents",
+        "module_label": "Documents",
+        "action_key": "restore",
+        "action_label": "Restore",
+        "description": "Restore disposed documents."
+      }
+    ],
+    "roles": [
+      {
+        "role_name": "Admin",
+        "description": "Default system administrator role with access to all protected modules."
+      },
+      {
+        "role_name": "Viewer",
+        "description": "Only to View"
+      }
+    ],
+    "role_permissions": [
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.dispose"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.export"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.create"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.edit"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "storage-classification.delete"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "storage-classification.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.download"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "location-management.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "location-management.create"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.search"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.delete"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "location-management.edit"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "location-management.archive"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "document-disposal.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "location-management.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "dashboard.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "document-disposal.dispose"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "user-accounts.delete"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "user-accounts.edit"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "batch-import.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "roles-permissions.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "user-accounts.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "document-disposal.restore"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "document-disposal.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "activity-logs.view_logs"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "storage-classification.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "batch-import.import"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "roles-permissions.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "backup-restore.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "batch-import.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "backup-restore.create_backup"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "storage-classification.create"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "backup-restore.download_backup"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "user-accounts.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "storage-classification.edit"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "backup-restore.delete_backup"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "ai-document-assistant.view"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "user-accounts.create"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "backup-restore.restore_backup"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "ai-document-assistant.search"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "backup-restore.view_logs"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.import"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "ai-document-assistant.manage"
+      },
+      {
+        "role_name": "Admin",
+        "permission_name": "documents.restore"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "activity-logs.view_logs"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "location-management.view"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "ai-document-assistant.view"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "ai-document-assistant.search"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "documents.search"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "dashboard.view"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "document-disposal.view"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "documents.view"
+      },
+      {
+        "role_name": "Viewer",
+        "permission_name": "storage-classification.view"
+      }
+    ],
+    "areas": [
+      {
+        "area_name": "s"
+      }
+    ],
+    "specifics": [
+      {
+        "specific_name": "s",
+        "area_name": null
+      }
+    ],
+    "locations": [
+      {
+        "location_name": "Main Office",
+        "location_code": "G",
+        "is_active": true,
+        "archived_at": null,
+        "created_at": "2026-07-09T02:14:34.795Z",
+        "updated_at": "2026-07-09T02:14:34.795Z"
+      }
+    ],
+    "sequences": [
+      {
+        "sequence_code": "001"
+      }
+    ],
+    "system_sequence_states": [
+      {
+        "sequence_key": "location_code",
+        "next_value": "7"
+      }
+    ],
+    "asset_numbers": [
+      {
+        "asset_number": "s",
+        "created_at": "2026-07-09T02:17:18.545Z"
+      }
+    ],
+    "users": [
+      {
+        "email": "admin@document-tracking.com",
+        "firstname": "Admin",
+        "lastname": "User",
+        "middlename": null,
+        "age": null,
+        "address": null,
+        "phone_number": null,
+        "position_title": "System Administrator",
+        "password": "$2b$10$pPAq907FrA11eXhw9eEzqOWwPCPISrKwRnVIXXmFB7Nwawba/7x4O",
+        "require_password_change": true,
+        "role_name": "Admin",
+        "created_at": "2026-07-09T01:42:28.632Z",
+        "updated_at": "2026-07-09T01:42:28.632Z"
+      },
+      {
+        "email": "sample1@document-tracking.com",
+        "firstname": "sample1",
+        "lastname": "sample1",
+        "middlename": "sample1",
+        "age": 22,
+        "address": "sample1@document-tracking.com",
+        "phone_number": "+639702237379",
+        "position_title": "Production Operator",
+        "password": "$2b$10$T1qQ401YuMkFF31f1aoSB.eW4KRqv.y7fcwypo.D6Lk.TbBfj64Gm",
+        "require_password_change": false,
+        "role_name": "Viewer",
+        "created_at": "2026-07-09T03:11:29.975Z",
+        "updated_at": "2026-07-09T03:11:29.975Z"
+      }
+    ],
+    "documents": [
+      {
+        "document_number": "dd",
+        "document_title": "Logistics Receiving Protocol - Raw Materials",
+        "document_type": "HARDCOPY",
+        "status": "Disposed",
+        "disposal_remarks": "nothing",
+        "disposed_at": "2026-07-09T02:38:47.806Z",
+        "disposed_by_name": null,
+        "created_by_email": "admin@document-tracking.com",
+        "disposed_by_email": "admin@document-tracking.com",
+        "created_at": "2026-07-09T02:17:49.590Z",
+        "updated_at": "2026-07-09T02:38:47.812Z"
+      }
+    ],
+    "hardcopies": [
+      {
+        "document_number": "dd",
+        "asset_number": "s",
+        "area_name": "s",
+        "specific_name": "s",
+        "location_name": "Main Office",
+        "sequence_code": "001",
+        "created_at": "2026-07-09T02:17:49.673Z"
+      }
+    ],
+    "softcopies": [],
+    "revisions": []
+  }
+}

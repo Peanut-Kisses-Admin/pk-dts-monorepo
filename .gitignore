@@ -1,0 +1,4 @@
+# Each application retains its own ignore rules. Keep root-only machine files out of the monorepo.
+.DS_Store
+Thumbs.db
+**/.env

@@ -1,0 +1,133 @@
+name: pk-dms
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks: [dms_internal]
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    networks: [dms_internal]
+
+  backend:
+    build:
+      context: ../pk-dms-backend
+      dockerfile: Dockerfile
+    command:
+      [
+        "sh",
+        "-c",
+        "node scripts/prepare-postgres-startup.js && node scripts/prisma-db-push-retry.js && npm run prisma:seed && npm run start:prod",
+      ]
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      APP_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_PROVIDER: postgresql
+      PRISMA_SCHEMA_PATH: prisma/schema.postgresql.prisma
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      APP_BASE_URL: ""
+      UPLOAD_BASE_URL: ""
+      BACKUP_RESTORE_DIR: /app/backup-store
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backups:/app/backup-store
+      - ./data/uploads:/app/uploads
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const http = require('http'); const req = http.get('http://127.0.0.1:3000/api/v1/health', (res) => { res.resume(); process.exit(res.statusCode >= 200 && res.statusCode < 300 ? 0 : 1); }); req.setTimeout(4000, () => { req.destroy(new Error('timeout')); process.exit(1); }); req.on('error', () => process.exit(1));\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10m
+    networks: [dms_internal]
+
+  frontend:
+    build:
+      context: ../pk-dms-frontend
+      dockerfile: Dockerfile
+      args:
+        PUBLIC_API_URL: /api/v1
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks: [dms_internal]
+
+  nginx:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    networks: [dms_internal]
+
+networks:
+  dms_internal:
+    driver: bridge

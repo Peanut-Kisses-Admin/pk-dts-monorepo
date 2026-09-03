@@ -1,0 +1,108 @@
+name: pk-dms
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  backend:
+    build:
+      context: ../pk-dms-backend
+      dockerfile: Dockerfile
+      target: build
+    command:
+      [
+        "sh",
+        "-c",
+        "node scripts/prepare-postgres-startup.js && node scripts/prisma-db-push-retry.js && npm run prisma:seed && npm run start:dev",
+      ]
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_PROVIDER: postgresql
+      PRISMA_SCHEMA_PATH: prisma/schema.postgresql.prisma
+      DATABASE_URL: ${DATABASE_URL}
+      APP_BASE_URL: ${SERVER_PUBLIC_BASE_URL}
+      UPLOAD_BASE_URL: ${SERVER_PUBLIC_BASE_URL}
+      BACKUP_RESTORE_DIR: /app/backup-store
+      TSC_WATCHFILE: DynamicPriorityPolling
+      TSC_WATCHDIRECTORY: DynamicPriorityPolling
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../pk-dms-backend/src:/app/src
+      - ../pk-dms-backend/prisma:/app/prisma
+      - ../pk-dms-backend/scripts:/app/scripts
+      - ../pk-dms-backend/nest-cli.json:/app/nest-cli.json:ro
+      - ../pk-dms-backend/tsconfig.json:/app/tsconfig.json:ro
+      - ../pk-dms-backend/tsconfig.build.json:/app/tsconfig.build.json:ro
+      - ./backups:/app/backup-store
+      - ./data/uploads:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-3001}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const http = require('http'); const req = http.get('http://127.0.0.1:3000/api/v1/health', (res) => { res.resume(); process.exit(res.statusCode >= 200 && res.statusCode < 300 ? 0 : 1); }); req.setTimeout(4000, () => { req.destroy(new Error('timeout')); process.exit(1); }); req.on('error', () => process.exit(1));\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+  frontend:
+    build:
+      context: ../pk-dms-frontend
+      dockerfile: Dockerfile
+      target: build
+    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "1000"]
+    restart: unless-stopped
+    environment:
+      BACKEND_API_BASE_URL: ${PUBLIC_API_URL}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ../pk-dms-frontend/src:/app/src
+      - ../pk-dms-frontend/public:/app/public
+      - ../pk-dms-frontend/scripts:/app/scripts
+      - ../pk-dms-frontend/angular.json:/app/angular.json:ro
+      - ../pk-dms-frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ../pk-dms-frontend/tsconfig.app.json:/app/tsconfig.app.json:ro
+      - ../pk-dms-frontend/tsconfig.spec.json:/app/tsconfig.spec.json:ro
+      - ../pk-dms-frontend/.postcssrc.json:/app/.postcssrc.json:ro
+    ports:
+      - "${FRONTEND_PORT:-3000}:4200"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"const http = require('http'); const req = http.get('http://127.0.0.1:4200/', (res) => { res.resume(); process.exit(res.statusCode >= 200 && res.statusCode < 400 ? 0 : 1); }); req.setTimeout(4000, () => { req.destroy(new Error('timeout')); process.exit(1); }); req.on('error', () => process.exit(1));\"",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
