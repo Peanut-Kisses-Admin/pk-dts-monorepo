@@ -276,22 +276,27 @@ async function main() {
     select: { settings_json: true },
   });
   const appearanceSettings = appearance?.settings_json;
-  if (
-    appearanceSettings &&
-    typeof appearanceSettings === "object" &&
-    !Array.isArray(appearanceSettings) &&
-    typeof appearanceSettings.logoUrl === "string" &&
-    LEGACY_BRAND_LOGO_URLS.has(appearanceSettings.logoUrl)
-  ) {
-    await prisma.systemAppearanceSetting.update({
-      where: { id: 1 },
-      data: {
-        settings_json: {
-          ...(appearanceSettings as Prisma.JsonObject),
-          logoUrl: CURRENT_BRAND_LOGO_URL,
-        },
-      },
-    });
+  if (appearanceSettings && typeof appearanceSettings === "object" && !Array.isArray(appearanceSettings)) {
+    const migratedAppearanceSettings: Prisma.JsonObject = {
+      ...(appearanceSettings as Prisma.JsonObject),
+    };
+    let appearanceChanged = false;
+
+    if (typeof appearanceSettings.logoUrl === "string" && LEGACY_BRAND_LOGO_URLS.has(appearanceSettings.logoUrl)) {
+      migratedAppearanceSettings.logoUrl = CURRENT_BRAND_LOGO_URL;
+      appearanceChanged = true;
+    }
+    if (typeof appearanceSettings.faviconUrl === "string" && LEGACY_BRAND_LOGO_URLS.has(appearanceSettings.faviconUrl)) {
+      migratedAppearanceSettings.faviconUrl = CURRENT_BRAND_LOGO_URL;
+      appearanceChanged = true;
+    }
+
+    if (appearanceChanged) {
+      await prisma.systemAppearanceSetting.update({
+        where: { id: 1 },
+        data: { settings_json: migratedAppearanceSettings },
+      });
+    }
   }
 
   const permissionRecords = await Promise.all(
