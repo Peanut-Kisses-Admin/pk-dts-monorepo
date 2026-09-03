@@ -52,6 +52,9 @@ export interface DashboardSummary {
 
 export interface NavigationNotificationCounts {
     approval_review: number;
-    my_requests: number;
+    document_requests: number;
+    disposal_requests: number;
+    access_requests: number;
+    hardcopy_transfers: number;
     user_accounts: number;
 }

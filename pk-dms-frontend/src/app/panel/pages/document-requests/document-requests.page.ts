@@ -19,7 +19,6 @@ import {
     AreaReference,
     AssetReference,
     DocumentFormValue,
-    DisposalRequestSummary,
     DocumentSummary,
     LocationReference,
     SequenceReference,
@@ -40,7 +39,7 @@ import {
                 <div>
                     <span>PERSONAL WORKFLOW</span>
                     <h1>My Requests</h1>
-                    <p>Drafts and requests you created, including requests made for another named person.</p>
+                    <p>Create and track document requests submitted by your account, including their approval history and current status.</p>
                 </div>
                 <p-button
                     *ngIf="canCreateRequest()"
@@ -53,12 +52,7 @@ import {
             <div class="feedback success" *ngIf="successMessage()">{{ successMessage() }}</div>
             <div class="feedback error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
 
-            <nav class="workflow-tabs" aria-label="My request type">
-                <button type="button" [class.active]="activeTab === 'documents'" (click)="activeTab = 'documents'"><i class="pi pi-file-edit"></i> Document Requests <span>{{ totalRecords() }}</span></button>
-                <button *ngIf="canRequestDisposal()" type="button" [class.active]="activeTab === 'disposals'" (click)="activeTab = 'disposals'"><i class="pi pi-trash"></i> Disposal Requests <span>{{ disposalRequests().length }}</span></button>
-            </nav>
-
-            <div class="request-table" *ngIf="activeTab === 'documents'">
+            <div class="request-table">
                 <app-data-view-switch [(mode)]="viewMode" title="Request results" />
                 <p-table *ngIf="viewMode === 'list'" [value]="requests()" [loading]="loading" responsiveLayout="scroll">
                     <ng-template pTemplate="header"><tr><th>Document</th><th>Requester</th><th>Status</th><th>Updated</th><th>Reviewer remarks</th><th>Actions</th></tr></ng-template>
@@ -101,14 +95,6 @@ import {
                     (pageChange)="onPageChange($event)"
                 />
             </div>
-            <div class="request-table" *ngIf="activeTab === 'disposals'">
-                <h2>My Disposal Requests</h2><p class="tab-copy">Track disposal requests separately from new document requests.</p>
-                <p-table [value]="disposalRequests()" responsiveLayout="scroll">
-                    <ng-template pTemplate="header"><tr><th>Document</th><th>Action</th><th>Reason</th><th>Status</th><th>Requested</th><th>Reviewed by</th><th>Reviewer remarks</th></tr></ng-template>
-                    <ng-template pTemplate="body" let-item><tr><td><strong>{{ item.document.document_number || 'No document number' }}</strong><small>{{ item.document.document_title }}</small></td><td><strong>{{ item.disposal_action }}</strong><small *ngIf="item.disposal_action_other">{{ item.disposal_action_other }}</small></td><td>{{ item.disposal_remarks }}</td><td><span class="status disposal-status" [attr.data-status]="item.status">{{ item.status }}</span></td><td>{{ item.created_at | date:'medium' }}</td><td>{{ name(item.reviewer) || (item.status === 'Pending' ? 'Awaiting administrator' : 'N/A') }}</td><td>{{ item.reviewer_remarks || 'None' }}</td></tr></ng-template>
-                    <ng-template pTemplate="emptymessage"><tr><td colspan="7">You have not submitted any disposal requests.</td></tr></ng-template>
-                </p-table>
-            </div>
         </section>
 
         <app-document-form-dialog
@@ -149,7 +135,6 @@ export class DocumentRequestsPage implements OnInit {
     private systemSettings = inject(SystemSettingsService);
 
     requests = signal<DocumentSummary[]>([]);
-    disposalRequests = signal<DisposalRequestSummary[]>([]);
     totalRecords = signal(0);
     areas = signal<AreaReference[]>([]);
     assets = signal<AssetReference[]>([]);
@@ -178,7 +163,6 @@ export class DocumentRequestsPage implements OnInit {
     viewMode: DataViewMode = 'list';
     page = 1;
     rows = 10;
-    activeTab: 'documents' | 'disposals' = 'documents';
 
     ngOnInit() { this.viewMode = this.systemSettings.defaultDataView(); this.rows = this.systemSettings.defaultRowsPerPage(); this.load(); }
 
@@ -193,12 +177,6 @@ export class DocumentRequestsPage implements OnInit {
             },
             error: () => { this.errorMessage.set('Unable to load your document requests.'); this.loading = false; }
         });
-        if (this.canRequestDisposal()) {
-            this.documents.listMyDisposalRequests().subscribe({
-                next: (items) => this.disposalRequests.set(items ?? []),
-                error: () => this.disposalRequests.set([])
-            });
-        }
     }
 
     onPageChange(event: PaginatorState) {
@@ -388,10 +366,8 @@ export class DocumentRequestsPage implements OnInit {
     canCreateRequest() { return this.auth.hasPermission('document-requests.create'); }
     canEditRequest() { return this.auth.hasPermission('document-requests.edit'); }
     canSubmitRequest() { return this.auth.hasPermission('document-requests.submit'); }
-    canRequestDisposal() { return this.auth.hasPermission('document-disposal.request'); }
     currentUserName() { const user = this.auth.user(); return [user?.firstname, user?.lastname].filter(Boolean).join(' ') || user?.email || ''; }
     requester(item: DocumentSummary) { return item.requested_by_name || [item.requester?.firstname, item.requester?.lastname].filter(Boolean).join(' ') || 'Current user'; }
-    name(user?: { firstname?: string; lastname?: string } | null) { return [user?.firstname, user?.lastname].filter(Boolean).join(' '); }
     statusLabel(status: DocumentSummary['status']) {
         const labels: Record<string, string> = { Draft: 'Draft', PendingApproval: 'Pending Approval', ForNotedBy: 'For Noted By', ForPlantManagerApproval: 'For Plant Manager Approval', ForDocumentControllerAdmin: 'For Document Controller/Admin Approval', ForApproval: 'For Approval', Approved: 'Approved — Pending Release', Completed: 'Completed / Released', ReturnedForCorrection: 'For Revision', ForRevision: 'For Revision', Rejected: 'Rejected', Cancelled: 'Cancelled', Disposed: 'Disposed' };
         return status ? (labels[status] || status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ')) : 'N/A';

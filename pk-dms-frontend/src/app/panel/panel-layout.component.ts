@@ -177,9 +177,10 @@ export class PanelLayoutComponent implements OnInit, OnDestroy {
             items: [
                 { label: 'Softcopy Documents', icon: 'pi pi-file', route: '/panel/softcopy-documents', permissions: ['documents.view', 'document-requests.view'] },
                 { label: 'Hardcopy Documents', icon: 'pi pi-box', route: '/panel/hardcopy-documents', permissions: ['documents.view', 'document-requests.view'] },
-                { label: 'Hardcopy Transfers', icon: 'pi pi-arrow-right-arrow-left', route: '/panel/hardcopy-transfers', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'] },
-                { label: 'My Requests', icon: 'pi pi-send', route: '/panel/my-requests', permissions: ['document-requests.view-own', 'document-disposal.request'], notificationKey: 'my_requests' },
-                { label: 'Document Access Requests', icon: 'pi pi-key', route: '/panel/document-access-requests', permissions: ['document-access-requests.catalog', 'document-access-requests.view-own', 'document-access-requests.review', 'document-access-requests.approve', 'document-access-requests.reject', 'document-access-requests.grant', 'document-access-requests.revoke', 'document-access-requests.expire'] },
+                { label: 'Hardcopy Transfer Requests', icon: 'pi pi-arrow-right-arrow-left', route: '/panel/hardcopy-transfers', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'], notificationKey: 'hardcopy_transfers' },
+                { label: 'Document Requests', icon: 'pi pi-file-edit', route: '/panel/my-document-requests', permissions: ['document-requests.view-own', 'document-requests.create'], notificationKey: 'document_requests' },
+                { label: 'Document Access Requests', icon: 'pi pi-key', route: '/panel/document-access-requests', permissions: ['document-access-requests.catalog', 'document-access-requests.view-own', 'document-access-requests.review', 'document-access-requests.approve', 'document-access-requests.reject', 'document-access-requests.grant', 'document-access-requests.revoke', 'document-access-requests.expire'], notificationKey: 'access_requests' },
+                { label: 'Disposal Requests', icon: 'pi pi-trash', route: '/panel/my-disposal-requests', permissions: ['document-disposal.request', 'document-disposal.view'], notificationKey: 'disposal_requests' },
                 { label: 'Approval Review', icon: 'pi pi-check-square', route: '/panel/approval-review', permissions: ['document-requests.review', 'document-requests.approve-noted-by', 'document-requests.approve-plant-manager', 'document-requests.approve-document-controller', 'document-requests.approve-hardcopy', 'document-disposal.review', 'document-disposal.manage'], notificationKey: 'approval_review' },
                 { label: 'Document Disposal', icon: 'pi pi-trash', route: '/panel/disposal', permissions: ['document-disposal.view'] }
             ]
@@ -229,7 +230,7 @@ export class PanelLayoutComponent implements OnInit, OnDestroy {
     );
     openCategories = signal<Set<string>>(new Set());
     sidebarOpen = signal(false);
-    notificationCounts = signal<NavigationNotificationCounts>({ approval_review: 0, my_requests: 0, user_accounts: 0 });
+    notificationCounts = signal<NavigationNotificationCounts>({ approval_review: 0, document_requests: 0, disposal_requests: 0, access_requests: 0, hardcopy_transfers: 0, user_accounts: 0 });
     notifications = signal<UserNotification[]>([]);
     unreadCount = signal(0);
     notificationsOpen = signal(false);
