@@ -211,6 +211,7 @@ export class DocumentRequestsPage implements OnInit {
             location_id: item.hardcopy?.location?.location_id || '',
             sequence_id: item.hardcopy?.sequence?.sequence_id || '',
             softcopy_category_id: item.softcopy?.category?.softcopy_category_id || '',
+            action_requested: item.document_type === 'SOFTCOPY' ? 'REVISE' : undefined,
             initial_revision_number: item.softcopy?.current_revision?.revision_number || '',
             initial_file: null,
             attached_scan_files: [], assigned_user_ids: [],
@@ -401,6 +402,7 @@ export class DocumentRequestsPage implements OnInit {
             requester_type: 'CURRENT_USER', requested_by_name: '', asset_id: '', area_id: '',
             specific_id: '', location_id: '', sequence_id: '', softcopy_category_id: '',
             initial_revision_number: '', initial_file: null, attached_scan_files: [], assigned_user_ids: [],
+            action_requested: 'CREATE',
             workflow_name: 'Direct Hardcopy Approval', workflow_version: 1,
             workflow_steps: [{ stage: 'HARDCOPY_APPROVAL', assigned_user_id: '' }], retention_enabled: false,
             retention_start_date: '', retention_end_date: ''

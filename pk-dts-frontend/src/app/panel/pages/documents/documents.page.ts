@@ -1992,6 +1992,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
                   location_id: document.hardcopy?.location?.location_id || '',
                   sequence_id: document.hardcopy?.sequence?.sequence_id || '',
                   softcopy_category_id: document.softcopy?.category?.softcopy_category_id || '',
+                  action_requested: document.document_type === 'SOFTCOPY' ? 'REVISE' : undefined,
                   series_number: document.softcopy?.series_number || document.softcopy?.current_revision?.series_number || '',
                   initial_revision_number: document.softcopy?.current_revision?.revision_number || '',
                   initial_file: null,

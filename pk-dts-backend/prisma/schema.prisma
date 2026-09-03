@@ -737,6 +737,8 @@ enum DocumentBusinessType {
 }
 
 enum DocumentActionRequested {
+  CREATE
+  REVISE
   CREATE_REVISE
   CANCELLATION
 }

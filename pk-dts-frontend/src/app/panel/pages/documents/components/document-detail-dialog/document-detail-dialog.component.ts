@@ -478,7 +478,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
         ];
     }
     private detailRow(label: string, value: unknown, wide = false, breakable = false) { return { label, value: value === null || value === undefined ? '' : String(value), wide, breakable }; }
-    private actionRequestedLabel(value?: string | null) { return value === 'CREATE_REVISE' ? 'Create / Revise Document' : value === 'CANCELLATION' ? 'Cancellation' : value; }
+    private actionRequestedLabel(value?: string | null) { return value === 'CREATE' ? 'Create Document' : value === 'REVISE' ? 'Revise Document' : value === 'CREATE_REVISE' ? 'Create / Revise Document (legacy)' : value === 'CANCELLATION' ? 'Cancellation' : value; }
     private changeReasonLabel(value?: string | null) { return value === 'CorrectionOfPreviousReleases' ? 'Correction of Previous Releases' : value; }
     revisionStatusLabel(revision: RevisionSummary) {
         if (this.document?.softcopy?.current_revision?.revision_id === revision.revision_id || revision.is_current) return 'Current controlled revision';

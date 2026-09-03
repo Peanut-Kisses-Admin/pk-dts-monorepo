@@ -23,7 +23,7 @@ export interface PaginatedResponse<T> {
 export type DocumentTypeValue = 'HARDCOPY' | 'SOFTCOPY';
 export type DocumentStatusValue = 'Draft' | 'PendingApproval' | 'ForNotedBy' | 'ForPlantManagerApproval' | 'ForDocumentControllerAdmin' | 'ForApproval' | 'Approved' | 'Completed' | 'ReturnedForCorrection' | 'Rejected' | 'Cancelled' | 'ForTransfer' | 'Transferred' | 'PendingRecipientAcceptance' | 'ForRevision' | 'Disposed';
 export type DocumentBusinessTypeValue = 'Forms' | 'Manual' | 'Procedures' | 'WorkInstruction' | 'Monitoring' | 'Others';
-export type DocumentActionRequestedValue = 'CREATE_REVISE' | 'CANCELLATION';
+export type DocumentActionRequestedValue = 'CREATE' | 'REVISE' | 'CREATE_REVISE' | 'CANCELLATION';
 export type DocumentChangeReasonValue = 'Improvement' | 'CorrectionOfPreviousReleases' | 'Others';
 export type DisposalActionValue = 'Shred' | 'Scratch' | 'Reuse' | 'Other';
 export type SoftcopyAttachmentStatusValue = 'PendingApproval' | 'Approved' | 'Rejected' | 'Cancelled';

@@ -68,10 +68,10 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                     <small class="field-note" *ngIf="!analyzingFile">{{ fileAnalysisMessage || 'Required for direct creation. DCR revision files are uploaded only after approval.' }}</small>
                 </div>
 
-                <div class="field" *ngIf="!isHardcopy() && mode === 'create'">
-                    <label for="initial-revision-number">Current revision number</label>
+                <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
+                    <label for="initial-revision-number">{{ form.direct_create ? 'Initial revision number' : 'Revision number' }}</label>
                     <input id="initial-revision-number" pInputText [(ngModel)]="form.initial_revision_number" class="w-full" placeholder="000 (automatic when empty)" maxlength="50" />
-                    <small class="field-note">Enter the existing revision directly, or leave blank to use 000.</small>
+                    <small class="field-note">Enter the revision number, or leave blank to use the next automatic number.</small>
                 </div>
 
                 <div class="field" *ngIf="!isHardcopy()">
@@ -85,7 +85,8 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                 <div class="field" *ngIf="!isHardcopy()">
                     <label for="action-requested">Action Requested</label>
                     <select id="action-requested" [(ngModel)]="form.action_requested" (ngModelChange)="onActionRequestedChange()" class="select-field">
-                        <option value="CREATE_REVISE">Create / Revise Document</option>
+                        <option value="CREATE">Create Document</option>
+                        <option value="REVISE">Revise Document</option>
                         <option value="CANCELLATION">Cancellation</option>
                     </select>
                 </div>
@@ -165,7 +166,7 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                     <label for="to-party">To</label>
                     <input id="to-party" pInputText [(ngModel)]="form.to_party" class="w-full" />
                 </div>
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="reason-for-change">Reason for Change</label>
                     <select id="reason-for-change" [(ngModel)]="form.reason_for_change" class="select-field">
                         <option value="">Select reason</option>
@@ -174,11 +175,11 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                         <option value="Others">Others</option>
                     </select>
                 </div>
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="revision-level-from">Revision Level From</label>
                     <input id="revision-level-from" pInputText [(ngModel)]="form.revision_level_from" class="w-full" />
                 </div>
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="revision-level-to">Revision Level To</label>
                     <input id="revision-level-to" pInputText [(ngModel)]="form.revision_level_to" class="w-full" />
                 </div>
@@ -192,22 +193,22 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                     <label for="page-number">Page Number</label>
                     <input id="page-number" pInputText [(ngModel)]="form.page_number" class="w-full" placeholder="1-5" />
                 </div>
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="previous-effective-date">Previous Effective Date</label>
                     <input id="previous-effective-date" type="date" [(ngModel)]="form.previous_effective_date" class="select-field" />
                 </div>
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="new-effective-date">New Effective Date</label>
                     <input id="new-effective-date" type="date" [(ngModel)]="form.new_effective_date" class="select-field" />
                 </div>
-                <div class="field md:col-span-2" *ngIf="!isHardcopy()">
+                <div class="field md:col-span-2" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <div class="system-generated-field"><i class="pi pi-calendar-clock"></i><span><strong>Control dates are automatic</strong><small class="field-note">Date Received, Approval Date, and Date Released are recorded by the workflow.</small></span></div>
                 </div>
-                <div class="field md:col-span-2" *ngIf="!isHardcopy()">
+                <div class="field md:col-span-2" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="brief-description">Brief Description of Changes</label>
                     <textarea id="brief-description" [(ngModel)]="form.brief_description" class="select-field" rows="3"></textarea>
                 </div>
-                <div class="field md:col-span-2" *ngIf="!isHardcopy()">
+                <div class="field md:col-span-2" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="proposed-change">Proposed Change</label>
                     <textarea id="proposed-change" [(ngModel)]="form.proposed_change" class="select-field" rows="3"></textarea>
                 </div>
@@ -575,7 +576,7 @@ export class DocumentFormDialogComponent {
         ,retention_end_date: ''
         ,request_date: ''
         ,business_document_type: 'Forms'
-        ,action_requested: 'CREATE_REVISE'
+        ,action_requested: 'CREATE'
         ,series_number: ''
         ,page_number: ''
         ,department: ''
@@ -693,7 +694,21 @@ export class DocumentFormDialogComponent {
     }
 
     onActionRequestedChange() {
+        if (!this.isRevisionAction() && !this.form.direct_create) {
+            this.form.initial_revision_number = '';
+            this.form.reason_for_change = undefined;
+            this.form.revision_level_from = '';
+            this.form.revision_level_to = '';
+            this.form.previous_effective_date = '';
+            this.form.new_effective_date = '';
+            this.form.brief_description = '';
+            this.form.proposed_change = '';
+        }
         if (this.selectedWorkflowPreset === 'RECOMMENDED') this.applyWorkflowPreset('RECOMMENDED');
+    }
+
+    isRevisionAction() {
+        return this.form.action_requested === 'REVISE' || this.form.action_requested === 'CREATE_REVISE';
     }
 
     loadPublishedWorkflows() {

@@ -1309,7 +1309,7 @@ export class DocumentsService {
       : this.parseWorkflowPlan(
           dto.workflow_plan,
           dto.document_type,
-          dto.action_requested ?? DocumentActionRequested.CREATE_REVISE,
+          dto.action_requested ?? DocumentActionRequested.CREATE,
         );
     if (
       dto.workflow_plan &&
@@ -1378,7 +1378,7 @@ export class DocumentsService {
             ? {
                 department: dto.department?.trim() || null,
                 business_document_type: dto.business_document_type,
-                action_requested: dto.action_requested ?? DocumentActionRequested.CREATE_REVISE,
+                action_requested: dto.action_requested ?? DocumentActionRequested.CREATE,
                 from_party: dto.from_party?.trim() || null,
                 to_party: dto.to_party?.trim() || null,
                 reason_for_change: dto.reason_for_change,
@@ -1704,7 +1704,7 @@ export class DocumentsService {
     const plan = this.parseWorkflowPlan(
       configured?.workflow_plan,
       documentType,
-      document?.action_requested ?? DocumentActionRequested.CREATE_REVISE,
+      document?.action_requested ?? DocumentActionRequested.CREATE,
     );
     const resolvedSteps: Array<WorkflowPlanStepInput & {
       assignedUserId: bigint;
@@ -1971,7 +1971,7 @@ export class DocumentsService {
   private workflowConditionsMatch(conditions: Array<{ field: string; operator: string; value: string | string[] }>, dto: CreateDocumentDto) {
     const values: Record<string, string> = {
       document_type: dto.document_type,
-      action_requested: dto.action_requested ?? DocumentActionRequested.CREATE_REVISE,
+      action_requested: dto.action_requested ?? DocumentActionRequested.CREATE,
       business_document_type: dto.business_document_type ?? "",
       requester_type: dto.requester_type ?? "CURRENT_USER",
     };
@@ -3105,7 +3105,7 @@ export class DocumentsService {
                   requested_by_name: null,
                   department: null,
                   business_document_type: null,
-                  action_requested: DocumentActionRequested.CREATE_REVISE,
+                  action_requested: DocumentActionRequested.CREATE,
                   from_party: null,
                   to_party: null,
                   reason_for_change: null,
