@@ -159,12 +159,12 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                 </div>
 
                 <div class="field" *ngIf="!isHardcopy()">
-                    <label for="from-party">From</label>
-                    <input id="from-party" pInputText [(ngModel)]="form.from_party" class="w-full" />
+                    <label for="from-party">{{ isRevisionAction() ? 'Document Title From' : 'From' }}</label>
+                    <input id="from-party" pInputText [(ngModel)]="form.from_party" class="w-full" [placeholder]="isRevisionAction() ? 'Previous document title' : ''" />
                 </div>
                 <div class="field" *ngIf="!isHardcopy()">
-                    <label for="to-party">To</label>
-                    <input id="to-party" pInputText [(ngModel)]="form.to_party" class="w-full" />
+                    <label for="to-party">{{ isRevisionAction() ? 'Document Title To' : 'To' }}</label>
+                    <input id="to-party" pInputText [(ngModel)]="form.to_party" class="w-full" [placeholder]="isRevisionAction() ? 'Updated document title' : ''" />
                 </div>
                 <div class="field" *ngIf="!isHardcopy() && (isRevisionAction() || form.direct_create)">
                     <label for="reason-for-change">Reason for Change</label>
