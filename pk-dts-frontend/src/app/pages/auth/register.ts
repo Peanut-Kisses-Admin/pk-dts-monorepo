@@ -582,8 +582,8 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
             }
 
             .brand-mark img {
-                width: 2.25rem;
-                height: 2.25rem;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
             }
 
@@ -712,8 +712,8 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
             }
 
             .registration-intro .logo-frame img {
-                width: 2.65rem;
-                height: 2.65rem;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
             }
 
@@ -1068,6 +1068,19 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                 .wide {
                     grid-column: 1;
                 }
+            }
+
+            /* Preserve the supplied red/charcoal lockup on a readable plate in both themes. */
+            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; background: #fff; }
+            .landing-brand > span:last-child { display: none; }
+            .registration-intro .logo-frame { width: 10rem; height: 4rem; padding: .2rem .45rem; border-radius: .9rem; background: #fff; }
+            .registration-intro .brand-copy { display: none; }
+            :host-context(.app-dark) .landing-brand .brand-mark,
+            :host-context(.app-dark) .registration-intro .logo-frame { background: #fff; }
+
+            @media (max-width: 640px) {
+                .landing-brand .brand-mark { width: 8.5rem; height: 3rem; }
+                .registration-intro .logo-frame { width: 8.75rem; height: 3.5rem; }
             }
         `
     ]

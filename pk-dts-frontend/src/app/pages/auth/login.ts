@@ -771,6 +771,20 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
                 .login-cover,.landing-nav,.login-panel,.hero-kicker,.hero-copy h1,.hero-copy>p,.workflow-points>div,.login-card>*,.landing-footer { animation:none!important; }
                 .workflow-points>div,.login-form .field,.registration-links a { transition:none!important; }
             }
+
+            /* The supplied PK-DTS lockup contains dark lettering, so every theme uses a white contrast plate. */
+            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; background: #fff; }
+            .landing-brand .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+            .landing-brand > span:last-child { display: none; }
+            .login-logo { width: 11rem; height: 4.75rem; padding: .25rem .55rem; border-radius: 1rem; background: #fff; }
+            .login-logo img { width: 100%; height: 100%; object-fit: contain; }
+            :host-context(.app-dark) .landing-brand .brand-mark,
+            :host-context(.app-dark) .login-logo { background: #fff; border-color: rgba(248, 113, 113, .38); }
+
+            @media (max-width: 640px) {
+                .landing-brand .brand-mark { width: 8.5rem; height: 3rem; }
+                .login-logo { width: 8.75rem; height: 4rem; }
+            }
         `
     ]
 })
