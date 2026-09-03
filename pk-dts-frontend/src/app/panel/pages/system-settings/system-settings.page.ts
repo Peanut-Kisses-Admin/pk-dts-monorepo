@@ -102,7 +102,7 @@ import { COLOR_THEME_OPTIONS, DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSet
                         <div class="field"><label for="footer-text">Static footer text</label><input id="footer-text" [(ngModel)]="form.footerText" maxlength="100" /></div>
                     </div>
                     <div class="brand-preview">
-                        <div class="preview-logo"><img [src]="form.logoUrl" alt="Logo preview" /></div>
+                        <div class="preview-logo"><img class="dts-brand-logo" [src]="form.logoUrl" alt="Logo preview" /></div>
                         <div>
                             <span>{{ form.brandEyebrow }}</span
                             ><strong>{{ form.systemShortTitle }}</strong
@@ -524,14 +524,15 @@ import { COLOR_THEME_OPTIONS, DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSet
             .preview-logo {
                 display: grid;
                 place-items: center;
-                width: 4rem;
-                height: 4rem;
+                width: 12rem;
+                height: 3.5rem;
+                overflow: hidden;
                 border-radius: 1rem;
                 background: #fff;
             }
             .preview-logo img {
-                width: 3rem;
-                height: 3rem;
+                width: 100%;
+                height: 100%;
                 object-fit: contain;
             }
             .brand-preview span,

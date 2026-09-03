@@ -149,3 +149,10 @@
 @media (prefers-reduced-motion: reduce) {
     .document-detail-softcopy .metadata-item,.document-detail-softcopy .revision-card,.document-detail-softcopy .revision-actions button { transition:none; }
 }
+/* The supplied lockup has a tall transparent canvas. Scale only that known asset so
+   the visible artwork fills its viewport; uploaded/custom logos keep normal contain sizing. */
+.dts-brand-logo[src$='/images/pk-dts-logo.png'] {
+    max-width: none;
+    transform: scale(2.1);
+    transform-origin: center;
+}

@@ -37,7 +37,7 @@ interface PanelNavCategory {
             <aside class="panel-sidebar" [class.mobile-open]="sidebarOpen()">
                 <div class="panel-brand">
                     <div class="brand-mark">
-                        <img [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" />
+                        <img class="dts-brand-logo" [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" />
                     </div>
                     <div class="brand-copy">
                         <div class="brand-eyebrow">{{ settings().brandEyebrow }}</div>

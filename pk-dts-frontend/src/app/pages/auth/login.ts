@@ -20,7 +20,7 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
 
             <header class="landing-nav">
                 <a class="landing-brand" routerLink="/auth/login" aria-label="Document workspace home">
-                    <span class="brand-mark"><img [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" /></span>
+                    <span class="brand-mark"><img class="dts-brand-logo" [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" /></span>
                     <span><small>{{ settings().brandEyebrow }}</small><strong>{{ settings().systemShortTitle }}</strong></span>
                 </a>
                 <div class="landing-nav-meta"><i class="pi pi-shield"></i><span>Authorized access only</span></div>
@@ -44,7 +44,7 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
                     <div class="portal-label"><span></span> Staff workspace</div>
                     <div class="login-card-header">
                         <div class="login-logo">
-                            <img [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" />
+                            <img class="dts-brand-logo" [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" />
                         </div>
                         <div>
                             <div class="login-title">{{ settings().loginWelcomeTitle }}</div>
@@ -773,17 +773,17 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
             }
 
             /* The supplied PK-DTS lockup contains dark lettering, so every theme uses a white contrast plate. */
-            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; background: #fff; }
+            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; overflow: hidden; background: linear-gradient(135deg, #fff, #f5f5f5); }
             .landing-brand .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
             .landing-brand > span:last-child { display: none; }
-            .login-logo { width: 11rem; height: 4.75rem; padding: .25rem .55rem; border-radius: 1rem; background: #fff; }
+            .login-logo { width: 11rem; height: 3.5rem; padding: .2rem .55rem; overflow: hidden; border-radius: .85rem; background: linear-gradient(135deg, #fff, #f5f5f5); }
             .login-logo img { width: 100%; height: 100%; object-fit: contain; }
             :host-context(.app-dark) .landing-brand .brand-mark,
             :host-context(.app-dark) .login-logo { background: #fff; border-color: rgba(248, 113, 113, .38); }
 
             @media (max-width: 640px) {
                 .landing-brand .brand-mark { width: 8.5rem; height: 3rem; }
-                .login-logo { width: 8.75rem; height: 4rem; }
+                .login-logo { width: 8.75rem; height: 3rem; }
             }
         `
     ]

@@ -17,7 +17,7 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
             <div class="registration-overlay"></div>
             <header class="landing-nav">
                 <a class="landing-brand" routerLink="/auth/login" aria-label="Document workspace home">
-                    <span class="brand-mark"><img [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" /></span>
+                    <span class="brand-mark"><img class="dts-brand-logo" [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" /></span>
                     <span><small>{{ settings().brandEyebrow }}</small><strong>{{ settings().systemShortTitle }}</strong></span>
                 </a>
                 <div class="landing-nav-actions">
@@ -28,7 +28,7 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
             <section class="registration-card">
                 <aside class="registration-intro">
                     <header>
-                        <span class="logo-frame"><img [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" /></span>
+                        <span class="logo-frame"><img class="dts-brand-logo" [src]="settings().logoUrl" [alt]="settings().systemTitle + ' logo'" /></span>
                         <div class="brand-copy"><strong>{{ settings().systemTitle }}</strong><span>Account access</span></div>
                     </header>
                     <div class="intro-copy">
@@ -1071,16 +1071,16 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
             }
 
             /* Preserve the supplied red/charcoal lockup on a readable plate in both themes. */
-            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; background: #fff; }
+            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; overflow: hidden; background: linear-gradient(135deg, #fff, #f5f5f5); }
             .landing-brand > span:last-child { display: none; }
-            .registration-intro .logo-frame { width: 10rem; height: 4rem; padding: .2rem .45rem; border-radius: .9rem; background: #fff; }
+            .registration-intro .logo-frame { width: 10rem; height: 3.25rem; padding: .2rem .45rem; overflow: hidden; border-radius: .8rem; background: linear-gradient(135deg, #fff, #f5f5f5); }
             .registration-intro .brand-copy { display: none; }
             :host-context(.app-dark) .landing-brand .brand-mark,
             :host-context(.app-dark) .registration-intro .logo-frame { background: #fff; }
 
             @media (max-width: 640px) {
                 .landing-brand .brand-mark { width: 8.5rem; height: 3rem; }
-                .registration-intro .logo-frame { width: 8.75rem; height: 3.5rem; }
+                .registration-intro .logo-frame { width: 8.75rem; height: 2.9rem; }
             }
         `
     ]
