@@ -1070,17 +1070,17 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                 }
             }
 
-            /* Preserve the supplied red/charcoal lockup on a readable plate in both themes. */
-            .landing-brand .brand-mark { width: 10rem; height: 2.5rem; padding: .15rem .35rem; overflow: hidden; background: linear-gradient(135deg, #fff, #f5f5f5); }
-            .landing-brand > span:last-child { display: none; }
-            .registration-intro .logo-frame { width: 10rem; height: 2.5rem; padding: .15rem .35rem; overflow: hidden; border-radius: .7rem; background: linear-gradient(135deg, #fff, #f5f5f5); }
-            .registration-intro .brand-copy { display: none; }
+            /* The supplied PK mark is a compact icon; retain the adjacent system identity copy. */
+            .landing-brand .brand-mark { width: 4.2rem; height: 2.8rem; padding: 0; overflow: hidden; background: #070707; }
+            .landing-brand > span:last-child { display: grid; }
+            .registration-intro .logo-frame { width: 4.5rem; height: 3rem; padding: 0; overflow: hidden; border-radius: .7rem; background: #070707; }
+            .registration-intro .brand-copy { display: grid; }
             :host-context(.app-dark) .landing-brand .brand-mark,
-            :host-context(.app-dark) .registration-intro .logo-frame { background: #fff; }
+            :host-context(.app-dark) .registration-intro .logo-frame { background: #070707; }
 
             @media (max-width: 640px) {
-                .landing-brand .brand-mark { width: 8.5rem; height: 2.25rem; }
-                .registration-intro .logo-frame { width: 8.75rem; height: 2.35rem; }
+                .landing-brand .brand-mark { width: 3.75rem; height: 2.5rem; }
+                .registration-intro .logo-frame { width: 4.05rem; height: 2.7rem; }
             }
         `
     ]

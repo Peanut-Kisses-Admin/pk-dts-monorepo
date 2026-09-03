@@ -772,18 +772,18 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
                 .workflow-points>div,.login-form .field,.registration-links a { transition:none!important; }
             }
 
-            /* The supplied PK-DTS lockup contains dark lettering, so every theme uses a white contrast plate. */
-            .landing-brand .brand-mark { width: 10rem; height: 2.5rem; padding: .15rem .35rem; overflow: hidden; background: linear-gradient(135deg, #fff, #f5f5f5); }
+            /* The supplied PK mark is a compact icon; pair it with the system name instead of treating it as a wordmark. */
+            .landing-brand .brand-mark { width: 4.2rem; height: 2.8rem; padding: 0; overflow: hidden; background: #070707; }
             .landing-brand .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
-            .landing-brand > span:last-child { display: none; }
-            .login-logo { width: 11rem; height: 2.75rem; padding: .15rem .4rem; overflow: hidden; border-radius: .75rem; background: linear-gradient(135deg, #fff, #f5f5f5); }
+            .landing-brand > span:last-child { display: grid; }
+            .login-logo { width: 4.5rem; height: 3rem; padding: 0; overflow: hidden; border-radius: .75rem; background: #070707; }
             .login-logo img { width: 100%; height: 100%; object-fit: contain; }
             :host-context(.app-dark) .landing-brand .brand-mark,
-            :host-context(.app-dark) .login-logo { background: #fff; border-color: rgba(248, 113, 113, .38); }
+            :host-context(.app-dark) .login-logo { background: #070707; border-color: rgba(248, 113, 113, .38); }
 
             @media (max-width: 640px) {
-                .landing-brand .brand-mark { width: 8.5rem; height: 2.25rem; }
-                .login-logo { width: 8.75rem; height: 2.35rem; }
+                .landing-brand .brand-mark { width: 3.75rem; height: 2.5rem; }
+                .login-logo { width: 4.05rem; height: 2.7rem; }
             }
         `
     ]

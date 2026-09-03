@@ -524,11 +524,11 @@ import { COLOR_THEME_OPTIONS, DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSet
             .preview-logo {
                 display: grid;
                 place-items: center;
-                width: 12rem;
-                height: 2.75rem;
+                width: 6rem;
+                height: 4rem;
                 overflow: hidden;
                 border-radius: 1rem;
-                background: #fff;
+                background: #070707;
             }
             .preview-logo img {
                 width: 100%;
