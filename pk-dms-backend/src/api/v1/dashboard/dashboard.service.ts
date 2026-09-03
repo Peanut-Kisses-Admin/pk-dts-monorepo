@@ -26,11 +26,8 @@ export class DashboardService {
     const [documentApprovals, disposalApprovals, documentRequests, disposalRequests, accessRequests, hardcopyTransfers, userAccounts] = await Promise.all([
       canReview ? this.prisma.document.count({
         where: isAdmin
-          ? { status: { in: [DocumentStatus.PendingApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin, DocumentStatus.ForApproval] } }
-          : {
-              status: { in: [DocumentStatus.PendingApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin, DocumentStatus.ForApproval] },
-              workflow_steps: { some: { assigned_user_id: userId, status: WorkflowStepStatus.PENDING } },
-            },
+          ? { status: { in: [DocumentStatus.PendingApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin, DocumentStatus.ForApproval] }, workflow_steps: { some: { assigned_user_id: userId, status: WorkflowStepStatus.PENDING } } }
+          : { status: { in: [DocumentStatus.PendingApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin, DocumentStatus.ForApproval] }, workflow_steps: { some: { assigned_user_id: userId, status: WorkflowStepStatus.PENDING } } },
       }) : Promise.resolve(0),
       canReviewDisposals ? this.prisma.documentDisposalRequest.count({ where: { status: "Pending" } }) : Promise.resolve(0),
       this.prisma.document.count({ where: { created_by: userId, status: { notIn: [DocumentStatus.Approved, DocumentStatus.Completed, DocumentStatus.Disposed] } } }),
