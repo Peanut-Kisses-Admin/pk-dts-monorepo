@@ -3059,8 +3059,8 @@ export class DocumentsService {
           const duplicatePair = await tx.softcopyDocument.findFirst({
             where: {
               softcopy_id: { not: existingDocument.softcopy.softcopy_id },
-              document_number: { equals: nextDocumentNumber!, mode: "insensitive" },
-              series_number: { equals: nextSeriesNumber!, mode: "insensitive" },
+              document_number: { equals: nextDocumentNumber! },
+              series_number: { equals: nextSeriesNumber! },
             },
             select: { softcopy_id: true },
           });
@@ -3733,16 +3733,16 @@ export class DocumentsService {
     const reserved = await this.prisma.softcopyDocument.findFirst({
       where: {
         ...(softcopyId ? { softcopy_id: { not: softcopyId } } : {}),
-        document_number: { equals: documentNumber, mode: "insensitive" },
-        series_number: { equals: seriesNumber, mode: "insensitive" },
+        document_number: { equals: documentNumber },
+        series_number: { equals: seriesNumber },
       },
       select: { softcopy_id: true },
     });
     const existing = reserved || await this.prisma.documentRevision.findFirst({
       where: {
-        series_number: { equals: seriesNumber, mode: "insensitive" },
+        series_number: { equals: seriesNumber },
         softcopy: {
-          document_number: { equals: documentNumber, mode: "insensitive" },
+          document_number: { equals: documentNumber },
         },
       },
       select: { revision_id: true },
