@@ -21,7 +21,7 @@ services:
 
   backend:
     build:
-      context: ../pk-dms-backend
+      context: ../pk-dts-backend
       dockerfile: Dockerfile
       target: build
     command:
@@ -50,12 +50,12 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../pk-dms-backend/src:/app/src
-      - ../pk-dms-backend/prisma:/app/prisma
-      - ../pk-dms-backend/scripts:/app/scripts
-      - ../pk-dms-backend/nest-cli.json:/app/nest-cli.json:ro
-      - ../pk-dms-backend/tsconfig.json:/app/tsconfig.json:ro
-      - ../pk-dms-backend/tsconfig.build.json:/app/tsconfig.build.json:ro
+      - ../pk-dts-backend/src:/app/src
+      - ../pk-dts-backend/prisma:/app/prisma
+      - ../pk-dts-backend/scripts:/app/scripts
+      - ../pk-dts-backend/nest-cli.json:/app/nest-cli.json:ro
+      - ../pk-dts-backend/tsconfig.json:/app/tsconfig.json:ro
+      - ../pk-dts-backend/tsconfig.build.json:/app/tsconfig.build.json:ro
       - ./backups:/app/backup-store
       - ./data/uploads:/app/uploads
     ports:
@@ -73,7 +73,7 @@ services:
 
   frontend:
     build:
-      context: ../pk-dms-frontend
+      context: ../pk-dts-frontend
       dockerfile: Dockerfile
       target: build
     command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "1000"]
@@ -86,14 +86,14 @@ services:
       backend:
         condition: service_healthy
     volumes:
-      - ../pk-dms-frontend/src:/app/src
-      - ../pk-dms-frontend/public:/app/public
-      - ../pk-dms-frontend/scripts:/app/scripts
-      - ../pk-dms-frontend/angular.json:/app/angular.json:ro
-      - ../pk-dms-frontend/tsconfig.json:/app/tsconfig.json:ro
-      - ../pk-dms-frontend/tsconfig.app.json:/app/tsconfig.app.json:ro
-      - ../pk-dms-frontend/tsconfig.spec.json:/app/tsconfig.spec.json:ro
-      - ../pk-dms-frontend/.postcssrc.json:/app/.postcssrc.json:ro
+      - ../pk-dts-frontend/src:/app/src
+      - ../pk-dts-frontend/public:/app/public
+      - ../pk-dts-frontend/scripts:/app/scripts
+      - ../pk-dts-frontend/angular.json:/app/angular.json:ro
+      - ../pk-dts-frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ../pk-dts-frontend/tsconfig.app.json:/app/tsconfig.app.json:ro
+      - ../pk-dts-frontend/tsconfig.spec.json:/app/tsconfig.spec.json:ro
+      - ../pk-dts-frontend/.postcssrc.json:/app/.postcssrc.json:ro
     ports:
       - "${FRONTEND_PORT:-3000}:4200"
     healthcheck:

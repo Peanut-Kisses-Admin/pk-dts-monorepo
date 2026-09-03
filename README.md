@@ -4,11 +4,11 @@ PK DTS is the unified monorepo for the Peanut Kisses Document Tracking System, i
 
 This repository contains the PK Document Tracking System source tree:
 
-- `pk-dms-backend` — NestJS API
-- `pk-dms-frontend` — Angular application
-- `pk-dms-docker` — Docker Compose deployment stack
+- `pk-dts-backend` — NestJS API
+- `pk-dts-frontend` — Angular application
+- `pk-dts-docker` — Docker Compose deployment stack
 
-The source directories keep their existing names so Docker build contexts and deployment commands remain compatible.
+The repository and local workspace use the PK DTS / Document Tracking System identity. Runtime API, database, environment, and service identifiers remain unchanged for compatibility.
 
 ## Legacy repositories
 

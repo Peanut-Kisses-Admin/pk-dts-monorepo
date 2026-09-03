@@ -7,17 +7,17 @@ Docker orchestration repository for the complete Document Tracking System.
 Keep the three repositories as siblings:
 
 ```text
-pk-dms/
-|-- pk-dms-backend/
-|-- pk-dms-docker/
-`-- pk-dms-frontend/
+pk-dts/
+|-- pk-dts-backend/
+|-- pk-dts-docker/
+`-- pk-dts-frontend/
 ```
 
 The Docker repository keeps deployment configuration and runtime data. Application source remains in the independent backend and frontend repositories.
 
 ## Start
 
-From `pk-dms/pk-dms-docker`:
+From `pk-dts/pk-dts-docker`:
 
 ```powershell
 Copy-Item .env.example .env
@@ -45,6 +45,4 @@ Persistent PostgreSQL data, uploads, and backups remain under `data/` and `backu
 
 ## Repositories
 
-- Backend: `https://github.com/Peanut-Kisses-Admin/pk-dms-backend.git`
-- Docker: `https://github.com/Peanut-Kisses-Admin/pk-dms-docker.git`
-- Frontend: `https://github.com/Peanut-Kisses-Admin/pk-dms-frontend.git`
+- Repository: `https://github.com/Peanut-Kisses-Admin/pk-dts-monorepo.git`

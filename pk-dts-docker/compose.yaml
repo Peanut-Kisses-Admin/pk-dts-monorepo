@@ -41,7 +41,7 @@ services:
 
   backend:
     build:
-      context: ../pk-dms-backend
+      context: ../pk-dts-backend
       dockerfile: Dockerfile
     command:
       [
@@ -86,7 +86,7 @@ services:
 
   frontend:
     build:
-      context: ../pk-dms-frontend
+      context: ../pk-dts-frontend
       dockerfile: Dockerfile
       args:
         PUBLIC_API_URL: /api/v1
