@@ -44,7 +44,7 @@ export class CreateDocumentDto {
   @IsEnum(DocumentBusinessType)
   business_document_type?: DocumentBusinessType;
 
-  @ApiPropertyOptional({ enum: DocumentActionRequested, default: DocumentActionRequested.CREATE_REVISE })
+  @ApiPropertyOptional({ enum: DocumentActionRequested, default: DocumentActionRequested.CREATE })
   @IsOptional()
   @IsEnum(DocumentActionRequested)
   action_requested?: DocumentActionRequested;
