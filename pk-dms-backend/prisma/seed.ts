@@ -385,9 +385,6 @@ async function main() {
     ),
   ]);
 
-  const searchPortalPermission = permissionRecords.find(
-    (permission) => permission.permission_name === "admin-search-portal.access",
-  );
   const administrativeRoles = await prisma.role.findMany({
     where: {
       role_name: {
@@ -402,15 +399,6 @@ async function main() {
     },
     select: { role_id: true },
   });
-
-  if (searchPortalPermission) {
-    await prisma.rolePermission.deleteMany({
-      where: {
-        permission_id: searchPortalPermission.permission_id,
-        role_id: { notIn: administrativeRoles.map((role) => role.role_id) },
-      },
-    });
-  }
 
   await Promise.all(
     administrativeRoles.flatMap((role) =>

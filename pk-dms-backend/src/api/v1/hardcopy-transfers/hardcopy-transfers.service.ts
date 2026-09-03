@@ -215,7 +215,7 @@ export class HardcopyTransfersService {
 
   private async changeStatus(id: string, expected: HardcopyTransferStatus, next: HardcopyTransferStatus, action: string, actor: AuthenticatedUser, extra: Prisma.HardcopyTransferRequestUpdateInput = {}) {
     const isRequesterAction = action === "submit" || action === "resubmit";
-    this.assertActorPermission(actor, isRequesterAction ? "document-requests.submit" : "hardcopy-transfers.dispatch");
+    this.assertActorPermission(actor, isRequesterAction ? "hardcopy-transfers.create" : "hardcopy-transfers.dispatch");
     const transferId = toBigIntId(id, "transfer_request_id");
     return this.prisma.$transaction(async (tx) => {
       const transfer = await tx.hardcopyTransferRequest.findUnique({ where: { transfer_request_id: transferId } });

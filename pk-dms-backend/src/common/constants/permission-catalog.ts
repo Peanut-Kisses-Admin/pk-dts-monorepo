@@ -19,18 +19,6 @@ interface PermissionModuleDefinition {
 
 const permissionModules: PermissionModuleDefinition[] = [
   {
-    module_key: "admin-search-portal",
-    module_label: "Document Search Portal",
-    actions: [
-      {
-        action_key: "access",
-        action_label: "Access",
-        description:
-          "Legacy portal access setting. The document search portal is available to every signed-in user with document visibility scoped by assignment.",
-      },
-    ],
-  },
-  {
     module_key: "dashboard",
     module_label: "Dashboard",
     actions: [

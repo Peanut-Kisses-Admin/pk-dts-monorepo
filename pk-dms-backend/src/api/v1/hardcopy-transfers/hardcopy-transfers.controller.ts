@@ -23,7 +23,7 @@ export class HardcopyTransfersController {
   pending(@CurrentUser() user: AuthenticatedUser) { return this.service.listPending(user); }
 
   @Post(":id/submit")
-  @RequirePermissions("document-requests.submit")
+  @RequirePermissions("hardcopy-transfers.create")
   submit(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) { return this.service.submit(id, user); }
 
   @Post(":id/approve")
@@ -39,7 +39,7 @@ export class HardcopyTransfersController {
   reject(@Param("id") id: string, @Body() dto: WorkflowActionDto, @CurrentUser() user: AuthenticatedUser) { return this.service.reject(id, user, dto.remarks); }
 
   @Post(":id/resubmit")
-  @RequirePermissions("document-requests.submit")
+  @RequirePermissions("hardcopy-transfers.create")
   resubmit(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) { return this.service.resubmit(id, user); }
 
   @Post(":id/cancel")
