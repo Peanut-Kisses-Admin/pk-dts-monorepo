@@ -399,6 +399,10 @@ async function main() {
     },
     select: { role_id: true },
   });
+  const broadApprovalPermission = permissionRecords.find((permission) => permission.permission_name === "document-requests.approve");
+  if (broadApprovalPermission) {
+    await prisma.rolePermission.deleteMany({ where: { permission_id: broadApprovalPermission.permission_id, role_id: { notIn: administrativeRoles.map((role) => role.role_id) } } });
+  }
 
   await Promise.all(
     administrativeRoles.flatMap((role) =>

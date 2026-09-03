@@ -330,7 +330,7 @@ export class DocumentsController {
   }
 
   @Post(":id/complete")
-  @RequirePermissions("document-requests.complete", "document-requests.approve")
+  @RequirePermissions("document-requests.complete")
   complete(
     @Param("id") id: string,
     @Body() dto: WorkflowActionDto,

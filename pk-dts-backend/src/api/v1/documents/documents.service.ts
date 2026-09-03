@@ -2146,7 +2146,6 @@ export class DocumentsService {
     if (stage === DocumentWorkflowStage.NOTED_BY) {
       return this.assertConfiguredApprover(usersById, userId, "Noted By", [
         "document-requests.approve-noted-by",
-        "document-requests.approve",
       ]);
     }
     if (stage === DocumentWorkflowStage.PLANT_MANAGER) {
@@ -2154,7 +2153,7 @@ export class DocumentsService {
         usersById,
         userId,
         "Plant Manager",
-        ["document-requests.approve-plant-manager", "document-requests.approve"],
+        ["document-requests.approve-plant-manager"],
         ["plant manager", "plant_manager", "plant-manager"],
       );
     }
@@ -2163,7 +2162,7 @@ export class DocumentsService {
         usersById,
         userId,
         "Document Controller/Admin",
-        ["document-requests.approve-document-controller", "document-requests.approve"],
+        ["document-requests.approve-document-controller"],
         [
           "admin",
           "administrator",
@@ -2183,7 +2182,7 @@ export class DocumentsService {
         usersById,
         userId,
         "Hardcopy",
-        ["document-requests.approve-hardcopy", "document-requests.approve"],
+        ["document-requests.approve-hardcopy"],
         [
           "admin",
           "administrator",
@@ -2298,10 +2297,10 @@ export class DocumentsService {
         throw new BadRequestException("One or more configured approvers do not exist.");
       }
       const byId = new Map(configuredUsers.map((configuredUser) => [configuredUser.user_id.toString(), configuredUser]));
-      this.assertConfiguredApprover(byId, dto.noted_by_user_id, "Noted By", ["document-requests.approve-noted-by", "document-requests.approve"]);
-      this.assertConfiguredApprover(byId, dto.plant_manager_user_id, "Plant Manager", ["document-requests.approve-plant-manager", "document-requests.approve"], ["plant manager", "plant_manager", "plant-manager"]);
-      this.assertConfiguredApprover(byId, dto.document_controller_user_id, "Document Controller/Admin", ["document-requests.approve-document-controller", "document-requests.approve"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin"]);
-      this.assertConfiguredApprover(byId, dto.hardcopy_approver_user_id, "Hardcopy", ["document-requests.approve-hardcopy", "document-requests.approve"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin", "plant manager", "plant_manager", "plant-manager"]);
+      this.assertConfiguredApprover(byId, dto.noted_by_user_id, "Noted By", ["document-requests.approve-noted-by"]);
+      this.assertConfiguredApprover(byId, dto.plant_manager_user_id, "Plant Manager", ["document-requests.approve-plant-manager"], ["plant manager", "plant_manager", "plant-manager"]);
+      this.assertConfiguredApprover(byId, dto.document_controller_user_id, "Document Controller/Admin", ["document-requests.approve-document-controller"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin"]);
+      this.assertConfiguredApprover(byId, dto.hardcopy_approver_user_id, "Hardcopy", ["document-requests.approve-hardcopy"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin", "plant manager", "plant_manager", "plant-manager"]);
       this.assertConfiguredApprover(byId, dto.access_approver_user_id, "Document Access", ["document-access-requests.approve"]);
       this.assertConfiguredApprover(byId, dto.document_owner_user_id, "Document Owner", ["document-access-requests.approve"]);
     }
@@ -2597,20 +2596,21 @@ export class DocumentsService {
       }
 
       if (actor && action === "approve") {
+        if (current.created_by === actorId) throw new ForbiddenException("A request creator cannot approve their own request.");
         const stagePermissions = pendingStep?.required_permission
           ? [pendingStep.required_permission]
           : pendingStep?.stage === DocumentWorkflowStage.NOTED_BY
-          ? [DOCUMENT_APPROVAL_PERMISSIONS[0], DOCUMENT_APPROVAL_PERMISSIONS[1]]
+              ? [DOCUMENT_APPROVAL_PERMISSIONS[0]]
           : pendingStep?.stage === DocumentWorkflowStage.PLANT_MANAGER
-            ? [DOCUMENT_APPROVAL_PERMISSIONS[0], DOCUMENT_APPROVAL_PERMISSIONS[2]]
+            ? [DOCUMENT_APPROVAL_PERMISSIONS[1]]
             : pendingStep?.stage === DocumentWorkflowStage.DOCUMENT_CONTROLLER_ADMIN
-              ? [DOCUMENT_APPROVAL_PERMISSIONS[0], DOCUMENT_APPROVAL_PERMISSIONS[3]]
-              : [DOCUMENT_APPROVAL_PERMISSIONS[0], DOCUMENT_APPROVAL_PERMISSIONS[4]];
+              ? [DOCUMENT_APPROVAL_PERMISSIONS[2]]
+              : [DOCUMENT_APPROVAL_PERMISSIONS[3]];
         if (!hasAnyPermission(actor, stagePermissions)) {
           throw new ForbiddenException("You do not have permission to approve this workflow stage.");
         }
       }
-      if (actor && action === "complete" && !hasAnyPermission(actor, ["document-requests.complete", "document-requests.approve"])) {
+      if (actor && action === "complete" && !hasAnyPermission(actor, ["document-requests.complete"])) {
         throw new ForbiddenException("You do not have permission to complete this request.");
       }
 
@@ -3059,8 +3059,8 @@ export class DocumentsService {
           const duplicatePair = await tx.softcopyDocument.findFirst({
             where: {
               softcopy_id: { not: existingDocument.softcopy.softcopy_id },
-              document_number: { equals: nextDocumentNumber! },
-              series_number: { equals: nextSeriesNumber! },
+              document_number: { equals: nextDocumentNumber!, mode: "insensitive" } as any,
+              series_number: { equals: nextSeriesNumber!, mode: "insensitive" } as any,
             },
             select: { softcopy_id: true },
           });
@@ -3733,16 +3733,16 @@ export class DocumentsService {
     const reserved = await this.prisma.softcopyDocument.findFirst({
       where: {
         ...(softcopyId ? { softcopy_id: { not: softcopyId } } : {}),
-        document_number: { equals: documentNumber },
-        series_number: { equals: seriesNumber },
+        document_number: { equals: documentNumber, mode: "insensitive" } as any,
+        series_number: { equals: seriesNumber, mode: "insensitive" } as any,
       },
       select: { softcopy_id: true },
     });
     const existing = reserved || await this.prisma.documentRevision.findFirst({
       where: {
-        series_number: { equals: seriesNumber },
+        series_number: { equals: seriesNumber, mode: "insensitive" } as any,
         softcopy: {
-          document_number: { equals: documentNumber },
+          document_number: { equals: documentNumber, mode: "insensitive" } as any,
         },
       },
       select: { revision_id: true },

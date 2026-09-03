@@ -2,7 +2,6 @@ import { AuthenticatedUser } from "./authenticated-user.interface";
 import { isAdministrativeRole } from "./administrative-role.util";
 
 export const DOCUMENT_APPROVAL_PERMISSIONS = [
-  "document-requests.approve",
   "document-requests.approve-noted-by",
   "document-requests.approve-plant-manager",
   "document-requests.approve-document-controller",
