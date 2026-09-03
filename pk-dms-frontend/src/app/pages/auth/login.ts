@@ -84,7 +84,11 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
                 </section>
             </div>
 
-            <footer class="landing-footer"><span>{{ settings().footerText }}</span><span>Secure records · Clear ownership · Faster retrieval</span></footer>
+            <footer class="landing-footer">
+                <span>{{ settings().footerText }}</span>
+                <span>Created by John Paul Curib, Full-stack Developer</span>
+                <span>Secure records &middot; Clear ownership &middot; Faster retrieval</span>
+            </footer>
         </div>
     `,
     styles: [
