@@ -1071,16 +1071,16 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
             }
 
             /* Preserve the supplied red/charcoal lockup on a readable plate in both themes. */
-            .landing-brand .brand-mark { width: 10rem; height: 3.5rem; padding: .2rem .45rem; overflow: hidden; background: linear-gradient(135deg, #fff, #f5f5f5); }
+            .landing-brand .brand-mark { width: 10rem; height: 2.5rem; padding: .15rem .35rem; overflow: hidden; background: linear-gradient(135deg, #fff, #f5f5f5); }
             .landing-brand > span:last-child { display: none; }
-            .registration-intro .logo-frame { width: 10rem; height: 3.25rem; padding: .2rem .45rem; overflow: hidden; border-radius: .8rem; background: linear-gradient(135deg, #fff, #f5f5f5); }
+            .registration-intro .logo-frame { width: 10rem; height: 2.5rem; padding: .15rem .35rem; overflow: hidden; border-radius: .7rem; background: linear-gradient(135deg, #fff, #f5f5f5); }
             .registration-intro .brand-copy { display: none; }
             :host-context(.app-dark) .landing-brand .brand-mark,
             :host-context(.app-dark) .registration-intro .logo-frame { background: #fff; }
 
             @media (max-width: 640px) {
-                .landing-brand .brand-mark { width: 8.5rem; height: 3rem; }
-                .registration-intro .logo-frame { width: 8.75rem; height: 2.9rem; }
+                .landing-brand .brand-mark { width: 8.5rem; height: 2.25rem; }
+                .registration-intro .logo-frame { width: 8.75rem; height: 2.35rem; }
             }
         `
     ]

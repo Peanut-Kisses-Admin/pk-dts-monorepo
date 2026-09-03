@@ -57,7 +57,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     systemTitle: 'Document Tracking System (DTS)',
     systemShortTitle: 'DTS',
     brandEyebrow: 'Records workspace',
-    logoUrl: '/images/pk-dts-logo.png',
+    logoUrl: '/images/pk-dts-logo-v2.png',
     faviconUrl: '/images/dts-logo.png',
     loginCoverUrl: '/images/pk-building-cover.png',
     loginKicker: 'Document Tracking System',
@@ -80,6 +80,7 @@ const LEGACY_SYSTEM_SHORT_TITLE = 'Document Management';
 const LEGACY_FOOTER_TEXT = 'Document Tracking and Management System';
 const LEGACY_LOGO_URL = '/images/peanut_kisses_logo-removebg-preview.png';
 const PREVIOUS_LOGO_URL = '/images/dts-logo.png';
+const FORMER_BRAND_LOGO_URL = '/images/pk-dts-logo.png';
 const LEGACY_FAVICON_URL = '/images/peanut_kisses_logo-removebg-preview.png';
 const APPEARANCE_API = `${BACKEND_API_BASE_URL}/system-settings/appearance`;
 
@@ -129,7 +130,7 @@ export class SystemSettingsService {
             systemTitle: this.brandingText(settings.systemTitle, LEGACY_SYSTEM_TITLE, DEFAULT_SYSTEM_SETTINGS.systemTitle, 100),
             systemShortTitle: this.brandingText(settings.systemShortTitle, LEGACY_SYSTEM_SHORT_TITLE, DEFAULT_SYSTEM_SETTINGS.systemShortTitle, 50),
             brandEyebrow: this.text(settings.brandEyebrow, DEFAULT_SYSTEM_SETTINGS.brandEyebrow, 40),
-            logoUrl: this.brandingAssetUrl(settings.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
+            logoUrl: this.brandingAssetUrl(settings.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL, FORMER_BRAND_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
             faviconUrl: this.brandingAssetUrl(settings.faviconUrl, LEGACY_FAVICON_URL, DEFAULT_SYSTEM_SETTINGS.faviconUrl),
             loginCoverUrl: this.coverUrl(settings.loginCoverUrl),
             loginKicker: this.text(settings.loginKicker, DEFAULT_SYSTEM_SETTINGS.loginKicker, 60),
@@ -226,7 +227,7 @@ export class SystemSettingsService {
                 systemTitle: this.brandingText(stored.systemTitle, LEGACY_SYSTEM_TITLE, DEFAULT_SYSTEM_SETTINGS.systemTitle, 100),
                 systemShortTitle: this.brandingText(stored.systemShortTitle, LEGACY_SYSTEM_SHORT_TITLE, DEFAULT_SYSTEM_SETTINGS.systemShortTitle, 50),
                 brandEyebrow: this.text(stored.brandEyebrow, DEFAULT_SYSTEM_SETTINGS.brandEyebrow, 40),
-                logoUrl: this.brandingAssetUrl(stored.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
+                logoUrl: this.brandingAssetUrl(stored.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL, FORMER_BRAND_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
                 faviconUrl: this.brandingAssetUrl(stored.faviconUrl, LEGACY_FAVICON_URL, DEFAULT_SYSTEM_SETTINGS.faviconUrl),
                 loginCoverUrl: this.coverUrl(stored.loginCoverUrl),
                 loginKicker: this.text(stored.loginKicker, DEFAULT_SYSTEM_SETTINGS.loginKicker, 60),
@@ -346,7 +347,7 @@ export class SystemSettingsService {
             ...settings,
             systemTitle: this.brandingText(settings.systemTitle, LEGACY_SYSTEM_TITLE, DEFAULT_SYSTEM_SETTINGS.systemTitle, 100),
             systemShortTitle: this.brandingText(settings.systemShortTitle, LEGACY_SYSTEM_SHORT_TITLE, DEFAULT_SYSTEM_SETTINGS.systemShortTitle, 50),
-            logoUrl: this.brandingAssetUrl(settings.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
+            logoUrl: this.brandingAssetUrl(settings.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL, FORMER_BRAND_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
             faviconUrl: this.brandingAssetUrl(settings.faviconUrl, LEGACY_FAVICON_URL, DEFAULT_SYSTEM_SETTINGS.faviconUrl),
             footerText: this.brandingText(settings.footerText, LEGACY_FOOTER_TEXT, DEFAULT_SYSTEM_SETTINGS.footerText, 100)
         };

@@ -525,7 +525,7 @@ import { COLOR_THEME_OPTIONS, DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSet
                 display: grid;
                 place-items: center;
                 width: 12rem;
-                height: 3.5rem;
+                height: 2.75rem;
                 overflow: hidden;
                 border-radius: 1rem;
                 background: #fff;
