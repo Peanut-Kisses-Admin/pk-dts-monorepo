@@ -27,9 +27,10 @@ const DEFAULT_ADMIN_FIRSTNAME =
   process.env.DEFAULT_ADMIN_FIRSTNAME?.trim() || "Admin";
 const DEFAULT_ADMIN_LASTNAME =
   process.env.DEFAULT_ADMIN_LASTNAME?.trim() || "User";
-const CURRENT_BRAND_LOGO_URL = "/images/pk-dts-logo.png";
+const CURRENT_BRAND_LOGO_URL = "/images/pk-dts-logo-v2.png";
 const LEGACY_BRAND_LOGO_URLS = new Set([
   "/images/dts-logo.png",
+  "/images/pk-dts-logo.png",
   "/images/peanut_kisses_logo-removebg-preview.png",
 ]);
 
