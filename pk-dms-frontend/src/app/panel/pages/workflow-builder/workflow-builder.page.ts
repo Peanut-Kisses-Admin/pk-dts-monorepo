@@ -93,7 +93,7 @@ export class WorkflowBuilderPage implements OnInit {
 
     createDefinition() {
         const name = this.createForm.name.trim();
-        const key = this.createForm.workflow_key.trim().toLowerCase();
+        const key = this.createForm.workflow_key.trim().toLowerCase() || this.workflowKeyFromName(name);
         if (!name || !key) { this.error = 'Workflow name and key are required.'; return; }
         this.saving = true;
         this.workflowsApi.create({
@@ -234,6 +234,7 @@ export class WorkflowBuilderPage implements OnInit {
     private edge(node: WorkflowNode, outcome: WorkflowOutcome) { return this.graph.edges.find((item) => item.from === node.key && item.outcome === outcome); }
     private clearFeedback() { this.message = ''; this.error = ''; }
     private uniqueKey(prefix: string) { let index = 1; while (this.graph.nodes.some((node) => node.key === `${prefix}-${index}`)) index++; return `${prefix}-${index}`; }
+    private workflowKeyFromName(name: string) { return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 88); }
     private uniqueEdgeKey(from: string, outcome: WorkflowOutcome) { return `${from}-${outcome.toLowerCase()}-${Date.now()}`.slice(0, 100); }
     private copyGraph(graph: WorkflowGraph): WorkflowGraph { return JSON.parse(JSON.stringify(graph)); }
     private normalizedGraph(): WorkflowGraph { return { ...this.copyGraph(this.graph), schema_version: 2 }; }
