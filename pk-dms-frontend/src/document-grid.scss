@@ -1147,6 +1147,50 @@ html.app-dark .documents-page .document-card-meta > div {
     background: var(--dts-dark-surface-alt) !important;
 }
 
+/* Keep the document title as the visual heading in every document view. */
+.documents-page .document-title-highlight {
+    display: inline-block;
+    max-width: 100%;
+    border-left: 0.25rem solid var(--dts-accent, #b91c1c);
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--dts-accent-soft, #fee2e2) 72%, #fff);
+    padding: 0.3rem 0.55rem;
+    color: var(--dts-accent-deep, #7f1d1d) !important;
+    font-weight: 900 !important;
+    line-height: 1.35;
+}
+
+.documents-page .document-row-title.document-title-highlight {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+}
+
+.documents-page .folder-document-main > span > small:not(.assignment-inline) {
+    order: -1;
+    display: inline-block;
+    margin-bottom: 0.2rem;
+    border-left: 0.25rem solid var(--dts-accent, #b91c1c);
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--dts-accent-soft, #fee2e2) 72%, #fff);
+    padding: 0.3rem 0.55rem;
+    color: var(--dts-accent-deep, #7f1d1d) !important;
+    font-size: 0.86rem;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.documents-page .folder-document-main > span {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+html.app-dark .documents-page .document-title-highlight,
+html.app-dark .documents-page .folder-document-main > span > small:not(.assignment-inline) {
+    background: color-mix(in srgb, var(--dts-accent, #b91c1c) 24%, #27272a);
+    color: #fecaca !important;
+}
+
 /* Assignment is the primary state shown in document list and grid results. */
 .documents-page .document-assignment-panel {
     display: grid;

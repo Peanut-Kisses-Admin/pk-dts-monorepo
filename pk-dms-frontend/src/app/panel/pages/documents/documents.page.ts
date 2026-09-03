@@ -346,8 +346,8 @@ interface DocumentFolderNode {
                                             <img *ngIf="documentPreviewImage(document) as previewImage" [src]="previewImage" [alt]="document.document_title" (error)="hideBrokenPreview($event)" />
                                         </button>
                                         <div class="document-row-copy">
+                                            <h3 class="document-row-title document-title-highlight">{{ document.document_title }}</h3>
                                             <div class="document-number-line"><strong>{{ document.document_type === 'HARDCOPY' ? 'Hardcopy record' : (document.document_number || 'No document number') }}</strong><span>{{ formatDate(document.created_at) }}</span></div>
-                                            <div class="document-row-title">{{ document.document_title }}</div>
                                             <div class="document-row-file"><i [class]="documentPreviewIcon(document)"></i>{{ documentPreviewDescription(document) }}</div>
                                         </div>
                                     </div>
@@ -474,7 +474,7 @@ interface DocumentFolderNode {
 
                         <div class="document-card-body">
                             <div class="document-card-kicker"><span class="document-card-number">{{ document.document_type === 'HARDCOPY' ? 'Hardcopy record' : (document.document_number || 'No document number') }}</span><span class="document-card-date"><i class="pi pi-calendar"></i>{{ formatDate(document.created_at) }}</span></div>
-                            <h3>{{ document.document_title }}</h3>
+                            <h3 class="document-title-highlight">{{ document.document_title }}</h3>
 
                             <div class="document-card-meta" *ngIf="document.document_type === 'HARDCOPY'; else softcopyGridMeta">
                                 <div><span>Area</span><strong>{{ document.hardcopy?.area?.area_name || 'None' }}</strong></div>
