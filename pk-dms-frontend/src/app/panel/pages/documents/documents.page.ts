@@ -394,7 +394,6 @@ interface DocumentFolderNode {
                                         <p-button *ngIf="canAttachToDocument(document)" title="Attach scanned documents" icon="pi pi-paperclip" size="small" [rounded]="true" [outlined]="true" severity="success" (onClick)="openAttachmentDialog(document)" />
                                         <p-button *ngIf="canAssignDocuments()" title="Assign users" icon="pi pi-users" size="small" [rounded]="true" styleClass="assignment-action-button" (onClick)="openAssignmentDialog(document)" />
                                         <p-button *ngIf="canManageDocument(document)" title="Edit document" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openDocumentDialog(document)" />
-                                        <p-button *ngIf="canRequestNewRevision(document)" title="Request new revision" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="requestNewRevision(document)" />
                                         <p-button *ngIf="canUploadRevision(document)" title="Upload and finalize controlled copy" icon="pi pi-upload" size="small" [rounded]="true" [outlined]="true" (onClick)="openRevisionDialog(document)" /><p-button *ngIf="canCorrectRevision(document)" title="Correct controlled file" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="openRevisionDialog(document)" />
                                         <p-button *ngIf="canDeleteDocuments()" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
                                     </div>
@@ -444,7 +443,6 @@ interface DocumentFolderNode {
                                         <p-button *ngIf="canAssignDocuments()" title="Assign users" icon="pi pi-users" size="small" [rounded]="true" [outlined]="true" (onClick)="openAssignmentDialog(document)" />
                                         <p-button *ngIf="canChangeDocumentStatus(document)" [title]="document.status === 'Disposed' ? 'Restore document' : 'Dispose document'" [icon]="document.status === 'Disposed' ? 'pi pi-replay' : 'pi pi-ban'" size="small" [rounded]="true" [outlined]="true" [severity]="document.status === 'Disposed' ? 'success' : 'danger'" (onClick)="openStatusDialog(document)" />
                                         <p-button *ngIf="canManageDocument(document)" title="Edit document" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openDocumentDialog(document)" />
-                                        <p-button *ngIf="canRequestNewRevision(document)" title="Request new revision" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="requestNewRevision(document)" />
                                         <p-button *ngIf="canUploadRevision(document)" title="Upload and finalize controlled copy" icon="pi pi-upload" size="small" [rounded]="true" [outlined]="true" (onClick)="openRevisionDialog(document)" /><p-button *ngIf="canCorrectRevision(document)" title="Correct controlled file" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="openRevisionDialog(document)" />
                                         <p-button *ngIf="canDeleteDocuments()" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
                                     </div>
@@ -506,7 +504,6 @@ interface DocumentFolderNode {
                             <p-button *ngIf="canAssignDocuments()" title="Assign users" icon="pi pi-users" size="small" [rounded]="true" styleClass="assignment-action-button" (onClick)="openAssignmentDialog(document)" />
                             <p-button *ngIf="canChangeDocumentStatus(document)" [title]="document.status === 'Disposed' ? 'Restore document' : 'Dispose document'" [icon]="document.status === 'Disposed' ? 'pi pi-replay' : 'pi pi-ban'" size="small" [rounded]="true" [outlined]="true" [severity]="document.status === 'Disposed' ? 'success' : 'danger'" (onClick)="openStatusDialog(document)" />
                             <p-button *ngIf="canManageDocument(document)" title="Edit document" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openDocumentDialog(document)" />
-                            <p-button *ngIf="canRequestNewRevision(document)" title="Request new revision" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="requestNewRevision(document)" />
                             <p-button *ngIf="canUploadRevision(document)" title="Upload and finalize controlled copy" icon="pi pi-upload" size="small" [rounded]="true" [outlined]="true" (onClick)="openRevisionDialog(document)" /><p-button *ngIf="canCorrectRevision(document)" title="Correct controlled file" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="openRevisionDialog(document)" />
                             <p-button *ngIf="canDeleteDocuments()" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
                         </div>
@@ -1391,22 +1388,11 @@ export class DocumentsPage implements OnInit, OnDestroy {
         return !!userId && this.auth.hasPermission('documents.manage-own') && (document.creator?.user_id === userId || document.assignments?.some((assignment) => assignment.user.user_id === userId));
     }
     canAttachToDocument(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && this.canAttachScans() && (this.auth.isAdministrator() || this.canManageDocument(document)); }
-    canRequestNewRevision(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && ['Approved', 'Completed'].includes(document.status || '') && this.canManageDocument(document) && this.auth.hasPermission('document-requests.request-revision'); }
     canUploadRevision(document: DocumentSummary) {
         const hasRevisionFile = !!document.softcopy?.current_revision || !!document.softcopy?.revisions?.length;
         return document.document_type === 'SOFTCOPY' && document.status === 'Approved' && !hasRevisionFile && this.canManageDocument(document) && this.auth.hasAnyPermission('documents.edit', 'documents.manage-own', 'document-requests.edit');
     }
     canCorrectRevision(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && document.status === 'Completed' && this.canManageDocument(document) && this.auth.hasAnyPermission('documents.edit', 'documents.manage-own', 'document-requests.edit'); }
-
-    requestNewRevision(document: DocumentSummary) {
-        this.documentsService.workflowAction(document.document_id, 'request-revision', 'New controlled revision requested.').subscribe({
-            next: () => {
-                this.showNotice('success', 'Revision requested', `${document.document_title} is ready for a new revision upload in My Requests.`);
-                this.loadData();
-            },
-            error: (error: unknown) => this.handleActionError(error, 'Unable to request a new revision')
-        });
-    }
 
     filteredDocuments() {
         const search = this.searchTerm.trim().toLowerCase();
