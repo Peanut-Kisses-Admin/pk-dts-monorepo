@@ -1,8 +1,8 @@
-# PK DMS Monorepo
+# PK DTS Monorepo
 
-PK DMS is the unified monorepo for the Peanut Kisses Document Management System, including its backend API, frontend application, and Docker deployment stack.
+PK DTS is the unified monorepo for the Peanut Kisses Document Tracking System, including its backend API, frontend application, and Docker deployment stack.
 
-This repository contains the PK Document Management System source tree:
+This repository contains the PK Document Tracking System source tree:
 
 - `pk-dms-backend` — NestJS API
 - `pk-dms-frontend` — Angular application
