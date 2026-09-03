@@ -27,6 +27,11 @@ const DEFAULT_ADMIN_FIRSTNAME =
   process.env.DEFAULT_ADMIN_FIRSTNAME?.trim() || "Admin";
 const DEFAULT_ADMIN_LASTNAME =
   process.env.DEFAULT_ADMIN_LASTNAME?.trim() || "User";
+const CURRENT_BRAND_LOGO_URL = "/images/pk-dts-logo.png";
+const LEGACY_BRAND_LOGO_URLS = new Set([
+  "/images/dts-logo.png",
+  "/images/peanut_kisses_logo-removebg-preview.png",
+]);
 
 const DEFAULT_LOCATIONS = [
   "Production Archive",
@@ -261,6 +266,29 @@ async function main() {
     });
     await prisma.permission.deleteMany({
       where: { permission_id: { in: stalePermissionIds } },
+    });
+  }
+
+  const appearance = await prisma.systemAppearanceSetting.findUnique({
+    where: { id: 1 },
+    select: { settings_json: true },
+  });
+  const appearanceSettings = appearance?.settings_json;
+  if (
+    appearanceSettings &&
+    typeof appearanceSettings === "object" &&
+    !Array.isArray(appearanceSettings) &&
+    typeof appearanceSettings.logoUrl === "string" &&
+    LEGACY_BRAND_LOGO_URLS.has(appearanceSettings.logoUrl)
+  ) {
+    await prisma.systemAppearanceSetting.update({
+      where: { id: 1 },
+      data: {
+        settings_json: {
+          ...(appearanceSettings as Prisma.JsonObject),
+          logoUrl: CURRENT_BRAND_LOGO_URL,
+        },
+      },
     });
   }
 
