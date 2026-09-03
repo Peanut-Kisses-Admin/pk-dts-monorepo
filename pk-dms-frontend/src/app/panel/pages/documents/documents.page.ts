@@ -1392,7 +1392,10 @@ export class DocumentsPage implements OnInit, OnDestroy {
     }
     canAttachToDocument(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && this.canAttachScans() && (this.auth.isAdministrator() || this.canManageDocument(document)); }
     canRequestNewRevision(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && ['Approved', 'Completed'].includes(document.status || '') && this.canManageDocument(document) && this.auth.hasPermission('document-requests.request-revision'); }
-    canUploadRevision(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && document.status === 'Approved' && this.canManageDocument(document) && this.auth.hasAnyPermission('documents.edit', 'documents.manage-own', 'document-requests.edit'); }
+    canUploadRevision(document: DocumentSummary) {
+        const hasRevisionFile = !!document.softcopy?.current_revision || !!document.softcopy?.revisions?.length;
+        return document.document_type === 'SOFTCOPY' && document.status === 'Approved' && !hasRevisionFile && this.canManageDocument(document) && this.auth.hasAnyPermission('documents.edit', 'documents.manage-own', 'document-requests.edit');
+    }
     canCorrectRevision(document: DocumentSummary) { return document.document_type === 'SOFTCOPY' && document.status === 'Completed' && this.canManageDocument(document) && this.auth.hasAnyPermission('documents.edit', 'documents.manage-own', 'document-requests.edit'); }
 
     requestNewRevision(document: DocumentSummary) {
