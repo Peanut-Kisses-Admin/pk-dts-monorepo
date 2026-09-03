@@ -21,7 +21,6 @@ describe("DEFAULT_PERMISSION_CATALOG", () => {
         "document-requests.edit",
         "document-requests.submit",
         "document-requests.review",
-        "document-requests.approve",
         "document-requests.request-revision",
         "document-requests.reject",
         "document-requests.delete",
@@ -80,5 +79,9 @@ describe("DEFAULT_PERMISSION_CATALOG", () => {
 
   it("keeps every default role grant in the permission catalog", () => {
     expect([...DEFAULT_VIEWER_PERMISSION_NAMES, ...DEFAULT_STAFF_PERMISSION_NAMES].every((name) => DEFAULT_PERMISSION_NAMES.includes(name))).toBe(true);
+  });
+
+  it("does not expose the obsolete broad document approval permission", () => {
+    expect(DEFAULT_PERMISSION_NAMES).not.toContain("document-requests.approve");
   });
 });

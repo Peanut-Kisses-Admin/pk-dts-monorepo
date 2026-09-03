@@ -199,6 +199,30 @@ describe('DocumentsService', () => {
     expect(prisma.documentWorkflowStep.update).toHaveBeenCalled();
   });
 
+  it('prevents a request creator from approving their own assigned workflow step', async () => {
+    const requesterApprover = {
+      ...regularUser,
+      role: { ...regularUser.role, permissions: ['document-requests.approve-noted-by'] },
+    } satisfies AuthenticatedUser;
+    prisma.document.findUnique.mockResolvedValue({
+      document_id: 1n,
+      created_by: 7n,
+      document_type: DocumentType.SOFTCOPY,
+      status: DocumentStatus.ForNotedBy,
+      action_requested: 'CREATE_REVISE',
+      workflow_steps: [{
+        workflow_step_id: 10n,
+        stage: 'NOTED_BY',
+        sequence: 1,
+        assigned_user_id: 7n,
+        status: 'PENDING',
+      }],
+    });
+
+    await expect(service.transition('1', '7', 'approve', 'Self approval', requesterApprover))
+      .rejects.toThrow('A request creator cannot approve their own request.');
+  });
+
   it('marks Softcopy attachments approved when Plant Manager approval is completed', async () => {
     const plantManager = {
       ...regularUser,

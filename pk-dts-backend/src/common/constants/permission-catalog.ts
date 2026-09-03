@@ -135,11 +135,6 @@ const permissionModules: PermissionModuleDefinition[] = [
         description: "View requests awaiting approval.",
       },
       {
-        action_key: "approve",
-        action_label: "Approve",
-        description: "Approve pending requests.",
-      },
-      {
         action_key: "request-revision",
         action_label: "Request Revision",
         description: "Return pending requests for revision.",

@@ -36,9 +36,6 @@ export class RolePermissionsService {
     ]);
     if (!role || !permission) throw new NotFoundException('Role or permission was not found.');
     const normalizedRole = role.role_name.trim().toLowerCase();
-    if (!['admin', 'administrator', 'super admin', 'superadmin', 'super-admin'].includes(normalizedRole) && permission.permission_name === 'document-requests.approve') {
-      throw new BadRequestException('The broad document approval permission is reserved for administrators. Assign a stage-specific approval permission instead.');
-    }
     if (normalizedRole === 'viewer' && !['dashboard.view', 'documents.view', 'softcopy-folders.view'].includes(permission.permission_name)) {
       throw new BadRequestException('Viewer is a protected read-only role and can only receive view permissions.');
     }
