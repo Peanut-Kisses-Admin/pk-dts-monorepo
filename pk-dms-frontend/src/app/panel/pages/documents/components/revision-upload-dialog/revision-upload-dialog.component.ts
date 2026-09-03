@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { RevisionFormValue, RevisionSummary } from '../../documents.types';
+import { RevisionFormValue, RevisionSummary, SoftcopyCategoryReference } from '../../documents.types';
 
 @Component({
     selector: 'app-revision-upload-dialog',
@@ -54,6 +54,16 @@ import { RevisionFormValue, RevisionSummary } from '../../documents.types';
                     <div *ngIf="form.file" class="text-sm text-slate-500">{{ form.file.name }}</div>
                     <div class="text-sm text-slate-500">Maximum softcopy size: 100 MB.</div>
                     <small *ngIf="submitted && !form.file">A file is required.</small>
+                </div>
+
+                <div class="field">
+                    <label for="revision-folder">Main folder or subfolder <span class="text-red-500">*</span></label>
+                    <select id="revision-folder" [(ngModel)]="form.softcopy_category_id" class="w-full" [disabled]="saving">
+                        <option value="">Select folder</option>
+                        <option *ngFor="let category of softcopyCategories" [value]="category.softcopy_category_id">{{ category.folder_name || category.category_name }}</option>
+                    </select>
+                    <small class="field-note">Choose the folder after the DCR is fully approved or completed. The controlled revision and later scan attachments use this folder.</small>
+                    <small *ngIf="submitted && !form.softcopy_category_id">A folder is required for the revision upload.</small>
                 </div>
 
                 <div class="field">
@@ -185,6 +195,7 @@ export class RevisionUploadDialogComponent {
     @Input() existingRevisions: RevisionSummary[] = [];
     @Input() documentStatus = '';
     @Input() correctionMode = false;
+    @Input() softcopyCategories: SoftcopyCategoryReference[] = [];
 
     @Output() save = new EventEmitter<RevisionFormValue>();
     @Output() cancelClick = new EventEmitter<void>();
@@ -210,6 +221,7 @@ export class RevisionUploadDialogComponent {
             return;
         }
 
+        if (!this.form.softcopy_category_id) return;
         if (this.correctionMode && !this.form.correction_reason?.trim()) return;
         if (this.form.set_as_current && (!this.form.effective_date || !this.form.series_number?.trim() || !this.form.page_number?.trim())) return;
         this.save.emit({ ...this.form, set_as_current: this.correctionMode ? false : this.form.set_as_current, correction_reason: this.form.correction_reason?.trim() || '' });

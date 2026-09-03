@@ -338,6 +338,7 @@ export interface RevisionFormValue {
     revision_level_to?: string;
     previous_effective_date?: string;
     new_effective_date?: string;
+    softcopy_category_id?: string;
 }
 
 export interface DocumentAssistantResponse {

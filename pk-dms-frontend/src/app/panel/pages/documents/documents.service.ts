@@ -186,6 +186,7 @@ export class DocumentsService {
         if (payload.previous_effective_date) formData.append('previous_effective_date', new Date(payload.previous_effective_date).toISOString());
         if (payload.new_effective_date) formData.append('new_effective_date', new Date(payload.new_effective_date).toISOString());
         if (payload.set_as_current) formData.append('set_as_current', 'true');
+        if (payload.softcopy_category_id) formData.append('softcopy_category_id', payload.softcopy_category_id);
         if (payload.file) {
             formData.append('file', payload.file);
         }
@@ -202,6 +203,7 @@ export class DocumentsService {
         if (payload.effective_date) formData.append('effective_date', new Date(payload.effective_date).toISOString());
         if (payload.page_number.trim()) formData.append('page_number', payload.page_number.trim());
         if (payload.series_number?.trim()) formData.append('series_number', payload.series_number.trim());
+        if (payload.softcopy_category_id) formData.append('softcopy_category_id', payload.softcopy_category_id);
         if (payload.file) formData.append('file', payload.file);
         return this.http.post<ApiResponse<RevisionSummary>>(`${DOCUMENTS_API}/${documentId}/revisions/${revisionId}/correct`, formData).pipe(map((response) => this.unwrap(response)), tap(() => this.invalidateListCache()));
     }

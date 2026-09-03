@@ -56,15 +56,6 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                     <small class="field-note">A Document Number may be reused only with a different Series Number.</small>
                 </div>
 
-                <div class="field" *ngIf="!isHardcopy()">
-                    <label for="softcopy-category-id">Main folder or subfolder <span class="text-red-500">*</span></label>
-                    <select id="softcopy-category-id" [(ngModel)]="form.softcopy_category_id" class="select-field" [disabled]="saving || referenceLoading">
-                        <option value="">Select category</option>
-                        <option *ngFor="let category of softcopyCategories; trackBy: trackSoftcopyCategory" [value]="category.softcopy_category_id">{{ category.category_name }}</option>
-                    </select>
-                    <small *ngIf="submitted && !isHardcopy() && !form.softcopy_category_id">Category is required for softcopy documents.</small>
-                </div>
-
                 <div class="field md:col-span-2 direct-create-panel" *ngIf="!isHardcopy() && mode === 'create' && canDirectCreate">
                     <label class="direct-create-toggle"><input type="checkbox" [(ngModel)]="form.direct_create" [disabled]="saving" /><span><strong>Create directly as Controlled Copy</strong><small>This bypasses a DCR and is restricted to authorized Plant Managers and Administrators. A reason, complete revision metadata, and the file are required.</small></span></label>
                     <input *ngIf="form.direct_create" pInputText [(ngModel)]="form.direct_creation_reason" maxlength="2000" placeholder="Required reason for direct creation" [disabled]="saving" />
@@ -642,7 +633,6 @@ export class DocumentFormDialogComponent {
         if (this.isHardcopy() && this.form.retention_enabled && (!this.form.retention_start_date || !this.form.retention_end_date)) {
             return;
         }
-        if (!this.isHardcopy() && !this.form.softcopy_category_id) return;
         if (!this.isHardcopy() && (!this.form.document_number.trim() || !this.form.series_number?.trim())) return;
         if (this.form.requester_type === 'MANUAL_NAME' && !this.form.requested_by_name.trim()) return;
 

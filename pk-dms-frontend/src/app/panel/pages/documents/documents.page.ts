@@ -592,6 +592,7 @@ interface DocumentFolderNode {
             [existingRevisions]="revisionExistingRevisions"
             [documentStatus]="revisionTargetStatus"
             [correctionMode]="revisionCorrectionMode"
+            [softcopyCategories]="softcopyCategories()"
             (save)="uploadRevision($event)"
         />
 
@@ -2356,6 +2357,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
                     uploaded_by: currentUserId,
                     set_as_current: this.revisionTargetStatus === 'Approved',
                     series_number: detail?.softcopy?.series_number || '',
+                    softcopy_category_id: detail?.softcopy?.category?.softcopy_category_id || '',
                     correction_reason: ''
                 };
                 this.revisionContextDocumentNumber = detail?.document_number || document.document_number || 'No document number';
@@ -2771,7 +2773,8 @@ export class DocumentsPage implements OnInit, OnDestroy {
             series_number: '',
             page_number: '',
             set_as_current: true,
-            file: null
+            file: null,
+            softcopy_category_id: ''
         };
     }
 }
