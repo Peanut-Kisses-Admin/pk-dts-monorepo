@@ -134,6 +134,7 @@ import {
             [documentNumber]="revisionDocumentNumber"
             [currentRevision]="revisionCurrent"
             [existingRevisions]="revisionHistory"
+            [softcopyCategories]="softcopyCategories()"
             (save)="uploadRequestedRevision($event)"
         />
     `,
@@ -348,7 +349,14 @@ export class DocumentRequestsPage implements OnInit {
                 this.revisionDocumentNumber = detail?.document_number || item.document_number || 'No document number';
                 this.revisionCurrent = detail?.softcopy?.current_revision || null;
                 this.revisionHistory = revisions || [];
-                this.revisionForm = this.emptyRevisionForm();
+                const current = detail?.softcopy?.current_revision;
+                this.revisionForm = {
+                    ...this.emptyRevisionForm(),
+                    series_number: detail?.softcopy?.series_number || current?.series_number || '',
+                    page_number: current?.page_number || '',
+                    effective_date: this.dateInputValue(current?.effective_date),
+                    softcopy_category_id: detail?.softcopy?.category?.softcopy_category_id || ''
+                };
                 this.revisionDialogVisible = true;
                 this.saving.set(false);
             },
@@ -389,6 +397,7 @@ export class DocumentRequestsPage implements OnInit {
         return status ? (labels[status] || status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ')) : 'N/A';
     }
     requestUpdatedAt(item: DocumentSummary) { return (item as DocumentSummary & { updated_at?: string }).updated_at || item.created_at; }
+    private dateInputValue(value?: string | null) { return value ? value.slice(0, 10) : ''; }
 
     private loadReferences() {
         this.referenceLoading.set(true);
