@@ -26,7 +26,7 @@ export const panelRoutes: Routes = [
             { path: 'softcopy-documents', component: DocumentsPage, data: { documentType: 'SOFTCOPY', title: 'Softcopy Documents', subtitle: 'Browse digital documents by folder, table list, or card grid.', permissions: ['documents.view', 'document-requests.view'] } },
             { path: 'hardcopy-documents', component: DocumentsPage, data: { documentType: 'HARDCOPY', title: 'Hardcopy Documents', subtitle: 'Browse physical records by area, location, asset number, table list, or card grid.', permissions: ['documents.view', 'document-requests.view'] } },
             { path: 'hardcopy-transfers', component: HardcopyTransfersPage, data: { title: 'Hardcopy Transfers', subtitle: 'Issue, transfer, and confirm receipt of physical document copies.', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'] } },
-            { path: 'softcopy-folders', component: StorageClassificationPage, data: { resource: 'softcopyCategories', title: 'Softcopy Folders', subtitle: 'Manage digital document folders and subfolders independently.', permissions: ['softcopy-folders.view', 'softcopy-folders.manage'] } },
+            { path: 'softcopy-folders', pathMatch: 'full', redirectTo: 'storage?resource=softcopyCategories', data: { permissions: ['storage-classification.view', 'location-management.view', 'softcopy-folders.view', 'softcopy-folders.manage'] } },
             { path: 'my-requests', component: DocumentRequestsPage, data: { title: 'My Requests', subtitle: 'Track document and disposal requests you created.', permissions: ['document-requests.view-own', 'document-disposal.request'] } },
             { path: 'document-access-requests', component: DocumentAccessRequestsPage, data: { title: 'Document Access Requests', subtitle: 'Request document assignments and review pending access approvals.', permissions: ['document-access-requests.catalog', 'document-access-requests.view-own', 'document-access-requests.review', 'document-access-requests.approve', 'document-access-requests.reject', 'document-access-requests.grant', 'document-access-requests.revoke', 'document-access-requests.expire'] } },
             { path: 'approval-review', component: ApprovalReviewPage, data: { title: 'Approval Review', subtitle: 'Review document and disposal requests waiting for a decision.', permissions: ['document-requests.review', 'document-requests.approve-noted-by', 'document-requests.approve-plant-manager', 'document-requests.approve-document-controller', 'document-requests.approve-hardcopy', 'document-disposal.review', 'document-disposal.manage'] } },
@@ -37,7 +37,7 @@ export const panelRoutes: Routes = [
                 data: {
                     title: 'Storage and Classification',
                     subtitle: 'Storage management, filing structure, and classification rules can be managed together here.',
-                    permissions: ['storage-classification.view', 'location-management.view']
+                    permissions: ['storage-classification.view', 'location-management.view', 'softcopy-folders.view', 'softcopy-folders.manage']
                 }
             },
             { path: 'classification', pathMatch: 'full', redirectTo: 'storage' },

@@ -44,12 +44,11 @@ function firstAuthorizedPanelUrl(auth: AuthService) {
     const routes: Array<{ url: string; permissions: string[] }> = [
         { url: '/panel/dashboard', permissions: ['dashboard.view'] },
         { url: '/panel/documents', permissions: ['documents.view', 'document-requests.view'] },
-        { url: '/panel/softcopy-folders', permissions: ['softcopy-folders.view', 'softcopy-folders.manage'] },
         { url: '/panel/my-requests', permissions: ['document-requests.view-own', 'document-disposal.request'] },
         { url: '/panel/hardcopy-transfers', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'] },
         { url: '/panel/approval-review', permissions: ['document-requests.review', 'document-requests.approve-noted-by', 'document-requests.approve-plant-manager', 'document-requests.approve-document-controller', 'document-requests.approve-hardcopy', 'document-disposal.review', 'document-disposal.manage'] },
         { url: '/panel/disposal', permissions: ['document-disposal.view'] },
-        { url: '/panel/storage', permissions: ['storage-classification.view', 'location-management.view'] },
+        { url: '/panel/storage', permissions: ['storage-classification.view', 'location-management.view', 'softcopy-folders.view', 'softcopy-folders.manage'] },
         { url: '/panel/roles-permissions', permissions: ['roles-permissions.view'] },
         { url: '/panel/backup-restore', permissions: ['backup-restore.view'] },
         { url: '/panel/settings', permissions: ['system-settings.manage'] }

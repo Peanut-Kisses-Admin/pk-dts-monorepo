@@ -406,14 +406,19 @@ export class StorageClassificationPage implements OnInit {
     ngOnInit() {
         this.viewMode = this.systemSettings.defaultDataView();
         this.rows = this.systemSettings.defaultRowsPerPage();
-        if (this.route.snapshot.data['resource'] === 'softcopyCategories') {
-            this.resourceOptions = this.resourceOptions.filter((option) => option.key === 'softcopyCategories');
+        const canViewStorageCatalogs = this.auth.hasAnyPermission('storage-classification.view', 'location-management.view');
+        const canViewSoftcopyFolders = this.auth.hasAnyPermission('softcopy-folders.view', 'softcopy-folders.manage');
+        this.resourceOptions = this.resourceOptions.filter((option) => option.key === 'softcopyCategories' ? canViewSoftcopyFolders : canViewStorageCatalogs);
+        const requestedResource = this.route.snapshot.queryParamMap.get('resource') as StorageResourceKey | null;
+        if (requestedResource && this.resourceOptions.some((option) => option.key === requestedResource)) {
+            this.activeResource.set(requestedResource);
+        } else if (!canViewStorageCatalogs && canViewSoftcopyFolders) {
             this.activeResource.set('softcopyCategories');
-        } else {
-            this.resourceOptions = this.resourceOptions.filter((option) => option.key !== 'softcopyCategories');
         }
         this.loadActiveResource();
-        this.loadHierarchyOptions();
+        if (canViewStorageCatalogs) {
+            this.loadHierarchyOptions();
+        }
     }
 
     currentItems(): unknown[] {

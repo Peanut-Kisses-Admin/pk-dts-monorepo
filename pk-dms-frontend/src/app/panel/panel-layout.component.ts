@@ -178,7 +178,6 @@ export class PanelLayoutComponent implements OnInit, OnDestroy {
                 { label: 'Softcopy Documents', icon: 'pi pi-file', route: '/panel/softcopy-documents', permissions: ['documents.view', 'document-requests.view'] },
                 { label: 'Hardcopy Documents', icon: 'pi pi-box', route: '/panel/hardcopy-documents', permissions: ['documents.view', 'document-requests.view'] },
                 { label: 'Hardcopy Transfers', icon: 'pi pi-arrow-right-arrow-left', route: '/panel/hardcopy-transfers', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'] },
-                { label: 'Softcopy Folders', icon: 'pi pi-folder', route: '/panel/softcopy-folders', permissions: ['softcopy-folders.view', 'softcopy-folders.manage'] },
                 { label: 'My Requests', icon: 'pi pi-send', route: '/panel/my-requests', permissions: ['document-requests.view-own', 'document-disposal.request'], notificationKey: 'my_requests' },
                 { label: 'Document Access Requests', icon: 'pi pi-key', route: '/panel/document-access-requests', permissions: ['document-access-requests.catalog', 'document-access-requests.view-own', 'document-access-requests.review', 'document-access-requests.approve', 'document-access-requests.reject', 'document-access-requests.grant', 'document-access-requests.revoke', 'document-access-requests.expire'] },
                 { label: 'Approval Review', icon: 'pi pi-check-square', route: '/panel/approval-review', permissions: ['document-requests.review', 'document-requests.approve-noted-by', 'document-requests.approve-plant-manager', 'document-requests.approve-document-controller', 'document-requests.approve-hardcopy', 'document-disposal.review', 'document-disposal.manage'], notificationKey: 'approval_review' },
@@ -190,7 +189,7 @@ export class PanelLayoutComponent implements OnInit, OnDestroy {
             label: 'Administration',
             icon: 'pi pi-objects-column',
             items: [
-                { label: 'Storage and Classification', icon: 'pi pi-database', route: '/panel/storage', permissions: ['storage-classification.view', 'location-management.view'] },
+                { label: 'Storage and Classification', icon: 'pi pi-database', route: '/panel/storage', permissions: ['storage-classification.view', 'location-management.view', 'softcopy-folders.view', 'softcopy-folders.manage'] },
                 { label: 'User Account', icon: 'pi pi-users', route: '/panel/users', permissions: [], notificationKey: 'user_accounts' },
                 { label: 'Role and Permission', icon: 'pi pi-shield', route: '/panel/roles-permissions', permissions: ['roles-permissions.view'] },
                 { label: 'Workflow Builder', icon: 'pi pi-sitemap', route: '/panel/workflow-builder', permissions: ['document-workflow.view', 'document-workflow.configure'] }
