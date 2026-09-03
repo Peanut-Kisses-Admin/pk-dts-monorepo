@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { DocumentStatus, Prisma, WorkflowStepStatus } from "@prisma/client";
+import { DocumentAccessRequestStatus, DocumentStatus, HardcopyTransferStatus, Prisma, WorkflowStepStatus } from "@prisma/client";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import { isAdministrativeRole } from "../../../common/auth/administrative-role.util";
 import { AuthenticatedUser } from "../../../common/auth/authenticated-user.interface";
@@ -22,23 +22,29 @@ export class DashboardService {
     const canReviewDisposals = isAdmin || permissions.has("document-disposal.review") || permissions.has("document-disposal.manage");
     const canRequestDisposal = isAdmin || permissions.has("document-disposal.request");
     const canApproveUsers = isAdmin || permissions.has("user-accounts.approve") || permissions.has("user-accounts.manage");
-    const [documentApprovals, disposalApprovals, documentRequests, disposalRequests, userAccounts] = await Promise.all([
+    const userId = BigInt(user.user_id);
+    const [documentApprovals, disposalApprovals, documentRequests, disposalRequests, accessRequests, hardcopyTransfers, userAccounts] = await Promise.all([
       canReview ? this.prisma.document.count({
         where: isAdmin
           ? { status: { in: [DocumentStatus.PendingApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin, DocumentStatus.ForApproval] } }
           : {
               status: { in: [DocumentStatus.PendingApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin, DocumentStatus.ForApproval] },
-              workflow_steps: { some: { assigned_user_id: BigInt(user.user_id), status: WorkflowStepStatus.PENDING } },
+              workflow_steps: { some: { assigned_user_id: userId, status: WorkflowStepStatus.PENDING } },
             },
       }) : Promise.resolve(0),
       canReviewDisposals ? this.prisma.documentDisposalRequest.count({ where: { status: "Pending" } }) : Promise.resolve(0),
-      this.prisma.document.count({ where: { created_by: BigInt(user.user_id), status: { in: [DocumentStatus.ForRevision, DocumentStatus.ReturnedForCorrection] } } }),
-      canRequestDisposal ? this.prisma.documentDisposalRequest.count({ where: { requested_by_user_id: BigInt(user.user_id), status: "Pending" } }) : Promise.resolve(0),
+      this.prisma.document.count({ where: { created_by: userId, status: { notIn: [DocumentStatus.Approved, DocumentStatus.Completed, DocumentStatus.Disposed] } } }),
+      canRequestDisposal ? this.prisma.documentDisposalRequest.count({ where: { requested_by_user_id: userId, status: "Pending" } }) : Promise.resolve(0),
+      this.prisma.documentAccessRequest.count({ where: { OR: [{ requested_by_user_id: userId, status: { in: [DocumentAccessRequestStatus.PENDING, DocumentAccessRequestStatus.ForAccessApproval] } }, { approver_user_id: userId, status: { in: [DocumentAccessRequestStatus.PENDING, DocumentAccessRequestStatus.ForAccessApproval, DocumentAccessRequestStatus.APPROVED] } }] } }),
+      this.prisma.hardcopyTransferRequest.count({ where: { OR: [{ requested_by_user_id: userId, status: { in: [HardcopyTransferStatus.Draft, HardcopyTransferStatus.ForApproval, HardcopyTransferStatus.Returned] } }, { assigned_recipient_user_id: userId, status: HardcopyTransferStatus.ForTransfer }, { approver_user_id: userId, status: { in: [HardcopyTransferStatus.ForApproval, HardcopyTransferStatus.Approved, HardcopyTransferStatus.ForTransfer] } }] } }),
       canApproveUsers ? this.prisma.accountRegistrationRequest.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
     ]);
     return {
       approval_review: documentApprovals + disposalApprovals,
-      my_requests: documentRequests + disposalRequests,
+      document_requests: documentRequests,
+      disposal_requests: disposalRequests,
+      access_requests: accessRequests,
+      hardcopy_transfers: hardcopyTransfers,
       user_accounts: userAccounts,
     };
   }
