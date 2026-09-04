@@ -1983,7 +1983,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
     }
 
     openDocumentDialog(document?: DocumentSummary) {
-        this.documentFormMode = document ? 'update' : 'create';
+        this.documentFormMode = document && document.status !== 'Draft' ? 'update' : 'create';
         this.editingDocumentId = document?.document_id ?? '';
         this.documentForm = document
             ? {
