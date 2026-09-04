@@ -158,11 +158,11 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                     <small *ngIf="submitted && !form.document_title.trim()">Document title is required.</small>
                 </div>
 
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && mode === 'update'">
                     <label for="from-party">{{ isRevisionAction() ? 'Document Title From' : 'From' }}</label>
                     <input id="from-party" pInputText [(ngModel)]="form.from_party" class="w-full" [placeholder]="isRevisionAction() ? 'Previous document title' : ''" />
                 </div>
-                <div class="field" *ngIf="!isHardcopy()">
+                <div class="field" *ngIf="!isHardcopy() && mode === 'update'">
                     <label for="to-party">{{ isRevisionAction() ? 'Document Title To' : 'To' }}</label>
                     <input id="to-party" pInputText [(ngModel)]="form.to_party" class="w-full" [placeholder]="isRevisionAction() ? 'Updated document title' : ''" />
                 </div>
