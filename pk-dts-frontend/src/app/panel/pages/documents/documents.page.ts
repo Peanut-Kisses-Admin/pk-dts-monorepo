@@ -1983,7 +1983,8 @@ export class DocumentsPage implements OnInit, OnDestroy {
     }
 
     openDocumentDialog(document?: DocumentSummary) {
-        this.documentFormMode = document && document.status !== 'Draft' ? 'update' : 'create';
+        const isDraft = !!document && this.isDraftDocument(document);
+        this.documentFormMode = document && !isDraft ? 'update' : 'create';
         this.editingDocumentId = document?.document_id ?? '';
         this.documentForm = document
             ? {
@@ -1996,7 +1997,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
                   request_date: document.request_date || '',
                   department: document.department || '',
                   business_document_type: document.business_document_type || 'Forms',
-                  action_requested: document.status === 'Draft'
+                  action_requested: isDraft
                       ? 'CREATE'
                       : (document.document_type === 'SOFTCOPY' ? 'REVISE' : undefined),
                   from_party: document.from_party || '',
@@ -2032,6 +2033,10 @@ export class DocumentsPage implements OnInit, OnDestroy {
                   ...this.emptyDocumentForm()
               };
         this.documentDialogVisible = true;
+    }
+
+    private isDraftDocument(document: DocumentSummary) {
+        return document.status?.trim().toLowerCase() === 'draft';
     }
 
     openAssignmentDialog(document: DocumentSummary) {
