@@ -3511,10 +3511,24 @@ export class DocumentsService {
     });
   }
 
-  remove(id: string) {
-    return this.prisma.document.delete({
-      where: { document_id: toBigIntId(id, "document_id") },
+  async remove(id: string, actor: AuthenticatedUser) {
+    const documentId = toBigIntId(id, "document_id");
+    const existing = await this.prisma.document.findUnique({
+      where: { document_id: documentId },
+      select: { status: true, created_by: true },
     });
+    if (!existing) throw new NotFoundException("Document not found.");
+
+    if (!this.isAdministrativeRole(actor.role.role_name)) {
+      if (existing.status !== DocumentStatus.Draft) {
+        throw new ConflictException("Only Draft documents can be removed by Staff.");
+      }
+      if (existing.created_by !== toBigIntId(actor.user_id, "current_user_id")) {
+        throw new ForbiddenException("Only the Draft creator can remove this document.");
+      }
+    }
+
+    return this.prisma.document.delete({ where: { document_id: documentId } });
   }
 
   async createRevision(

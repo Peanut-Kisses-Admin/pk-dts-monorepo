@@ -430,11 +430,11 @@ export class DocumentsController {
   }
 
   @Delete(":id")
-  @RequirePermissions("documents.delete", "document-requests.delete")
+  @RequirePermissions("documents.delete", "document-requests.delete", "documents.manage-own")
   @ApiOperation({ summary: "Delete document" })
   @ApiOkResponse({ description: "Document deleted successfully." })
-  remove(@Param("id") id: string) {
-    return this.documentsService.remove(id);
+  remove(@Param("id") id: string, @CurrentUser() user?: AuthenticatedUser) {
+    return this.documentsService.remove(id, user!);
   }
 
   @Post()

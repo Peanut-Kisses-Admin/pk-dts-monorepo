@@ -395,7 +395,7 @@ interface DocumentFolderNode {
                                         <p-button *ngIf="canAssignDocuments()" title="Assign users" icon="pi pi-users" size="small" [rounded]="true" styleClass="assignment-action-button" (onClick)="openAssignmentDialog(document)" />
                                         <p-button *ngIf="canManageDocument(document)" title="Edit document" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openDocumentDialog(document)" />
                                         <p-button *ngIf="canUploadRevision(document)" title="Upload and finalize controlled copy" icon="pi pi-upload" size="small" [rounded]="true" [outlined]="true" (onClick)="openRevisionDialog(document)" /><p-button *ngIf="canCorrectRevision(document)" title="Correct controlled file" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="openRevisionDialog(document)" />
-                                        <p-button *ngIf="canDeleteDocuments()" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
+                                        <p-button *ngIf="canDeleteDocument(document)" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
                                     </div>
                                 </td>
                             </tr>
@@ -444,7 +444,7 @@ interface DocumentFolderNode {
                                         <p-button *ngIf="canChangeDocumentStatus(document)" [title]="document.status === 'Disposed' ? 'Restore document' : 'Dispose document'" [icon]="document.status === 'Disposed' ? 'pi pi-replay' : 'pi pi-ban'" size="small" [rounded]="true" [outlined]="true" [severity]="document.status === 'Disposed' ? 'success' : 'danger'" (onClick)="openStatusDialog(document)" />
                                         <p-button *ngIf="canManageDocument(document)" title="Edit document" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openDocumentDialog(document)" />
                                         <p-button *ngIf="canUploadRevision(document)" title="Upload and finalize controlled copy" icon="pi pi-upload" size="small" [rounded]="true" [outlined]="true" (onClick)="openRevisionDialog(document)" /><p-button *ngIf="canCorrectRevision(document)" title="Correct controlled file" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="openRevisionDialog(document)" />
-                                        <p-button *ngIf="canDeleteDocuments()" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
+                                        <p-button *ngIf="canDeleteDocument(document)" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
                                     </div>
                                 </div>
                             </div>
@@ -505,7 +505,7 @@ interface DocumentFolderNode {
                             <p-button *ngIf="canChangeDocumentStatus(document)" [title]="document.status === 'Disposed' ? 'Restore document' : 'Dispose document'" [icon]="document.status === 'Disposed' ? 'pi pi-replay' : 'pi pi-ban'" size="small" [rounded]="true" [outlined]="true" [severity]="document.status === 'Disposed' ? 'success' : 'danger'" (onClick)="openStatusDialog(document)" />
                             <p-button *ngIf="canManageDocument(document)" title="Edit document" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openDocumentDialog(document)" />
                             <p-button *ngIf="canUploadRevision(document)" title="Upload and finalize controlled copy" icon="pi pi-upload" size="small" [rounded]="true" [outlined]="true" (onClick)="openRevisionDialog(document)" /><p-button *ngIf="canCorrectRevision(document)" title="Correct controlled file" icon="pi pi-file-edit" size="small" [rounded]="true" [outlined]="true" severity="warn" (onClick)="openRevisionDialog(document)" />
-                            <p-button *ngIf="canDeleteDocuments()" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
+                            <p-button *ngIf="canDeleteDocument(document)" title="Delete document" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete(document)" />
                         </div>
                     </article>
                 </div>
@@ -1365,6 +1365,14 @@ export class DocumentsPage implements OnInit, OnDestroy {
     canEditDocuments = computed(() => this.auth.hasAnyPermission('documents.edit', 'documents.manage-own', 'document-requests.edit'));
     canAttachScans = computed(() => this.auth.hasAnyPermission('documents.attach-scans', 'documents.edit', 'documents.manage-own'));
     canDeleteDocuments = computed(() => this.auth.hasAnyPermission('documents.delete', 'document-requests.delete'));
+    canDeleteDocument(document: DocumentSummary) {
+        if (this.canDeleteDocuments()) return true;
+        const userId = this.auth.user()?.user_id;
+        return document.status === 'Draft'
+            && !!userId
+            && document.creator?.user_id === userId
+            && this.auth.hasPermission('documents.manage-own');
+    }
     canImportDocuments = computed(() => this.auth.hasAnyPermission('documents.import', 'batch-import.import'));
     canCreateFolders = computed(() => this.auth.hasAnyPermission('softcopy-folders.create', 'softcopy-folders.manage'));
     canEditFolders = computed(() => this.auth.hasAnyPermission('softcopy-folders.edit', 'softcopy-folders.manage'));
