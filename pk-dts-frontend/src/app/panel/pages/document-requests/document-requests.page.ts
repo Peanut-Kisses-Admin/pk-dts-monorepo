@@ -241,7 +241,7 @@ export class DocumentRequestsPage implements OnInit {
     }
 
     saveRequest(form: DocumentFormValue) {
-        if (this.documentFormMode === 'update' && this.editingDocumentId) {
+        if (this.editingDocumentId) {
             this.updateRequest(form);
             return;
         }
