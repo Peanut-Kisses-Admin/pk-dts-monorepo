@@ -196,7 +196,8 @@ export class DocumentRequestsPage implements OnInit {
     }
 
     openEditDialog(item: DocumentSummary) {
-        this.documentFormMode = 'update';
+        const isDraft = item.status?.trim().toLowerCase() === 'draft';
+        this.documentFormMode = isDraft ? 'create' : 'update';
         this.editingDocumentId = item.document_id;
         this.documentForm = {
             document_number: item.document_number || '',
@@ -205,13 +206,25 @@ export class DocumentRequestsPage implements OnInit {
             action: 'DRAFT',
             requester_type: item.requested_by_name ? 'MANUAL_NAME' : 'CURRENT_USER',
             requested_by_name: item.requested_by_name || '',
+            request_date: item.request_date || '',
+            department: item.department || '',
+            business_document_type: item.business_document_type || 'Forms',
+            action_requested: isDraft ? 'CREATE' : (item.document_type === 'SOFTCOPY' ? 'REVISE' : undefined),
+            from_party: item.from_party || '',
+            to_party: item.to_party || '',
+            reason_for_change: item.reason_for_change || 'Improvement',
+            brief_description: item.brief_description || '',
+            proposed_change: item.proposed_change || '',
+            revision_level_from: item.revision_level_from || '',
+            revision_level_to: item.revision_level_to || '',
+            previous_effective_date: item.previous_effective_date?.slice(0, 10) || '',
+            new_effective_date: item.new_effective_date?.slice(0, 10) || '',
             asset_id: item.hardcopy?.asset?.asset_id || '',
             area_id: item.hardcopy?.area?.area_id || '',
             specific_id: item.hardcopy?.specific?.specific_id || '',
             location_id: item.hardcopy?.location?.location_id || '',
             sequence_id: item.hardcopy?.sequence?.sequence_id || '',
             softcopy_category_id: item.softcopy?.category?.softcopy_category_id || '',
-            action_requested: item.document_type === 'SOFTCOPY' ? 'REVISE' : undefined,
             initial_revision_number: item.softcopy?.current_revision?.revision_number || '',
             initial_file: null,
             attached_scan_files: [], assigned_user_ids: [],
