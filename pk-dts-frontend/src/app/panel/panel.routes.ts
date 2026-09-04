@@ -12,7 +12,6 @@ import { ApprovalReviewPage } from './pages/approval-review/approval-review.page
 import { SystemSettingsPage } from './pages/system-settings/system-settings.page';
 import { AuditLogsPage } from './pages/audit-logs/audit-logs.page';
 import { DocumentAccessRequestsPage } from './pages/document-access-requests/document-access-requests.page';
-import { HardcopyTransfersPage } from './pages/hardcopy-transfers/hardcopy-transfers.page';
 import { WorkflowBuilderPage } from './pages/workflow-builder/workflow-builder.page';
 import { MyDisposalRequestsPage } from './pages/my-disposal-requests/my-disposal-requests.page';
 
@@ -26,7 +25,6 @@ export const panelRoutes: Routes = [
             { path: 'documents', component: DocumentsPage, data: { title: 'Document', subtitle: 'Manage document records, revisions, request states, and catalog mappings here.', permissions: ['documents.view', 'document-requests.view'] } },
             { path: 'softcopy-documents', component: DocumentsPage, data: { documentType: 'SOFTCOPY', title: 'Softcopy Documents', subtitle: 'Browse digital documents by folder, table list, or card grid.', permissions: ['documents.view', 'document-requests.view'] } },
             { path: 'hardcopy-documents', component: DocumentsPage, data: { documentType: 'HARDCOPY', title: 'Hardcopy Documents', subtitle: 'Browse physical records by area, location, asset number, table list, or card grid.', permissions: ['documents.view', 'document-requests.view'] } },
-            { path: 'hardcopy-transfers', component: HardcopyTransfersPage, data: { title: 'Hardcopy Transfers', subtitle: 'Issue, transfer, and confirm receipt of physical document copies.', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'] } },
             { path: 'softcopy-folders', pathMatch: 'full', redirectTo: 'storage?resource=softcopyCategories', data: { permissions: ['storage-classification.view', 'location-management.view', 'softcopy-folders.view', 'softcopy-folders.manage'] } },
             { path: 'my-document-requests', component: DocumentRequestsPage, data: { title: 'Document Requests', subtitle: 'Create and track only the document requests submitted by your account.', permissions: ['document-requests.view-own'] } },
             { path: 'my-requests', pathMatch: 'full', redirectTo: 'my-document-requests' },

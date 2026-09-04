@@ -46,7 +46,6 @@ function firstAuthorizedPanelUrl(auth: AuthService) {
         { url: '/panel/documents', permissions: ['documents.view', 'document-requests.view'] },
         { url: '/panel/my-document-requests', permissions: ['document-requests.view-own'] },
         { url: '/panel/my-disposal-requests', permissions: ['document-disposal.request'] },
-        { url: '/panel/hardcopy-transfers', permissions: ['hardcopy-transfers.view-own', 'hardcopy-transfers.create', 'hardcopy-transfers.review'] },
         { url: '/panel/approval-review', permissions: ['document-requests.review', 'document-requests.approve-noted-by', 'document-requests.approve-plant-manager', 'document-requests.approve-document-controller', 'document-requests.approve-hardcopy'] },
         { url: '/panel/disposal', permissions: ['document-disposal.view'] },
         { url: '/panel/storage', permissions: ['storage-classification.view', 'location-management.view', 'softcopy-folders.view', 'softcopy-folders.manage'] },
