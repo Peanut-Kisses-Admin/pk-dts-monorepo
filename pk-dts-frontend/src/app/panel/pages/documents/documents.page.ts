@@ -1975,7 +1975,6 @@ export class DocumentsPage implements OnInit, OnDestroy {
     }
 
     openDocumentDialog(document?: DocumentSummary) {
-        const currentUserId = this.auth.user()?.user_id || '';
         this.documentFormMode = document ? 'update' : 'create';
         this.editingDocumentId = document?.document_id ?? '';
         this.documentForm = document
@@ -1986,13 +1985,27 @@ export class DocumentsPage implements OnInit, OnDestroy {
                   action: 'DRAFT',
                   requester_type: document.requested_by_name ? 'MANUAL_NAME' : 'CURRENT_USER',
                   requested_by_name: document.requested_by_name || '',
+                  request_date: document.request_date || '',
+                  department: document.department || '',
+                  business_document_type: document.business_document_type || 'Forms',
+                  action_requested: document.status === 'Draft'
+                      ? (document.action_requested || 'CREATE')
+                      : (document.document_type === 'SOFTCOPY' ? 'REVISE' : undefined),
+                  from_party: document.from_party || '',
+                  to_party: document.to_party || '',
+                  reason_for_change: document.reason_for_change || 'Improvement',
+                  brief_description: document.brief_description || '',
+                  proposed_change: document.proposed_change || '',
+                  revision_level_from: document.revision_level_from || '',
+                  revision_level_to: document.revision_level_to || '',
+                  previous_effective_date: document.previous_effective_date?.slice(0, 10) || '',
+                  new_effective_date: document.new_effective_date?.slice(0, 10) || '',
                   asset_id: document.hardcopy?.asset?.asset_id || '',
                   area_id: document.hardcopy?.area?.area_id || '',
                   specific_id: document.hardcopy?.specific?.specific_id || '',
                   location_id: document.hardcopy?.location?.location_id || '',
                   sequence_id: document.hardcopy?.sequence?.sequence_id || '',
                   softcopy_category_id: document.softcopy?.category?.softcopy_category_id || '',
-                  action_requested: document.document_type === 'SOFTCOPY' ? 'REVISE' : undefined,
                   series_number: document.softcopy?.series_number || document.softcopy?.current_revision?.series_number || '',
                   initial_revision_number: document.softcopy?.current_revision?.revision_number || '',
                   initial_file: null,
