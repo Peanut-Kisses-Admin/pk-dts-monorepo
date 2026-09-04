@@ -1997,7 +1997,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
                   department: document.department || '',
                   business_document_type: document.business_document_type || 'Forms',
                   action_requested: document.status === 'Draft'
-                      ? (document.action_requested || 'CREATE')
+                      ? 'CREATE'
                       : (document.document_type === 'SOFTCOPY' ? 'REVISE' : undefined),
                   from_party: document.from_party || '',
                   to_party: document.to_party || '',

@@ -3040,6 +3040,9 @@ export class DocumentsService {
 
         const nextDocumentType = dto.document_type ?? existingDocument.document_type;
         const isSoftcopy = nextDocumentType === DocumentType.SOFTCOPY;
+        const nextActionRequested = existingDocument.status === DocumentStatus.Draft
+          ? DocumentActionRequested.CREATE
+          : dto.action_requested;
         const requestedDocumentNumber = dto.document_number?.trim() || null;
         if (isSoftcopy && dto.document_number !== undefined && !requestedDocumentNumber) {
           throw new BadRequestException("Document Number is required for every Softcopy document.");
@@ -3090,7 +3093,7 @@ export class DocumentsService {
                     : {}),
                   ...(dto.department !== undefined ? { department: dto.department?.trim() || null } : {}),
                   ...(dto.business_document_type !== undefined ? { business_document_type: dto.business_document_type } : {}),
-                  ...(dto.action_requested !== undefined ? { action_requested: dto.action_requested } : {}),
+                  ...(nextActionRequested !== undefined ? { action_requested: nextActionRequested } : {}),
                   ...(dto.from_party !== undefined ? { from_party: dto.from_party?.trim() || null } : {}),
                   ...(dto.to_party !== undefined ? { to_party: dto.to_party?.trim() || null } : {}),
                   ...(dto.reason_for_change !== undefined ? { reason_for_change: dto.reason_for_change } : {}),
