@@ -175,7 +175,7 @@ export class DocumentRequestsPage implements OnInit {
                 this.page = response.meta?.page ?? this.page;
                 this.loading = false;
             },
-            error: () => { this.errorMessage.set('Unable to load your document requests.'); this.loading = false; }
+            error: (error) => { this.errorMessage.set(this.requestError(error, 'Unable to load your document requests.')); this.loading = false; }
         });
     }
 
@@ -266,9 +266,9 @@ export class DocumentRequestsPage implements OnInit {
                 this.alerts.success('Document request saved', this.successMessage());
                 this.load();
             },
-            error: () => {
+            error: (error) => {
                 this.saving.set(false);
-                this.errorMessage.set('Unable to create the document request. Please review the form and try again.');
+                this.errorMessage.set(this.requestError(error, 'Unable to create the document request. Please review the form and try again.'));
                 this.alerts.error('Unable to create request', this.errorMessage());
             }
         });
@@ -322,11 +322,16 @@ export class DocumentRequestsPage implements OnInit {
                 this.alerts.success('Document request submitted', this.successMessage());
                 this.load();
             },
-            error: () => { this.submitting = false; this.errorMessage.set('Unable to submit this document request.'); this.alerts.error('Unable to submit request', this.errorMessage()); }
+            error: (error) => { this.submitting = false; this.errorMessage.set(this.requestError(error, 'Unable to submit this document request.')); this.alerts.error('Unable to submit request', this.errorMessage()); }
         });
     }
 
     clearPendingSubmit() { this.pendingSubmit = null; this.submitConfirmationVisible = false; }
+
+    private requestError(error: any, fallback: string) {
+        const message = error?.error?.message ?? error?.error?.error ?? error?.message;
+        return Array.isArray(message) ? message.join(' ') : typeof message === 'string' && message.trim() ? message : fallback;
+    }
 
     canUploadRequestedRevision(item: DocumentSummary) {
         return this.canEditRequest() && (item.status === 'ForRevision' || item.status === 'ReturnedForCorrection') && item.document_type === 'SOFTCOPY';
