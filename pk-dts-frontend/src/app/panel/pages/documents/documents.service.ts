@@ -367,7 +367,7 @@ export class DocumentsService {
             ...(payload.document_type === 'SOFTCOPY' && payload.direct_create ? { direct_create: 'true', direct_creation_reason: payload.direct_creation_reason?.trim() || '' } : {}),
             ...(!isUpdate && payload.assigned_user_ids.length ? { assigned_user_ids: JSON.stringify(payload.assigned_user_ids) } : {}),
             ...(!isUpdate && payload.workflow_version_id ? { workflow_version_id: payload.workflow_version_id } : {}),
-            ...(!isUpdate && !payload.workflow_version_id && payload.workflow_steps.length
+            ...(!payload.workflow_version_id && payload.workflow_steps.length && (!isUpdate || payload.action === 'SUBMIT')
                 ? {
                       workflow_name: payload.workflow_name.trim() || undefined,
                       workflow_version: String(payload.workflow_version || 1),
