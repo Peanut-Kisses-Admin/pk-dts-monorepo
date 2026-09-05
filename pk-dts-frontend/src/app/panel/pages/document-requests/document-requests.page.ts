@@ -287,9 +287,12 @@ export class DocumentRequestsPage implements OnInit {
                 this.alerts.success('Document request updated', this.successMessage());
                 this.load();
             },
-            error: () => {
+            error: (error) => {
                 this.saving.set(false);
-                this.errorMessage.set('Unable to save changes to this document request.');
+                const detail = typeof error?.error?.message === 'string'
+                    ? error.error.message
+                    : Array.isArray(error?.error?.message) ? error.error.message.join(' ') : '';
+                this.errorMessage.set(detail || 'Unable to save changes to this document request.');
                 this.alerts.error('Unable to save request', this.errorMessage());
             }
         });
