@@ -597,3 +597,11 @@ export const DEFAULT_STAFF_PERMISSION_NAMES = [
   "softcopy-folders.create",
   "softcopy-folders.edit",
 ] as const;
+
+export const DEFAULT_NOTED_BY_PERMISSION_NAMES = [
+  ...DEFAULT_STAFF_PERMISSION_NAMES,
+  "document-requests.review",
+  "document-requests.approve-noted-by",
+  "document-requests.request-revision",
+  "document-requests.reject",
+] as const;

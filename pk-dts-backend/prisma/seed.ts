@@ -7,6 +7,7 @@ import {
 import * as bcrypt from "bcrypt";
 import {
   DEFAULT_PERMISSION_CATALOG,
+  DEFAULT_NOTED_BY_PERMISSION_NAMES,
   DEFAULT_STAFF_PERMISSION_NAMES,
   DEFAULT_VIEWER_PERMISSION_NAMES,
 } from "../src/common/constants/permission-catalog";
@@ -352,8 +353,21 @@ async function main() {
         "Read-only access to assigned documents and their folder hierarchy.",
     },
   });
+  const notedByRole = await prisma.role.upsert({
+    where: { role_name: "Noted By" },
+    update: {
+      description:
+        "Staff self-service access plus approval of requests assigned to the Noted By stage.",
+    },
+    create: {
+      role_name: "Noted By",
+      description:
+        "Staff self-service access plus approval of requests assigned to the Noted By stage.",
+    },
+  });
   for (const [role, permissionNames] of [
     [staffRole, DEFAULT_STAFF_PERMISSION_NAMES],
+    [notedByRole, DEFAULT_NOTED_BY_PERMISSION_NAMES],
     [viewerRole, DEFAULT_VIEWER_PERMISSION_NAMES],
   ] as const) {
     const allowed = new Set<string>(permissionNames);

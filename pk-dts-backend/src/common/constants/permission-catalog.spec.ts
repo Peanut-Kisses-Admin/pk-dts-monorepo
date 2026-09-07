@@ -1,6 +1,7 @@
 import {
   DEFAULT_PERMISSION_CATALOG,
   DEFAULT_PERMISSION_NAMES,
+  DEFAULT_NOTED_BY_PERMISSION_NAMES,
   DEFAULT_STAFF_PERMISSION_NAMES,
   DEFAULT_VIEWER_PERMISSION_NAMES,
 } from "./permission-catalog";
@@ -63,6 +64,18 @@ describe("DEFAULT_PERMISSION_CATALOG", () => {
         "document-requests.approve-plant-manager",
         "document-requests.approve-document-controller",
         "document-requests.approve-hardcopy",
+        "document-requests.request-revision",
+        "document-requests.reject",
+      ]),
+    );
+  });
+
+  it("gives the Noted By role the dedicated first-stage approval permissions", () => {
+    expect(DEFAULT_NOTED_BY_PERMISSION_NAMES).toEqual(
+      expect.arrayContaining([
+        ...DEFAULT_STAFF_PERMISSION_NAMES,
+        "document-requests.review",
+        "document-requests.approve-noted-by",
         "document-requests.request-revision",
         "document-requests.reject",
       ]),
