@@ -55,6 +55,20 @@ describe("DEFAULT_PERMISSION_CATALOG", () => {
     );
   });
 
+  it("keeps Staff out of document approval queues", () => {
+    expect(DEFAULT_STAFF_PERMISSION_NAMES).not.toEqual(
+      expect.arrayContaining([
+        "document-requests.review",
+        "document-requests.approve-noted-by",
+        "document-requests.approve-plant-manager",
+        "document-requests.approve-document-controller",
+        "document-requests.approve-hardcopy",
+        "document-requests.request-revision",
+        "document-requests.reject",
+      ]),
+    );
+  });
+
   it("catalogs dedicated hardcopy transfer permissions", () => {
     expect(DEFAULT_PERMISSION_NAMES).toEqual(
       expect.arrayContaining([
