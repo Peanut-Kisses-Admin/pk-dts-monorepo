@@ -201,11 +201,31 @@ export class DocumentRequestsPage implements OnInit {
     }
 
     openEditDialog(item: DocumentSummary) {
+        this.saving.set(true);
+        this.documents.getDocument(item.document_id).subscribe({
+            next: (document) => {
+                this.saving.set(false);
+                if (!document) {
+                    this.errorMessage.set('This document request is no longer available.');
+                    this.alerts.error('Request unavailable', this.errorMessage());
+                    return;
+                }
+                this.openLoadedEditDialog(document);
+            },
+            error: (error) => {
+                this.saving.set(false);
+                this.errorMessage.set(this.requestError(error, 'Unable to load the saved document request.'));
+                this.alerts.error('Unable to edit request', this.errorMessage());
+            }
+        });
+    }
+
+    private openLoadedEditDialog(item: DocumentSummary) {
         const isDraft = item.status?.trim().toLowerCase() === 'draft';
         this.documentFormMode = isDraft ? 'create' : 'update';
         this.editingDocumentId = item.document_id;
         this.documentForm = {
-            document_number: item.document_number || '',
+            document_number: item.document_number || item.softcopy?.document_number || '',
             document_title: item.document_title,
             document_type: item.document_type,
             action: 'DRAFT',
@@ -214,7 +234,7 @@ export class DocumentRequestsPage implements OnInit {
             request_date: item.request_date || '',
             department: item.department || '',
             business_document_type: item.business_document_type || 'Forms',
-            action_requested: isDraft ? 'CREATE' : (item.document_type === 'SOFTCOPY' ? 'REVISE' : undefined),
+            action_requested: item.action_requested || (item.document_type === 'SOFTCOPY' ? 'CREATE' : undefined),
             from_party: item.from_party || '',
             to_party: item.to_party || '',
             reason_for_change: item.reason_for_change || 'Improvement',
@@ -231,6 +251,8 @@ export class DocumentRequestsPage implements OnInit {
             sequence_id: item.hardcopy?.sequence?.sequence_id || '',
             softcopy_category_id: item.softcopy?.category?.softcopy_category_id || '',
             initial_revision_number: item.softcopy?.current_revision?.revision_number || '',
+            series_number: item.softcopy?.series_number || item.softcopy?.current_revision?.series_number || '',
+            page_number: item.softcopy?.current_revision?.page_number || '',
             initial_file: null,
             attached_scan_files: [], assigned_user_ids: [],
             workflow_name: item.approver_configuration?.workflow_name || '',

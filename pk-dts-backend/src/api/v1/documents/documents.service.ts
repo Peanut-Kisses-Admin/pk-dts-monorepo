@@ -2477,7 +2477,12 @@ export class DocumentsService {
         orderBy: { updated_at: "desc" },
         include,
       });
-      return paginatedResponse(items, total, page, limit);
+      return paginatedResponse(
+        items.map((item) => this.withApiDocumentNumber(this.withHardcopyRetention(item))),
+        total,
+        page,
+        limit,
+      );
     }
 
     const revisionWhere: Prisma.DocumentWhereInput = {
@@ -2507,7 +2512,9 @@ export class DocumentsService {
           include,
         })
       : [];
-    const items = [...revisionItems, ...otherItems];
+    const items = [...revisionItems, ...otherItems].map((item) =>
+      this.withApiDocumentNumber(this.withHardcopyRetention(item)),
+    );
     return paginatedResponse(items, total, page, limit);
   }
 
@@ -3040,9 +3047,7 @@ export class DocumentsService {
 
         const nextDocumentType = dto.document_type ?? existingDocument.document_type;
         const isSoftcopy = nextDocumentType === DocumentType.SOFTCOPY;
-        const nextActionRequested = existingDocument.status === DocumentStatus.Draft
-          ? DocumentActionRequested.CREATE
-          : dto.action_requested;
+        const nextActionRequested = dto.action_requested;
         const requestedDocumentNumber = dto.document_number?.trim() || null;
         if (isSoftcopy && dto.document_number !== undefined && !requestedDocumentNumber) {
           throw new BadRequestException("Document Number is required for every Softcopy document.");
