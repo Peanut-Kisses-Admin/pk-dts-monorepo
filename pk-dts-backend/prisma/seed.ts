@@ -7,7 +7,9 @@ import {
 import * as bcrypt from "bcrypt";
 import {
   DEFAULT_PERMISSION_CATALOG,
+  DEFAULT_DOCUMENT_CONTROLLER_PERMISSION_NAMES,
   DEFAULT_NOTED_BY_PERMISSION_NAMES,
+  DEFAULT_PLANT_MANAGER_PERMISSION_NAMES,
   DEFAULT_STAFF_PERMISSION_NAMES,
   DEFAULT_VIEWER_PERMISSION_NAMES,
 } from "../src/common/constants/permission-catalog";
@@ -365,9 +367,21 @@ async function main() {
         "Staff self-service access plus approval of requests assigned to the Noted By stage.",
     },
   });
+  const plantManagerRole = await prisma.role.upsert({
+    where: { role_name: "Plant Manager" },
+    update: { description: "Approves requests assigned to the Plant Manager stage." },
+    create: { role_name: "Plant Manager", description: "Approves requests assigned to the Plant Manager stage." },
+  });
+  const documentControllerRole = await prisma.role.upsert({
+    where: { role_name: "Document Controller" },
+    update: { description: "Approves and completes requests assigned to Document Control." },
+    create: { role_name: "Document Controller", description: "Approves and completes requests assigned to Document Control." },
+  });
   for (const [role, permissionNames] of [
     [staffRole, DEFAULT_STAFF_PERMISSION_NAMES],
     [notedByRole, DEFAULT_NOTED_BY_PERMISSION_NAMES],
+    [plantManagerRole, DEFAULT_PLANT_MANAGER_PERMISSION_NAMES],
+    [documentControllerRole, DEFAULT_DOCUMENT_CONTROLLER_PERMISSION_NAMES],
     [viewerRole, DEFAULT_VIEWER_PERMISSION_NAMES],
   ] as const) {
     const allowed = new Set<string>(permissionNames);

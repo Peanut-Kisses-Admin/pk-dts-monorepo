@@ -605,3 +605,40 @@ export const DEFAULT_NOTED_BY_PERMISSION_NAMES = [
   "document-requests.request-revision",
   "document-requests.reject",
 ] as const;
+
+export const DEFAULT_PLANT_MANAGER_PERMISSION_NAMES = [
+  ...DEFAULT_STAFF_PERMISSION_NAMES,
+  "document-requests.review",
+  "document-requests.approve-plant-manager",
+  "document-requests.request-revision",
+  "document-requests.reject",
+  "document-requests.complete",
+  "hardcopy-transfers.review",
+  "hardcopy-transfers.approve",
+  "hardcopy-transfers.dispatch",
+  "document-access-requests.review",
+  "document-access-requests.approve",
+  "document-access-requests.reject",
+  "document-access-requests.grant",
+  "document-access-requests.revoke",
+  "document-access-requests.expire",
+] as const;
+
+export const DEFAULT_DOCUMENT_CONTROLLER_PERMISSION_NAMES = [
+  ...DEFAULT_STAFF_PERMISSION_NAMES,
+  "document-requests.review",
+  "document-requests.approve-document-controller",
+  "document-requests.approve-hardcopy",
+  "document-requests.request-revision",
+  "document-requests.reject",
+  "document-requests.complete",
+  "hardcopy-transfers.review",
+  "hardcopy-transfers.approve",
+  "hardcopy-transfers.dispatch",
+  "document-access-requests.review",
+  "document-access-requests.approve",
+  "document-access-requests.reject",
+  "document-access-requests.grant",
+  "document-access-requests.revoke",
+  "document-access-requests.expire",
+] as const;
