@@ -1820,17 +1820,22 @@ export class DocumentsService {
     const workflowUsersById = new Map(workflowUsers.map((workflowUser) => [workflowUser.user_id.toString(), workflowUser]));
 
     for (const step of resolvedSteps) {
-      this.assertApproverForStage(
-        workflowUsersById,
-        step.assignedUserId.toString(),
-        step.stage,
-      );
+      const isRequesterLeaderNotedBy =
+        step.stage === DocumentWorkflowStage.NOTED_BY &&
+        step.assignmentSource === "REQUESTER_LEADER";
+      if (!isRequesterLeaderNotedBy) {
+        this.assertApproverForStage(
+          workflowUsersById,
+          step.assignedUserId.toString(),
+          step.stage,
+        );
+      }
       if (step.required_permission) {
         const user = workflowUsersById.get(step.assignedUserId.toString())!;
         const permissions = user.role.role_permissions.map(
           ({ permission }) => permission.permission_name,
         );
-        if (!permissions.includes(step.required_permission)) {
+        if (!isRequesterLeaderNotedBy && !permissions.includes(step.required_permission)) {
           throw new BadRequestException(
             `${this.workflowUserName(user)} does not have the ${step.required_permission} permission required by ${step.stage_label || this.workflowStageLabel(step.stage)}.`,
           );
@@ -2604,6 +2609,10 @@ export class DocumentsService {
 
       if (actor && action === "approve") {
         if (current.created_by === actorId) throw new ForbiddenException("A request creator cannot approve their own request.");
+        const isRequesterLeaderNotedBy =
+          pendingStep?.stage === DocumentWorkflowStage.NOTED_BY &&
+          pendingStep.assignment_source === "REQUESTER_LEADER" &&
+          pendingStep.required_permission === "document-requests.approve-noted-by";
         const stagePermissions = pendingStep?.required_permission
           ? [pendingStep.required_permission]
           : pendingStep?.stage === DocumentWorkflowStage.NOTED_BY
@@ -2613,7 +2622,7 @@ export class DocumentsService {
             : pendingStep?.stage === DocumentWorkflowStage.DOCUMENT_CONTROLLER_ADMIN
               ? [DOCUMENT_APPROVAL_PERMISSIONS[2]]
               : [DOCUMENT_APPROVAL_PERMISSIONS[3]];
-        if (!hasAnyPermission(actor, stagePermissions)) {
+        if (!isRequesterLeaderNotedBy && !hasAnyPermission(actor, stagePermissions)) {
           throw new ForbiddenException("You do not have permission to approve this workflow stage.");
         }
       }

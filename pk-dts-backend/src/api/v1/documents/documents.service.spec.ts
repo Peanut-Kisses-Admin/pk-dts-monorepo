@@ -199,6 +199,34 @@ describe('DocumentsService', () => {
     expect(prisma.documentWorkflowStep.update).toHaveBeenCalled();
   });
 
+  it('allows the requester\'s assigned leader to approve their Noted By step without a global approval role', async () => {
+    prisma.document.findUnique
+      .mockResolvedValueOnce({
+        document_id: 1n,
+        created_by: 8n,
+        document_type: DocumentType.SOFTCOPY,
+        status: DocumentStatus.ForNotedBy,
+        action_requested: 'CREATE_REVISE',
+        workflow_steps: [{
+          workflow_step_id: 10n,
+          stage: 'NOTED_BY',
+          sequence: 1,
+          assigned_user_id: 7n,
+          assignment_source: 'REQUESTER_LEADER',
+          required_permission: 'document-requests.approve-noted-by',
+          status: 'PENDING',
+        }],
+      })
+      .mockResolvedValueOnce({ document_id: 1n, status: DocumentStatus.ForPlantManagerApproval });
+    prisma.documentWorkflowStep.update = jest.fn().mockResolvedValue({});
+    prisma.document.updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    prisma.documentStatusHistory.create.mockResolvedValue({});
+
+    await expect(
+      service.transition('1', '7', 'approve', 'Noted', regularUser),
+    ).resolves.toMatchObject({ status: DocumentStatus.ForPlantManagerApproval });
+  });
+
   it('prevents a request creator from approving their own assigned workflow step', async () => {
     const requesterApprover = {
       ...regularUser,
