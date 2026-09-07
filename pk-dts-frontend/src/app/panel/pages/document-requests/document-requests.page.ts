@@ -64,6 +64,7 @@ import {
                             <p-button *ngIf="canEditRequest()" label="Edit" icon="pi pi-pencil" size="small" [outlined]="true" [disabled]="submitting || saving()" (onClick)="openEditDialog(item)" />
                             <p-button *ngIf="canUploadRequestedRevision(item)" label="Upload revision" icon="pi pi-upload" size="small" [outlined]="true" [disabled]="submitting || saving()" (onClick)="openRevisionDialog(item)" />
                             <p-button *ngIf="canSubmitRequest()" [label]="item.status === 'Draft' ? 'Submit' : 'Resubmit'" size="small" [disabled]="submitting || saving()" (onClick)="openSubmitConfirmation(item)" />
+                            <p-button *ngIf="canDeleteDraftRequest(item)" label="Remove draft" icon="pi pi-trash" size="small" severity="danger" [outlined]="true" [disabled]="submitting || saving()" (onClick)="openDeleteConfirmation(item)" />
                         </div></td>
                     </tr></ng-template>
                     <ng-template pTemplate="emptymessage"><tr><td colspan="6">No requests found.</td></tr></ng-template>
@@ -81,6 +82,7 @@ import {
                             <p-button *ngIf="canEditRequest()" label="Edit" icon="pi pi-pencil" size="small" [outlined]="true" [disabled]="submitting || saving()" (onClick)="openEditDialog(item)" />
                             <p-button *ngIf="canUploadRequestedRevision(item)" label="Upload revision" icon="pi pi-upload" size="small" [outlined]="true" [disabled]="submitting || saving()" (onClick)="openRevisionDialog(item)" />
                             <p-button *ngIf="canSubmitRequest()" [label]="item.status === 'Draft' ? 'Submit' : 'Resubmit'" size="small" [disabled]="submitting || saving()" (onClick)="openSubmitConfirmation(item)" />
+                            <p-button *ngIf="canDeleteDraftRequest(item)" label="Remove draft" icon="pi pi-trash" size="small" severity="danger" [outlined]="true" [disabled]="submitting || saving()" (onClick)="openDeleteConfirmation(item)" />
                         </div>
                     </app-record-card>
                 </app-record-grid>
@@ -113,6 +115,7 @@ import {
             (save)="saveRequest($event)"
         />
         <app-confirmation-dialog [(visible)]="submitConfirmationVisible" title="Submit request?" [message]="submitConfirmationMessage()" [confirmLabel]="pendingSubmit?.status === 'ForRevision' ? 'Resubmit' : 'Submit'" tone="primary" (confirm)="confirmSubmit()" (cancel)="clearPendingSubmit()" />
+        <app-confirmation-dialog [(visible)]="deleteConfirmationVisible" title="Remove draft request?" [message]="deleteConfirmationMessage()" confirmLabel="Remove draft" tone="danger" (confirm)="confirmDelete()" (cancel)="clearPendingDelete()" />
         <app-revision-upload-dialog
             [(visible)]="revisionDialogVisible"
             [form]="revisionForm"
@@ -149,8 +152,10 @@ export class DocumentRequestsPage implements OnInit {
     loading = true;
     createDialogVisible = false;
     submitConfirmationVisible = false;
+    deleteConfirmationVisible = false;
     submitting = false;
     pendingSubmit: DocumentSummary | null = null;
+    pendingDelete: DocumentSummary | null = null;
     documentFormMode: 'create' | 'update' = 'create';
     editingDocumentId = '';
     revisionDialogVisible = false;
@@ -328,6 +333,39 @@ export class DocumentRequestsPage implements OnInit {
 
     clearPendingSubmit() { this.pendingSubmit = null; this.submitConfirmationVisible = false; }
 
+    openDeleteConfirmation(item: DocumentSummary) {
+        if (!this.canDeleteDraftRequest(item)) return;
+        this.errorMessage.set('');
+        this.pendingDelete = item;
+        this.deleteConfirmationVisible = true;
+    }
+
+    deleteConfirmationMessage() {
+        return `Remove the draft ${this.pendingDelete?.document_number || this.pendingDelete?.document_title || 'document request'}? This cannot be undone.`;
+    }
+
+    confirmDelete() {
+        const item = this.pendingDelete;
+        if (!item || this.saving()) return;
+        this.saving.set(true);
+        this.documents.deleteDocument(item.document_id).subscribe({
+            next: () => {
+                this.saving.set(false);
+                this.clearPendingDelete();
+                this.successMessage.set('Draft document request removed.');
+                this.alerts.success('Draft removed', this.successMessage());
+                this.load();
+            },
+            error: (error) => {
+                this.saving.set(false);
+                this.errorMessage.set(this.requestError(error, 'Unable to remove this draft document request.'));
+                this.alerts.error('Unable to remove draft', this.errorMessage());
+            }
+        });
+    }
+
+    clearPendingDelete() { this.pendingDelete = null; this.deleteConfirmationVisible = false; }
+
     private requestError(error: any, fallback: string) {
         const message = error?.error?.message ?? error?.error?.error ?? error?.message;
         return Array.isArray(message) ? message.join(' ') : typeof message === 'string' && message.trim() ? message : fallback;
@@ -388,6 +426,10 @@ export class DocumentRequestsPage implements OnInit {
     canCreateRequest() { return this.auth.hasPermission('document-requests.create'); }
     canEditRequest() { return this.auth.hasPermission('document-requests.edit'); }
     canSubmitRequest() { return this.auth.hasPermission('document-requests.submit'); }
+    canDeleteDraftRequest(item: DocumentSummary) {
+        return item.status?.trim().toLowerCase() === 'draft'
+            && this.auth.hasAnyPermission('documents.delete', 'document-requests.delete', 'documents.manage-own');
+    }
     currentUserName() { const user = this.auth.user(); return [user?.firstname, user?.lastname].filter(Boolean).join(' ') || user?.email || ''; }
     requester(item: DocumentSummary) { return item.requested_by_name || [item.requester?.firstname, item.requester?.lastname].filter(Boolean).join(' ') || 'Current user'; }
     statusLabel(status: DocumentSummary['status']) {
