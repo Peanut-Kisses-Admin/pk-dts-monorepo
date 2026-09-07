@@ -109,7 +109,6 @@ export class DocumentsController {
   }
 
   @Get("requests/pending")
-  @RequirePermissions(...DOCUMENT_REVIEW_PERMISSIONS)
   pendingRequests(
     @Query() query: PaginationQueryDto,
     @CurrentUser() user?: AuthenticatedUser,

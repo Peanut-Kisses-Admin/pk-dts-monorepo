@@ -224,7 +224,7 @@ export class PanelLayoutComponent implements OnInit, OnDestroy {
     visiblePrimaryNavItems = computed(() => this.primaryNavItems.filter((item) => this.auth.hasAnyPermission(...item.permissions)));
     visibleNavCategories = computed(() =>
         this.navCategories
-            .map((category) => ({ ...category, items: category.items.filter((item) => this.auth.hasAnyPermission(...item.permissions)) }))
+            .map((category) => ({ ...category, items: category.items.filter((item) => this.auth.hasAnyPermission(...item.permissions) || (item.notificationKey === 'approval_review' && this.notificationCount(item) > 0)) }))
             .filter((category) => category.items.length > 0)
     );
     openCategories = signal<Set<string>>(new Set());

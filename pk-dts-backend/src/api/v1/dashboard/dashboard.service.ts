@@ -18,7 +18,10 @@ export class DashboardService {
   async getNavigationCounts(user: AuthenticatedUser): Promise<NavigationNotificationCounts> {
     const isAdmin = isAdministrativeRole(user.role.role_name);
     const permissions = new Set(user.role.permissions);
-    const canReview = isAdmin || hasAnyPermission(user, DOCUMENT_REVIEW_PERMISSIONS);
+    // The queue query is restricted to workflow steps assigned to this user.
+    // A requester's designated leader may therefore see their own Noted By work
+    // without granting every Staff account a global review permission.
+    const canReview = true;
     const canReviewDisposals = isAdmin || permissions.has("document-disposal.review") || permissions.has("document-disposal.manage");
     const canRequestDisposal = isAdmin || permissions.has("document-disposal.request");
     const canApproveUsers = isAdmin || permissions.has("user-accounts.approve") || permissions.has("user-accounts.manage");
