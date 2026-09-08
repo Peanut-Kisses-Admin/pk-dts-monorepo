@@ -1735,13 +1735,13 @@ export class DocumentsService {
         assignmentSource = "WORKFLOW_PERMISSION";
       }
 
-      if (!assignedUserId && plannedStep.stage === DocumentWorkflowStage.NOTED_BY) {
+      if (!assignedUserId && !plannedStep.assignment_type && plannedStep.stage === DocumentWorkflowStage.NOTED_BY) {
         assignedUserId = configured?.noted_by_user_id ?? creator?.leader_id ?? null;
         assignmentSource = configured?.noted_by_user_id
           ? "DOCUMENT_CONFIGURATION"
           : "REQUESTER_LEADER";
       }
-      if (!assignedUserId && plannedStep.stage === DocumentWorkflowStage.PLANT_MANAGER) {
+      if (!assignedUserId && !plannedStep.assignment_type && plannedStep.stage === DocumentWorkflowStage.PLANT_MANAGER) {
         const fallback = configured?.plant_manager_user_id
           ? { user_id: configured.plant_manager_user_id }
           : await this.findUserByRole(tx, ["PLANT_MANAGER", "Plant Manager"]);
@@ -1750,7 +1750,7 @@ export class DocumentsService {
           ? "DOCUMENT_CONFIGURATION"
           : "ROLE_FALLBACK";
       }
-      if (!assignedUserId && plannedStep.stage === DocumentWorkflowStage.DOCUMENT_CONTROLLER_ADMIN) {
+      if (!assignedUserId && !plannedStep.assignment_type && plannedStep.stage === DocumentWorkflowStage.DOCUMENT_CONTROLLER_ADMIN) {
         const fallback = configured?.document_controller_user_id
           ? { user_id: configured.document_controller_user_id }
           : await this.findUserByRole(tx, [
@@ -1767,7 +1767,7 @@ export class DocumentsService {
           ? "DOCUMENT_CONFIGURATION"
           : "ROLE_FALLBACK";
       }
-      if (!assignedUserId && plannedStep.stage === DocumentWorkflowStage.HARDCOPY_APPROVAL) {
+      if (!assignedUserId && !plannedStep.assignment_type && plannedStep.stage === DocumentWorkflowStage.HARDCOPY_APPROVAL) {
         const fallback = configured?.hardcopy_approver_user_id
           ? { user_id: configured.hardcopy_approver_user_id }
           : await this.findUserByRole(tx, [
@@ -1823,19 +1823,22 @@ export class DocumentsService {
       const isRequesterLeaderNotedBy =
         step.stage === DocumentWorkflowStage.NOTED_BY &&
         step.assignmentSource === "REQUESTER_LEADER";
-      if (!isRequesterLeaderNotedBy) {
+      if (!isRequesterLeaderNotedBy && !step.required_permission) {
         this.assertApproverForStage(
           workflowUsersById,
           step.assignedUserId.toString(),
           step.stage,
         );
       }
+      const assignedUser = workflowUsersById.get(step.assignedUserId.toString());
+      if (!assignedUser) throw new BadRequestException("The configured workflow approver no longer exists.");
+      if (step.assignedUserId === creatorId) throw new BadRequestException(`${step.stage_label || this.workflowStageLabel(step.stage)} cannot be assigned to the request creator.`);
       if (step.required_permission) {
-        const user = workflowUsersById.get(step.assignedUserId.toString())!;
+        const user = assignedUser;
         const permissions = user.role.role_permissions.map(
           ({ permission }) => permission.permission_name,
         );
-        if (!isRequesterLeaderNotedBy && !permissions.includes(step.required_permission)) {
+        if (!(isRequesterLeaderNotedBy && step.required_permission === "document-requests.approve-noted-by") && !this.isAdministrativeRole(user.role.role_name) && !permissions.includes(step.required_permission)) {
           throw new BadRequestException(
             `${this.workflowUserName(user)} does not have the ${step.required_permission} permission required by ${step.stage_label || this.workflowStageLabel(step.stage)}.`,
           );
@@ -1934,6 +1937,16 @@ export class DocumentsService {
       throw new BadRequestException("The selected workflow version does not contain a supported graph.");
     }
     const nodesByKey = new Map(graph.nodes.map((node) => [node.key, node]));
+    const edgeFor = (key: string, outcome: WorkflowGraphEdge["outcome"]) => {
+      const matching = graph.edges.filter((edge) => edge.from === key && edge.outcome === outcome && this.workflowConditionsMatch(edge.conditions ?? [], dto));
+      if (matching.length > 1) throw new BadRequestException(`Workflow node ${key} has multiple matching ${outcome} paths.`);
+      return matching[0];
+    };
+    const targetsFor = (key: string) => ({
+      APPROVE: edgeFor(key, "APPROVE") ?? edgeFor(key, "DEFAULT"),
+      REJECT: edgeFor(key, "REJECT"),
+      RETURN: edgeFor(key, "RETURN"),
+    });
     const reachable = new Set<string>();
     const traversalOrder: string[] = [];
     const queue = [graph.start_node_key];
@@ -1942,7 +1955,13 @@ export class DocumentsService {
       if (reachable.has(key)) continue;
       reachable.add(key);
       traversalOrder.push(key);
-      graph.edges.filter((edge) => edge.from === key && this.workflowConditionsMatch(edge.conditions ?? [], dto)).forEach((edge) => queue.push(edge.to));
+      if (nodesByKey.get(key)?.type === "APPROVAL") {
+        const targets = targetsFor(key);
+        if (!targets.APPROVE && graph.edges.some((edge) => edge.from === key && ["APPROVE", "DEFAULT"].includes(edge.outcome))) {
+          throw new BadRequestException(`No approval path matches this request at ${nodesByKey.get(key)!.label}. Configure a default path in Workflow Builder.`);
+        }
+        Object.values(targets).forEach((edge) => { if (edge) queue.push(edge.to); });
+      }
     }
     const approvalNodes = traversalOrder
       .map((key) => nodesByKey.get(key))
@@ -1950,10 +1969,8 @@ export class DocumentsService {
     if (!approvalNodes.length || nodesByKey.get(graph.start_node_key)?.type !== "APPROVAL") {
       throw new BadRequestException("A document workflow must start with at least one approval node.");
     }
-    const targetFor = (node: WorkflowGraphNode, outcome: WorkflowGraphEdge["outcome"]) => {
-      const target = graph.edges.find(
-        (edge) => edge.from === node.key && edge.outcome === outcome && this.workflowConditionsMatch(edge.conditions ?? [], dto),
-      )?.to;
+    const targetFor = (node: WorkflowGraphNode, outcome: "APPROVE" | "REJECT" | "RETURN") => {
+      const target = targetsFor(node.key)[outcome]?.to;
       return target && nodesByKey.get(target)?.type === "APPROVAL" ? target : undefined;
     };
     return approvalNodes.map((node) => ({
@@ -1963,10 +1980,10 @@ export class DocumentsService {
       node_key: node.key,
       stage_label: node.label,
       assignment_type: node.assignment?.type,
-      assigned_user_id: node.assignment?.user_id,
-      assigned_role_id: node.assignment?.role_id,
+      assigned_user_id: node.assignment?.type === "USER" ? node.assignment.user_id : undefined,
+      assigned_role_id: node.assignment?.type === "ROLE" ? node.assignment.role_id : undefined,
       required_permission: node.required_permission || node.assignment?.permission,
-      on_approve_node_key: targetFor(node, "APPROVE") ?? targetFor(node, "DEFAULT"),
+      on_approve_node_key: targetFor(node, "APPROVE"),
       on_reject_node_key: targetFor(node, "REJECT"),
       on_return_node_key: targetFor(node, "RETURN"),
       condition_json: graph.edges.filter((edge) => edge.from === node.key && edge.conditions?.length) as unknown as Prisma.JsonValue,
@@ -2462,6 +2479,8 @@ export class DocumentsService {
         orderBy: { created_at: "desc" },
         include: { actor: true },
       },
+      approver_configuration: true,
+      workflow_steps: { orderBy: { sequence: "asc" }, include: { assignee: { select: { user_id: true, firstname: true, lastname: true } } } },
       hardcopy: {
         include: {
           asset: true,
@@ -2621,8 +2640,10 @@ export class DocumentsService {
             ? [DOCUMENT_APPROVAL_PERMISSIONS[1]]
             : pendingStep?.stage === DocumentWorkflowStage.DOCUMENT_CONTROLLER_ADMIN
               ? [DOCUMENT_APPROVAL_PERMISSIONS[2]]
-              : [DOCUMENT_APPROVAL_PERMISSIONS[3]];
-        if (!isRequesterLeaderNotedBy && !hasAnyPermission(actor, stagePermissions)) {
+              : pendingStep?.stage === DocumentWorkflowStage.HARDCOPY_APPROVAL
+                ? [DOCUMENT_APPROVAL_PERMISSIONS[3]]
+                : [];
+        if (!isRequesterLeaderNotedBy && stagePermissions.length && !hasAnyPermission(actor, stagePermissions)) {
           throw new ForbiddenException("You do not have permission to approve this workflow stage.");
         }
       }
@@ -2765,7 +2786,7 @@ export class DocumentsService {
           : action === "reject"
             ? step.on_reject_node_key
             : step.on_return_node_key;
-        const isLegacyStep = !step.node_key || step.node_key.startsWith("legacy-");
+        const isLegacyStep = !current.workflow_version_id && (!step.node_key || step.node_key.startsWith("legacy-"));
         const legacyNextStep = action === "approve" && isLegacyStep
             ? current.workflow_steps.find(
                 (candidate) =>

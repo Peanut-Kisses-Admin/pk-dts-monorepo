@@ -271,7 +271,7 @@ export class DocumentsController {
   }
 
   @Post(":id/approve")
-  @RequirePermissions(...DOCUMENT_APPROVAL_PERMISSIONS)
+  // The persisted step assignee and its configured permission are checked by transition().
   approve(
     @Param("id") id: string,
     @Body() dto: WorkflowActionDto,

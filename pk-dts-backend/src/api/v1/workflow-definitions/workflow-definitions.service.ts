@@ -151,11 +151,13 @@ export class WorkflowDefinitionsService {
       if (node.assignment) await this.validateAssignment(node, database);
     }
     if (!graph.start_node_key || !nodeKeys.has(graph.start_node_key)) throw new BadRequestException("Select a valid workflow start node.");
+    if (nodes.find((node) => node.key === graph.start_node_key)?.type !== "APPROVAL") throw new BadRequestException("A workflow must start at an approval step.");
     const edgeKeys = new Set<string>();
     for (const edge of edges) {
       if (!edge?.key || edgeKeys.has(edge.key)) throw new BadRequestException("Every workflow connection needs a unique key.");
       edgeKeys.add(edge.key);
       if (!nodeKeys.has(edge.from) || !nodeKeys.has(edge.to)) throw new BadRequestException(`Workflow connection ${edge.key} references a missing node.`);
+      if (nodes.find((node) => node.key === edge.from)?.type === "END") throw new BadRequestException("An end node cannot have outgoing connections.");
       if (!["APPROVE", "REJECT", "RETURN", "DEFAULT"].includes(edge.outcome)) throw new BadRequestException(`Workflow connection ${edge.key} has an invalid outcome.`);
       this.validateConditions(edge.conditions ?? []);
     }
@@ -177,6 +179,7 @@ export class WorkflowDefinitionsService {
       if (!role) throw new BadRequestException(`The assigned role for ${node.label} does not exist.`);
     }
     const permission = assignment.type === "PERMISSION" ? assignment.permission : node.required_permission;
+    if (assignment.type === "PERMISSION" && !assignment.permission?.trim()) throw new BadRequestException(`Node ${node.label} needs an assigned permission.`);
     if (permission) {
       const found = await database.permission.findUnique({ where: { permission_name: permission }, select: { permission_id: true } });
       if (!found) throw new BadRequestException(`Permission ${permission} used by ${node.label} does not exist.`);
@@ -184,10 +187,11 @@ export class WorkflowDefinitionsService {
   }
 
   private validateConditions(conditions: WorkflowCondition[]) {
+    if (!Array.isArray(conditions)) throw new BadRequestException("Workflow conditions must be an array.");
     const fields = new Set(["document_type", "action_requested", "business_document_type", "requester_type"]);
     for (const condition of conditions) {
-      if (!fields.has(condition.field) || !["EQUALS", "NOT_EQUALS", "IN"].includes(condition.operator)) throw new BadRequestException("A workflow connection contains an invalid condition.");
-      if (condition.operator === "IN" ? !Array.isArray(condition.value) : typeof condition.value !== "string") throw new BadRequestException("A workflow condition has an invalid comparison value.");
+      if (!condition || !fields.has(condition.field) || !["EQUALS", "NOT_EQUALS", "IN"].includes(condition.operator)) throw new BadRequestException("A workflow connection contains an invalid condition.");
+      if (condition.operator === "IN" ? !Array.isArray(condition.value) || !condition.value.length || condition.value.some((value) => typeof value !== "string") : typeof condition.value !== "string") throw new BadRequestException("A workflow condition has an invalid comparison value.");
     }
   }
 
