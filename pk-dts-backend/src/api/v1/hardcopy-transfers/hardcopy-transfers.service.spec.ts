@@ -4,7 +4,7 @@ import { HardcopyTransfersService } from "./hardcopy-transfers.service";
 
 const recipient = {
   user_id: "12",
-  email: "recipient@example.com",
+  username: "recipient@example.com",
   firstname: "Receiving",
   lastname: "User",
   require_password_change: false,

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEmail,
+  Matches,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -28,27 +28,10 @@ export class CreateUserDto {
   @MaxLength(100)
   middlename?: string;
 
-  @ApiPropertyOptional({ example: 30 })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  age?: number;
-
-  @ApiPropertyOptional({ example: 'Manila, Philippines' })
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @ApiPropertyOptional({ example: '+639171234567' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  phone_number?: string;
-
-  @ApiProperty({ example: 'juan@example.com' })
-  @IsEmail()
+  @ApiProperty({ example: 'juan.delacruz' })
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9._@+-]{0,149}$/)
   @MaxLength(150)
-  email: string;
+  username: string;
 
   @ApiPropertyOptional({ example: 'Document Controller' })
   @IsOptional()

@@ -51,22 +51,13 @@ type UserFormMode = 'create' | 'update';
                     <input id="middlename" name="middlename" pInputText [(ngModel)]="form.middlename" class="w-full" placeholder="Santos" />
                 </div>
 
-                <div class="field">
-                    <label for="age">Age</label>
-                    <input id="age" name="age" pInputText [(ngModel)]="form.age" class="w-full" placeholder="30" />
-                    <small *ngIf="submitted && !ageIsValid()">Age must be a whole number greater than or equal to 0.</small>
-                </div>
 
                 <div class="field">
-                    <label for="email">Email <span class="text-red-500">*</span></label>
-                    <input id="email" name="email" type="email" pInputText [(ngModel)]="form.email" class="w-full" placeholder="juan@example.com" />
-                    <small *ngIf="submitted && !emailIsValid()">Enter a valid email address.</small>
+                    <label for="username">Username <span class="text-red-500">*</span></label>
+                    <input id="username" name="username" type="text" pInputText [(ngModel)]="form.username" class="w-full" placeholder="juan.delacruz" />
+                    <small *ngIf="submitted && !usernameIsValid()">Enter a valid username.</small>
                 </div>
 
-                <div class="field">
-                    <label for="phone_number">Phone number</label>
-                    <input id="phone_number" name="phone_number" pInputText [(ngModel)]="form.phone_number" class="w-full" placeholder="+639171234567" />
-                </div>
 
                 <div class="field">
                     <label for="position_title">Position title</label>
@@ -110,10 +101,6 @@ type UserFormMode = 'create' | 'update';
                     <small class="role-note">Required before submitting a Softcopy request.</small>
                 </div>
 
-                <div class="field md:col-span-2">
-                    <label for="address">Address</label>
-                    <input id="address" name="address" pInputText [(ngModel)]="form.address" class="w-full" placeholder="Manila, Philippines" />
-                </div>
 
                 <div class="field md:col-span-2">
                     <label for="password">
@@ -231,10 +218,7 @@ export class UserFormDialogComponent {
         firstname: '',
         lastname: '',
         middlename: '',
-        age: '',
-        address: '',
-        phone_number: '',
-        email: '',
+        username: '',
         position_title: '',
         password: '',
         role_id: '',
@@ -251,7 +235,7 @@ export class UserFormDialogComponent {
     submit() {
         this.submitted = true;
 
-        if (!this.form.firstname.trim() || !this.form.lastname.trim() || !this.emailIsValid() || !this.form.role_id || !this.ageIsValid()) {
+        if (!this.form.firstname.trim() || !this.form.lastname.trim() || !this.usernameIsValid() || !this.form.role_id) {
             return;
         }
 
@@ -267,17 +251,8 @@ export class UserFormDialogComponent {
         this.close();
     }
 
-    emailIsValid() {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email.trim());
-    }
-
-    ageIsValid() {
-        const trimmedAge = this.form.age.trim();
-        if (!trimmedAge) {
-            return true;
-        }
-
-        return /^\d+$/.test(trimmedAge);
+    usernameIsValid() {
+        return /^[a-zA-Z0-9][a-zA-Z0-9._@+-]{0,149}$/.test(this.form.username.trim());
     }
 
     get roleOptions(): SearchableDropdownOption[] {

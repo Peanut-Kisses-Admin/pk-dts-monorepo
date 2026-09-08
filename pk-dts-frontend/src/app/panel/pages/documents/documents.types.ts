@@ -34,7 +34,7 @@ export interface DocumentUserSummary {
     user_id: string;
     firstname: string;
     lastname: string;
-    email?: string;
+    username?: string;
     position_title?: string | null;
     role?: {
         role_id?: string;

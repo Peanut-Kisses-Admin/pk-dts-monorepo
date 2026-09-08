@@ -14,8 +14,8 @@ export class AuditLogsService {
       ...(module ? { module } : {}),
       ...(action ? { action: action.toUpperCase() } : {}),
       ...(document ? { entity_id: document.trim() } : {}),
-      ...(user ? { OR: [{ user_name: { contains: user } }, { user_email: { contains: user } }, ...(userId ? [{ user_id: userId }] : [])] } : {}),
-      ...(search ? { AND: [{ OR: [{ user_name: { contains: search } }, { user_email: { contains: search } }, { description: { contains: search } }, { path: { contains: search } }, { entity_id: { contains: search } }, { reason: { contains: search } }] }] } : {}),
+      ...(user ? { OR: [{ user_name: { contains: user } }, { user_username: { contains: user } }, ...(userId ? [{ user_id: userId }] : [])] } : {}),
+      ...(search ? { AND: [{ OR: [{ user_name: { contains: search } }, { user_username: { contains: search } }, { description: { contains: search } }, { path: { contains: search } }, { entity_id: { contains: search } }, { reason: { contains: search } }] }] } : {}),
       ...(from || to ? { created_at: { ...(from ? { gte: this.date(from, false) } : {}), ...(to ? { lte: this.date(to, true) } : {}) } } : {}),
     };
     const [items, total] = await this.prisma.$transaction([
@@ -29,7 +29,7 @@ export class AuditLogsService {
     if (!/^\d+$/.test(documentId)) throw new BadRequestException('Document ID must be numeric.');
     const [audit, history] = await this.prisma.$transaction([
       this.prisma.auditLog.findMany({ where: { entity_id: documentId }, orderBy: { created_at: 'asc' } }),
-      this.prisma.documentStatusHistory.findMany({ where: { document_id: BigInt(documentId) }, orderBy: { created_at: 'asc' }, include: { actor: { select: { user_id: true, firstname: true, lastname: true, email: true, role: { select: { role_name: true } } } } } }),
+      this.prisma.documentStatusHistory.findMany({ where: { document_id: BigInt(documentId) }, orderBy: { created_at: 'asc' }, include: { actor: { select: { user_id: true, firstname: true, lastname: true, username: true, role: { select: { role_name: true } } } } } }),
     ]);
     return { audit, workflow_history: history };
   }

@@ -102,7 +102,7 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
 
                 <div class="field md:col-span-2" *ngIf="!isHardcopy() && mode === 'create' && canAssignUsers">
                     <label for="assigned-users">Assign document access</label>
-                    <p-multiselect inputId="assigned-users" [(ngModel)]="form.assigned_user_ids" [options]="userOptions" optionLabel="label" optionValue="value" display="chip" [filter]="true" filterBy="label" filterPlaceholder="Search staff by name or email" placeholder="Search and select staff" emptyMessage="No staff accounts available." emptyFilterMessage="No matching staff found." [showClear]="true" [disabled]="saving || referenceLoading" [loading]="referenceLoading" appendTo="body" styleClass="w-full assignment-multiselect" />
+                    <p-multiselect inputId="assigned-users" [(ngModel)]="form.assigned_user_ids" [options]="userOptions" optionLabel="label" optionValue="value" display="chip" [filter]="true" filterBy="label" filterPlaceholder="Search staff by name or username" placeholder="Search and select staff" emptyMessage="No staff accounts available." emptyFilterMessage="No matching staff found." [showClear]="true" [disabled]="saving || referenceLoading" [loading]="referenceLoading" appendTo="body" styleClass="w-full assignment-multiselect" />
                     <small class="field-note">Admin-created documents are assigned only to the selected staff. Search and select one or more users.</small>
                 </div>
 
@@ -813,7 +813,7 @@ export class DocumentFormDialogComponent implements OnChanges {
         return this.users
             .filter((user) => this.isLikelyWorkflowApprover(user, step.stage))
             .map((user) => ({
-                label: [this.fullName(user) || user.email || user.user_id, user.position_title, user.role?.role_name].filter(Boolean).join(' · '),
+                label: [this.fullName(user) || user.username || user.user_id, user.position_title, user.role?.role_name].filter(Boolean).join(' · '),
                 value: user.user_id
             }));
     }
@@ -867,7 +867,7 @@ export class DocumentFormDialogComponent implements OnChanges {
 
     get userOptions(): SearchableDropdownOption[] {
         return this.users.map((user) => ({
-            label: this.fullName(user) || user.email || user.user_id,
+            label: this.fullName(user) || user.username || user.user_id,
             value: user.user_id
         }));
     }

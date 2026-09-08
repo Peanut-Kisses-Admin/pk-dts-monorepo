@@ -6,7 +6,7 @@ import { Public } from "../../../common/auth/public.decorator";
 import { RequirePermissions } from "../../../common/auth/require-permissions.decorator";
 import { PaginationQueryDto } from "../../../common/dto/pagination-query.dto";
 import { CreateRegistrationDto } from "./dto/create-registration.dto";
-import { RegistrationEmailDto } from "./dto/registration-email.dto";
+import { RegistrationUsernameDto } from "./dto/registration-email.dto";
 import { RegistrationStatusDto } from "./dto/registration-status.dto";
 import { ReviewRegistrationDto } from "./dto/review-registration.dto";
 import { RegistrationsService } from "./registrations.service";
@@ -25,8 +25,8 @@ export class RegistrationsController {
   @Public() @Post("status") @ApiOkResponse({ description: "Registration status retrieved." })
   status(@Body() dto: RegistrationStatusDto) { return this.registrationsService.status(dto); }
 
-  @Public() @Post("reference") @ApiOkResponse({ description: "Latest registration reference retrieved for an email." })
-  reference(@Body() dto: RegistrationEmailDto) { return this.registrationsService.findReference(dto); }
+  @Public() @Post("reference") @ApiOkResponse({ description: "Latest registration reference retrieved for an username." })
+  reference(@Body() dto: RegistrationUsernameDto) { return this.registrationsService.findReference(dto); }
 
   @Get() @RequirePermissions("user-accounts.approve", "user-accounts.manage")
   findAll(@Query() query: PaginationQueryDto) { return this.registrationsService.findAll(query); }

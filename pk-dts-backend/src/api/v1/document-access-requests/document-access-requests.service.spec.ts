@@ -7,7 +7,7 @@ import { DocumentAccessRequestsService } from "./document-access-requests.servic
 
 const actor = (permissions: string[]) => ({
   user_id: "9",
-  email: "admin@example.com",
+  username: "admin@example.com",
   firstname: "Admin",
   lastname: "User",
   require_password_change: false,

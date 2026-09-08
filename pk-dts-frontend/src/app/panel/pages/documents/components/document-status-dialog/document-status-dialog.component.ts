@@ -67,7 +67,7 @@ import { DisposalActionValue, DocumentSummary, DocumentUserSummary } from '../..
                         [showClear]="false"
                         [invalid]="submitted && !disposedByUserId"
                         placeholder="Select a user"
-                        filterPlaceholder="Search by name or email"
+                        filterPlaceholder="Search by name or username"
                         emptyMessage="No users are available."
                     />
                     <small class="field-help" *ngIf="!administrator">Your signed-in account is recorded automatically. An administrator must approve this request before the document is disposed.</small>
@@ -217,7 +217,7 @@ export class DocumentStatusDialogComponent {
 
     get userOptions(): SearchableDropdownOption[] {
         const source = this.administrator ? this.users : this.currentUser ? [this.currentUser] : [];
-        return source.map((user) => ({ label: `${user.firstname} ${user.lastname} — ${user.email}`.trim(), value: user.user_id }));
+        return source.map((user) => ({ label: `${user.firstname} ${user.lastname} — ${user.username}`.trim(), value: user.user_id }));
     }
 
     setDisposedByUser(value: SearchableDropdownValue) {

@@ -21,7 +21,7 @@ export interface AccessRequestUser {
     user_id: string;
     firstname: string;
     lastname: string;
-    email: string;
+    username: string;
     position_title?: string | null;
 }
 

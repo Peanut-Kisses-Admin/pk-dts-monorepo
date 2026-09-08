@@ -54,9 +54,9 @@ import { SystemSettingsService } from '@/app/shared/services/system-settings.ser
 
                     <form class="login-form" [formGroup]="form" autocomplete="off" (ngSubmit)="submit()">
                         <div class="field">
-                            <label>Email</label>
-                            <input pInputText formControlName="email" type="email" placeholder="Enter your email" autocomplete="off" />
-                            <small *ngIf="isInvalid('email')">Enter a valid email address.</small>
+                            <label>Username</label>
+                            <input pInputText formControlName="username" type="text" placeholder="Enter your username" autocomplete="off" />
+                            <small *ngIf="isInvalid('username')">Enter a valid username.</small>
                         </div>
 
                         <div class="field">
@@ -799,7 +799,7 @@ export class Login {
     errorMessage = '';
 
     form = this.fb.group({
-        email: ['', [Validators.required, Validators.email]],
+        username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9][a-zA-Z0-9._@+-]{0,149}$/)]],
         password: ['', [Validators.required]],
         rememberMe: [false]
     });
@@ -819,9 +819,9 @@ export class Login {
 
         this.loading = true;
 
-        const { email, password, rememberMe } = this.form.getRawValue();
+        const { username, password, rememberMe } = this.form.getRawValue();
 
-        this.auth.login({ email: email ?? '', password: password ?? '' }, rememberMe ?? false).subscribe({
+        this.auth.login({ username: username ?? '', password: password ?? '' }, rememberMe ?? false).subscribe({
             next: () => {
                 this.loading = false;
                 this.router.navigate(['/panel/dashboard']);
@@ -833,7 +833,7 @@ export class Login {
         });
     }
 
-    isInvalid(controlName: 'email' | 'password') {
+    isInvalid(controlName: 'username' | 'password') {
         const control = this.form.get(controlName);
         return !!control && control.invalid && (control.dirty || control.touched);
     }

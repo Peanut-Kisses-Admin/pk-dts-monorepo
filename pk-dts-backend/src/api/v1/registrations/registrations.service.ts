@@ -15,7 +15,7 @@ import {
 } from "../../../common/utils/pagination.util";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import { CreateRegistrationDto } from "./dto/create-registration.dto";
-import { RegistrationEmailDto } from "./dto/registration-email.dto";
+import { RegistrationUsernameDto } from "./dto/registration-email.dto";
 import { RegistrationStatusDto } from "./dto/registration-status.dto";
 import { ReviewRegistrationDto } from "./dto/review-registration.dto";
 import { isAdministrativeRole } from "../../../common/auth/administrative-role.util";
@@ -34,14 +34,14 @@ export class RegistrationsService {
   }
 
   async create(dto: CreateRegistrationDto) {
-    const email = dto.email.trim().toLowerCase();
+    const username = dto.username.trim().toLowerCase();
     const [existingUser, existingRequest, requestedRole] = await Promise.all([
       this.prisma.user.findUnique({
-        where: { email },
+        where: { username },
         select: { user_id: true },
       }),
       this.prisma.accountRegistrationRequest.findFirst({
-        where: { email, status: RegistrationStatus.PENDING },
+        where: { username, status: RegistrationStatus.PENDING },
         select: { registration_id: true },
       }),
       this.prisma.role.findUnique({
@@ -53,10 +53,10 @@ export class RegistrationsService {
     ]);
 
     if (existingUser)
-      throw new ConflictException("An account with this email already exists.");
+      throw new ConflictException("An account with this username already exists.");
     if (existingRequest)
       throw new ConflictException(
-        "A pending registration already exists for this email.",
+        "A pending registration already exists for this username.",
       );
     if (!requestedRole || isAdministrativeRole(requestedRole.role_name)) {
       throw new BadRequestException(
@@ -71,8 +71,7 @@ export class RegistrationsService {
         firstname: dto.firstname.trim(),
         lastname: dto.lastname.trim(),
         middlename: dto.middlename?.trim() || null,
-        email,
-        phone_number: dto.phone_number?.trim() || null,
+        username,
         position_title: dto.position_title?.trim() || null,
         applicant_remarks: dto.applicant_remarks?.trim() || null,
         password_hash: await bcrypt.hash(dto.password, 10),
@@ -97,7 +96,7 @@ export class RegistrationsService {
     const registration = await this.prisma.accountRegistrationRequest.findFirst(
       {
         where: {
-          email: dto.email.trim().toLowerCase(),
+          username: dto.username.trim().toLowerCase(),
           reference_code: dto.reference_code.trim().toUpperCase(),
         },
         select: {
@@ -116,15 +115,15 @@ export class RegistrationsService {
 
     if (!registration)
       throw new NotFoundException(
-        "No registration matches that email and reference code.",
+        "No registration matches that username and reference code.",
       );
     return registration;
   }
 
-  async findReference(dto: RegistrationEmailDto) {
+  async findReference(dto: RegistrationUsernameDto) {
     const registration = await this.prisma.accountRegistrationRequest.findFirst(
       {
-        where: { email: dto.email.trim().toLowerCase() },
+        where: { username: dto.username.trim().toLowerCase() },
         select: { reference_code: true, status: true, created_at: true },
         orderBy: { created_at: "desc" },
       },
@@ -132,7 +131,7 @@ export class RegistrationsService {
 
     if (!registration)
       throw new NotFoundException(
-        "No registration request was found for this email.",
+        "No registration request was found for this username.",
       );
     return registration;
   }
@@ -150,8 +149,7 @@ export class RegistrationsService {
           firstname: true,
           lastname: true,
           middlename: true,
-          email: true,
-          phone_number: true,
+          username: true,
           position_title: true,
           applicant_remarks: true,
           status: true,
@@ -201,7 +199,7 @@ export class RegistrationsService {
             select: { role_id: true, role_name: true },
           }),
           tx.user.findUnique({
-            where: { email: registration.email },
+            where: { username: registration.username },
             select: { user_id: true },
           }),
         ]);
@@ -214,7 +212,7 @@ export class RegistrationsService {
         }
         if (existingUser)
           throw new ConflictException(
-            "An account with this email already exists.",
+            "An account with this username already exists.",
           );
 
         await tx.user.create({
@@ -222,8 +220,7 @@ export class RegistrationsService {
             firstname: registration.firstname,
             lastname: registration.lastname,
             middlename: registration.middlename,
-            email: registration.email,
-            phone_number: registration.phone_number,
+            username: registration.username,
             position_title: registration.position_title,
             password: registration.password_hash,
             role_id: assignedRoleId,

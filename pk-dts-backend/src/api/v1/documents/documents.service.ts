@@ -182,10 +182,10 @@ const PUBLIC_DOCUMENT_SELECT = {
   assignments: {
     select: {
       user: {
-        select: { user_id: true, firstname: true, lastname: true, email: true },
+        select: { user_id: true, firstname: true, lastname: true, username: true },
       },
       assigner: {
-        select: { user_id: true, firstname: true, lastname: true, email: true },
+        select: { user_id: true, firstname: true, lastname: true, username: true },
       },
       assigned_at: true,
     },
@@ -221,10 +221,10 @@ const PUBLIC_DOCUMENT_SUMMARY_SELECT = {
   assignments: {
     select: {
       user: {
-        select: { user_id: true, firstname: true, lastname: true, email: true },
+        select: { user_id: true, firstname: true, lastname: true, username: true },
       },
       assigner: {
-        select: { user_id: true, firstname: true, lastname: true, email: true },
+        select: { user_id: true, firstname: true, lastname: true, username: true },
       },
       assigned_at: true,
     },
@@ -1087,7 +1087,7 @@ export class DocumentsService {
                   user_id: true,
                   firstname: true,
                   lastname: true,
-                  email: true,
+                  username: true,
                 },
               },
               assigner: {
@@ -1095,7 +1095,7 @@ export class DocumentsService {
                   user_id: true,
                   firstname: true,
                   lastname: true,
-                  email: true,
+                  username: true,
                 },
               },
               assigned_at: true,
@@ -1212,7 +1212,7 @@ export class DocumentsService {
                   user_id: true,
                   firstname: true,
                   lastname: true,
-                  email: true,
+                  username: true,
                 },
               },
               assigner: {
@@ -1220,7 +1220,7 @@ export class DocumentsService {
                   user_id: true,
                   firstname: true,
                   lastname: true,
-                  email: true,
+                  username: true,
                 },
               },
             },
@@ -1240,7 +1240,7 @@ export class DocumentsService {
                   user_id: true,
                   firstname: true,
                   lastname: true,
-                  email: true,
+                  username: true,
                   position_title: true,
                 },
               },
@@ -1249,7 +1249,7 @@ export class DocumentsService {
                   user_id: true,
                   firstname: true,
                   lastname: true,
-                  email: true,
+                  username: true,
                   position_title: true,
                 },
               },
@@ -2270,8 +2270,8 @@ export class DocumentsService {
     return this.prisma.documentApproverConfiguration.findUnique({
       where: { document_id: toBigIntId(documentId, "document_id") },
       include: {
-        document_owner: { select: { user_id: true, firstname: true, lastname: true, email: true } },
-        configured_by: { select: { user_id: true, firstname: true, lastname: true, email: true } },
+        document_owner: { select: { user_id: true, firstname: true, lastname: true, username: true } },
+        configured_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
       },
     });
   }
@@ -2477,7 +2477,7 @@ export class DocumentsService {
               user_id: true,
               firstname: true,
               lastname: true,
-              email: true,
+              username: true,
               position_title: true,
             },
           },
@@ -3499,7 +3499,7 @@ export class DocumentsService {
         disposal_action: this.resolveDisposalAction(dto.disposal_action),
         disposal_action_other: this.resolveDisposalActionOther(dto),
       },
-      include: { document: true, requester: { select: { user_id: true, firstname: true, lastname: true, email: true } } },
+      include: { document: true, requester: { select: { user_id: true, firstname: true, lastname: true, username: true } } },
     });
   }
 
@@ -3509,7 +3509,7 @@ export class DocumentsService {
       orderBy: { created_at: "asc" },
       include: {
         document: { include: { hardcopy: { include: { area: true, location: true } }, softcopy: { include: { category: true } } } },
-        requester: { select: { user_id: true, firstname: true, lastname: true, email: true } },
+        requester: { select: { user_id: true, firstname: true, lastname: true, username: true } },
       },
     });
   }
@@ -3519,8 +3519,8 @@ export class DocumentsService {
       orderBy: { created_at: "desc" },
       include: {
         document: { include: { hardcopy: { include: { area: true, location: true } }, softcopy: { include: { category: true } } } },
-        requester: { select: { user_id: true, firstname: true, lastname: true, email: true } },
-        reviewer: { select: { user_id: true, firstname: true, lastname: true, email: true } },
+        requester: { select: { user_id: true, firstname: true, lastname: true, username: true } },
+        reviewer: { select: { user_id: true, firstname: true, lastname: true, username: true } },
       },
     });
   }
@@ -3531,8 +3531,8 @@ export class DocumentsService {
       orderBy: { created_at: "desc" },
       include: {
         document: true,
-        requester: { select: { user_id: true, firstname: true, lastname: true, email: true } },
-        reviewer: { select: { user_id: true, firstname: true, lastname: true, email: true } },
+        requester: { select: { user_id: true, firstname: true, lastname: true, username: true } },
+        reviewer: { select: { user_id: true, firstname: true, lastname: true, username: true } },
       },
     });
   }
@@ -3570,7 +3570,7 @@ export class DocumentsService {
           reviewer_remarks: remarks?.trim() || null,
           reviewed_at: new Date(),
         },
-        include: { document: true, requester: { select: { user_id: true, firstname: true, lastname: true, email: true } } },
+        include: { document: true, requester: { select: { user_id: true, firstname: true, lastname: true, username: true } } },
       });
     });
   }

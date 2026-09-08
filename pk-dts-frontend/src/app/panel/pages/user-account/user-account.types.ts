@@ -31,10 +31,7 @@ export interface UserAccountSummary {
     firstname: string;
     lastname: string;
     middlename?: string | null;
-    age?: number | null;
-    address?: string | null;
-    phone_number?: string | null;
-    email: string;
+    username: string;
     position_title?: string | null;
     created_at?: string;
     updated_at?: string;
@@ -72,10 +69,7 @@ export interface UserAccountFormValue {
     firstname: string;
     lastname: string;
     middlename: string;
-    age: string;
-    address: string;
-    phone_number: string;
-    email: string;
+    username: string;
     position_title: string;
     password: string;
     role_id: string;
@@ -87,8 +81,7 @@ export interface RegistrationRequestSummary {
     firstname: string;
     lastname: string;
     middlename?: string | null;
-    email: string;
-    phone_number?: string | null;
+    username: string;
     position_title?: string | null;
     applicant_remarks?: string | null;
     status: 'PENDING';

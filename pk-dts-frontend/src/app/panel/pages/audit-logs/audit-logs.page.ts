@@ -7,7 +7,7 @@ import { BACKEND_API_BASE_URL } from '@/app/config/api-config';
 interface AuditItem {
     audit_log_id: string;
     user_name: string;
-    user_email: string;
+    user_username: string;
     role_name: string;
     action: string;
     module: string;
@@ -45,7 +45,7 @@ interface AuditItem {
             <label class="search-field"><span>Search activity</span><div><i class="pi pi-search"></i><input [(ngModel)]="search" (keyup.enter)="apply()" placeholder="Description, path, reason" /></div></label>
             <label><span>Module</span><select [(ngModel)]="module" (ngModelChange)="apply()"><option value="">All modules</option><option *ngFor="let value of modules" [value]="value">{{ moduleLabel(value) }}</option></select></label>
             <label><span>Action</span><select [(ngModel)]="action" (ngModelChange)="apply()"><option value="">All actions</option><option *ngFor="let value of actions" [value]="value">{{ actionLabel(value) }}</option></select></label>
-            <label><span>User or email</span><input [(ngModel)]="user" (keyup.enter)="apply()" placeholder="Name, email, or ID" /></label>
+            <label><span>User or username</span><input [(ngModel)]="user" (keyup.enter)="apply()" placeholder="Name, username, or ID" /></label>
             <label><span>Document ID</span><input [(ngModel)]="document" (keyup.enter)="apply()" placeholder="Affected record" /></label>
             <label><span>From</span><input type="date" [(ngModel)]="from" (change)="apply()" /></label>
             <label><span>To</span><input type="date" [(ngModel)]="to" (change)="apply()" /></label>
@@ -69,7 +69,7 @@ interface AuditItem {
                     <div class="actor">
                         <strong>{{ item.user_name || 'Unknown user' }}</strong
                         ><span>{{ item.role_name || 'No role recorded' }}</span
-                        ><small>{{ item.user_email }}</small>
+                        ><small>{{ item.user_username }}</small>
                     </div>
                     <div class="event">
                         <div class="event-title">

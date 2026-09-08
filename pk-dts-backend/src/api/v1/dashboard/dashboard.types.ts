@@ -30,7 +30,7 @@ export interface DashboardRecentDocumentItem {
 export interface DashboardRecentUserItem {
   user_id: string;
   full_name: string;
-  email: string;
+  username: string;
   role_name: string;
   created_at: string;
 }

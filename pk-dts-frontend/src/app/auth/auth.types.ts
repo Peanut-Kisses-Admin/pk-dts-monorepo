@@ -19,13 +19,13 @@ export interface AuthUser {
     user_id: string;
     firstname: string;
     lastname: string;
-    email: string;
+    username: string;
     require_password_change?: boolean;
     role: AuthRole;
 }
 
 export interface LoginRequest {
-    email: string;
+    username: string;
     password: string;
 }
 

@@ -77,7 +77,7 @@ export class AuthenticationGuard implements CanActivate {
 
     const authenticatedUser = {
       user_id: user.user_id.toString(),
-      email: user.email,
+      username: user.username,
       firstname: user.firstname,
       lastname: user.lastname,
       require_password_change: user.require_password_change,

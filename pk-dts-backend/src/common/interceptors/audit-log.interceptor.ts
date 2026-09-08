@@ -24,7 +24,7 @@ export class AuditLogInterceptor implements NestInterceptor {
       const metadata = this.safeMetadata(request);
       const reason = this.reason(request);
       await this.prisma.auditLog.create({ data: {
-        user_id: BigInt(user.user_id), user_name: `${user.firstname} ${user.lastname}`.trim(), user_email: user.email,
+        user_id: BigInt(user.user_id), user_name: `${user.firstname} ${user.lastname}`.trim(), user_username: user.username,
         role_name: user.role.role_name, action, module,
         description: this.humanDescription(action, detail, entityId), method, path, entity_id: entityId,
         metadata, before_state: method === 'GET' ? undefined : metadata.body as Prisma.InputJsonValue,

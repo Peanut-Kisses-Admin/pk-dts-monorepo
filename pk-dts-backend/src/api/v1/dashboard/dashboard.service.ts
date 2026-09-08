@@ -229,7 +229,7 @@ export class DashboardService {
     return {
       user_id: user.user_id.toString(),
       full_name: `${user.firstname} ${user.lastname}`.trim(),
-      email: user.email,
+      username: user.username,
       role_name: user.role.role_name,
       created_at: user.created_at.toISOString(),
     };

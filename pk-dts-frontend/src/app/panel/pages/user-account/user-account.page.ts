@@ -101,7 +101,7 @@ interface NoticeState {
                 <div class="session-grid">
                     <div>
                         <div class="session-name">{{ currentSessionName() }}</div>
-                        <div class="session-copy">{{ currentUser()?.email }}</div>
+                        <div class="session-copy">{{ currentUser()?.username }}</div>
                     </div>
                     <div>
                         <div class="session-label">Role</div>
@@ -121,7 +121,7 @@ interface NoticeState {
                 </div>
                 <div class="registration-list" *ngIf="pendingRegistrations().length; else noRegistrations">
                     <article class="registration-request" *ngFor="let request of pendingRegistrations(); trackBy: trackRegistration">
-                        <div class="request-person"><span class="request-avatar"><i class="pi pi-user"></i></span><div><strong>{{ registrationName(request) }}</strong><small>{{ request.email }}</small><small>{{ request.position_title || 'No position title' }} · {{ request.phone_number || 'No phone number' }}</small></div></div>
+                        <div class="request-person"><span class="request-avatar"><i class="pi pi-user"></i></span><div><strong>{{ registrationName(request) }}</strong><small>{{ request.username }}</small><small>{{ request.position_title || 'No position title' }} ·</small></div></div>
                         <div class="requested-role"><span>Requested role</span><strong>{{ request.requested_role.role_name }}</strong><small>Submitted {{ formatDate(request.created_at) }}</small></div>
                         <div class="applicant-remarks"><span>Applicant remarks</span><p>{{ request.applicant_remarks || 'No remarks provided.' }}</p></div>
                         <label class="review-field"><span>Final assigned role</span><select [(ngModel)]="reviewRoles[request.registration_id]"><option value="">Select role</option><option *ngFor="let role of registrationRoles()" [value]="role.role_id">{{ role.role_name }}</option></select></label>
@@ -148,7 +148,6 @@ interface NoticeState {
                             <tr>
                                 <th class="px-4 py-3 font-bold">User</th>
                                 <th class="px-4 py-3 font-bold">Role</th>
-                                <th class="px-4 py-3 font-bold">Contact</th>
                                 <th class="px-4 py-3 font-bold">Position</th>
                                 <th class="px-4 py-3 font-bold">Created</th>
                                 <th class="px-4 py-3 text-right font-bold">Actions</th>
@@ -161,15 +160,10 @@ interface NoticeState {
                                         <div class="font-black text-slate-900">{{ fullName(user) }}</div>
                                         <span *ngIf="isCurrentUser(user)" class="current-user-pill">Current session</span>
                                     </div>
-                                    <div class="mt-1 text-sm text-slate-500">{{ user.email }}</div>
-                                    <div *ngIf="user.address" class="mt-1 max-w-xs text-xs leading-5 text-slate-400">{{ user.address }}</div>
+                                    <div class="mt-1 text-sm text-slate-500">{{ user.username }}</div>
                                 </td>
                                 <td class="px-4 py-4">
                                     <span class="role-pill">{{ user.role.role_name || 'No role' }}</span>
-                                </td>
-                                <td class="px-4 py-4">
-                                    <div class="text-slate-700">{{ user.phone_number || 'No phone number' }}</div>
-                                    <div class="mt-1 text-xs text-slate-400">Age: {{ user.age ?? 'N/A' }}</div>
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="text-slate-700">{{ user.position_title || 'No position title' }}</div>
@@ -198,22 +192,20 @@ interface NoticeState {
                                 </td>
                             </tr>
                             <tr *ngIf="!users().length && !isLoading()">
-                                <td colspan="6" class="px-4 py-10 text-center text-slate-500">No user accounts found. Create the first user to get started.</td>
+                                <td colspan="5" class="px-4 py-10 text-center text-slate-500">No user accounts found. Create the first user to get started.</td>
                             </tr>
                         </tbody>
                 </app-table-shell>
 
                 <app-record-grid *ngIf="viewMode === 'grid'" [empty]="!users().length && !isLoading()" emptyTitle="No user accounts found" emptyMessage="Create the first user to get started.">
-                    <app-record-card *ngFor="let user of users(); trackBy: trackUser" icon="pi pi-user" eyebrow="User account" [title]="fullName(user)" [subtitle]="user.email">
+                    <app-record-card *ngFor="let user of users(); trackBy: trackUser" icon="pi pi-user" eyebrow="User account" [title]="fullName(user)" [subtitle]="user.username">
                         <div record-badges>
                             <span>{{ user.role.role_name || 'No role' }}</span>
                             <span *ngIf="isCurrentUser(user)">Current session</span>
                         </div>
                         <div record-details>
-                            <div><span>Phone</span><strong>{{ user.phone_number || 'No phone number' }}</strong><small>Age: {{ user.age ?? 'N/A' }}</small></div>
                             <div><span>Position</span><strong>{{ user.position_title || 'No position title' }}</strong></div>
                             <div><span>Created</span><strong>{{ formatDate(user.created_at) }}</strong><small>Updated {{ formatDate(user.updated_at) }}</small></div>
-                            <div><span>Address</span><strong>{{ user.address || 'No address recorded' }}</strong></div>
                         </div>
                         <div record-actions>
                             <p-button label="View" icon="pi pi-eye" size="small" [outlined]="true" (onClick)="openUserView(user)" />
@@ -593,10 +585,7 @@ export class UserAccountPage implements OnInit {
                   firstname: user.firstname ?? '',
                   lastname: user.lastname ?? '',
                   middlename: user.middlename ?? '',
-                  age: user.age === undefined || user.age === null ? '' : String(user.age),
-                  address: user.address ?? '',
-                  phone_number: user.phone_number ?? '',
-                  email: user.email ?? '',
+                  username: user.username ?? '',
                   position_title: user.position_title ?? '',
                   password: '',
                   role_id: user.role?.role_id ?? '',
@@ -773,13 +762,11 @@ export class UserAccountPage implements OnInit {
             kindLabel: 'User Account',
             title: this.fullName(detail),
             subtitle: detail.position_title || 'Account profile overview',
-            nameLabel: 'Email',
-            name: detail.email,
-            description: detail.address || 'No address provided.',
+            nameLabel: 'Username',
+            name: detail.username,
+            description: detail.position_title || "User account",
             metrics: [
                 { label: 'Role', value: detail.role?.role_name || 'No role' },
-                { label: 'Phone', value: detail.phone_number || 'No phone number' },
-                { label: 'Age', value: detail.age === undefined || detail.age === null ? 'N/A' : String(detail.age) },
                 { label: 'Created documents', value: String(createdDocuments) },
                 { label: 'Uploaded revisions', value: String(uploadedRevisions) },
                 { label: 'Created', value: this.formatDate(detail.created_at) }
@@ -845,10 +832,7 @@ export class UserAccountPage implements OnInit {
             firstname: '',
             lastname: '',
             middlename: '',
-            age: '',
-            address: '',
-            phone_number: '',
-            email: '',
+            username: '',
             position_title: '',
             password: '',
             role_id: '',

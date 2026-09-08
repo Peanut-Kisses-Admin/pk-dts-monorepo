@@ -16,7 +16,7 @@ type AssignmentGroupKind = 'folder' | 'area' | 'location' | 'specific' | 'asset'
             <div class="assignment-dialog">
                 <div class="person-card">
                     <span class="person-icon"><i class="pi pi-user"></i></span>
-                    <div><strong>{{ fullName() }}</strong><span>{{ user?.email }}</span></div>
+                    <div><strong>{{ fullName() }}</strong><span>{{ user?.username }}</span></div>
                     <span class="count-pill">{{ selected.size }} assigned</span>
                 </div>
 

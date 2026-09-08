@@ -21,8 +21,8 @@ export class RegistrationService {
 
     roles() { return this.http.get<Envelope<RegistrationRole[]>>(`${API}/roles`).pipe(map(this.unwrap)); }
     register(payload: Record<string, unknown>) { return this.http.post<Envelope<RegistrationReceipt>>(API, payload).pipe(map(this.unwrap)); }
-    reference(email: string) { return this.http.post<Envelope<RegistrationReference>>(`${API}/reference`, { email }).pipe(map(this.unwrap)); }
-    status(email: string, reference_code: string) { return this.http.post<Envelope<RegistrationStatusResult>>(`${API}/status`, { email, reference_code }).pipe(map(this.unwrap)); }
+    reference(username: string) { return this.http.post<Envelope<RegistrationReference>>(`${API}/reference`, { username }).pipe(map(this.unwrap)); }
+    status(username: string, reference_code: string) { return this.http.post<Envelope<RegistrationStatusResult>>(`${API}/status`, { username, reference_code }).pipe(map(this.unwrap)); }
 
     private unwrap<T>(response: Envelope<T>): T { return response && typeof response === 'object' && 'data' in response ? response.data : response; }
 }

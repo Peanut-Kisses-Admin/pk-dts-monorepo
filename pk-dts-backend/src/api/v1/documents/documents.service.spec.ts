@@ -6,7 +6,7 @@ import { AuthenticatedUser } from '../../../common/auth/authenticated-user.inter
 
 const adminUser = {
   user_id: '1',
-  email: 'admin@example.com',
+  username: 'admin@example.com',
   firstname: 'System',
   lastname: 'Admin',
   require_password_change: false,
@@ -16,7 +16,7 @@ const adminUser = {
 const regularUser = {
   ...adminUser,
   user_id: '7',
-  email: 'staff@example.com',
+  username: 'staff@example.com',
   role: { role_id: '2', role_name: 'User', permissions: [] },
 } satisfies AuthenticatedUser;
 

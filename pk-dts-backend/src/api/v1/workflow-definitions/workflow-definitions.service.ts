@@ -9,12 +9,12 @@ import { UpdateWorkflowVersionDto } from "./dto/update-workflow-version.dto";
 import { WorkflowCondition, WorkflowGraph, WorkflowGraphEdge, WorkflowGraphNode } from "./workflow-graph.types";
 
 const WORKFLOW_INCLUDE = {
-  created_by: { select: { user_id: true, firstname: true, lastname: true, email: true } },
+  created_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
   versions: {
     orderBy: { version_number: "desc" as const },
     include: {
-      created_by: { select: { user_id: true, firstname: true, lastname: true, email: true } },
-      published_by: { select: { user_id: true, firstname: true, lastname: true, email: true } },
+      created_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
+      published_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
       _count: { select: { documents: true } },
     },
   },

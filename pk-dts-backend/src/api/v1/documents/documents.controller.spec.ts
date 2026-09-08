@@ -75,7 +75,7 @@ describe("DocumentsController disposal listing", () => {
 function authenticatedUser(permissions: string[], roleName = "Editor"): AuthenticatedUser {
   return {
     user_id: "7",
-    email: "editor@example.com",
+    username: "editor@example.com",
     firstname: "Document",
     lastname: "Editor",
     require_password_change: false,

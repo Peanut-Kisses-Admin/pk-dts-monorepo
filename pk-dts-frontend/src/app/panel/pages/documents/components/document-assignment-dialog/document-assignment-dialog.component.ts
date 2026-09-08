@@ -21,7 +21,7 @@ import { DocumentSummary, DocumentUserSummary } from '../../documents.types';
                 <div class="max-h-72 space-y-2 overflow-y-auto pr-1">
                     <label *ngFor="let user of filteredUsers()" class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 hover:bg-slate-50">
                         <input type="checkbox" [checked]="selected.has(user.user_id)" (change)="toggle(user.user_id)" />
-                        <span><strong class="block text-slate-900">{{ user.firstname }} {{ user.lastname }}</strong><small class="text-slate-500">{{ user.email }}</small></span>
+                        <span><strong class="block text-slate-900">{{ user.firstname }} {{ user.lastname }}</strong><small class="text-slate-500">{{ user.username }}</small></span>
                     </label>
                     <div *ngIf="!filteredUsers().length" class="py-8 text-center text-sm text-slate-500">No users match this search.</div>
                 </div>
@@ -51,7 +51,7 @@ export class DocumentAssignmentDialogComponent {
 
     filteredUsers() {
         const term = this.search.trim().toLowerCase();
-        return this.users.filter((user) => !term || `${user.firstname} ${user.lastname} ${user.email ?? ''}`.toLowerCase().includes(term));
+        return this.users.filter((user) => !term || `${user.firstname} ${user.lastname} ${user.username ?? ''}`.toLowerCase().includes(term));
     }
 
     toggle(userId: string) {

@@ -13,9 +13,9 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const normalizedEmail = dto.email.trim().toLowerCase();
+    const normalizedUsername = dto.username.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: normalizedEmail },
+      where: { username: normalizedUsername },
       include: {
         role: {
           include: {
@@ -26,18 +26,18 @@ export class AuthService {
     });
 
     if (!user) {
-      await this.writeLoginAudit(normalizedEmail, false);
-      throw new UnauthorizedException("Invalid email or password.");
+      await this.writeLoginAudit(normalizedUsername, false);
+      throw new UnauthorizedException("Invalid username or password.");
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
-      await this.writeLoginAudit(normalizedEmail, false, user);
-      throw new UnauthorizedException("Invalid email or password.");
+      await this.writeLoginAudit(normalizedUsername, false, user);
+      throw new UnauthorizedException("Invalid username or password.");
     }
 
-    await this.writeLoginAudit(normalizedEmail, true, user);
+    await this.writeLoginAudit(normalizedUsername, true, user);
 
     return {
       user: this.toAuthenticatedUser(user),
@@ -45,13 +45,13 @@ export class AuthService {
     };
   }
 
-  private async writeLoginAudit(email: string, success: boolean, user?: { user_id: bigint; firstname: string; lastname: string; role: { role_name: string } }) {
+  private async writeLoginAudit(username: string, success: boolean, user?: { user_id: bigint; firstname: string; lastname: string; role: { role_name: string } }) {
     try {
       await this.prisma.auditLog.create({
         data: {
           user_id: user?.user_id,
           user_name: user ? `${user.firstname} ${user.lastname}`.trim() : "Unknown user",
-          user_email: email.slice(0, 150),
+          user_username: username.slice(0, 150),
           role_name: user?.role.role_name || "UNKNOWN",
           action: success ? "LOGIN" : "LOGIN_FAILED",
           module: "auth",
@@ -59,8 +59,8 @@ export class AuthService {
           method: "POST",
           path: "/api/v1/auth/login",
           entity_id: user?.user_id.toString() || null,
-          metadata: { email },
-          reason: success ? null : "Invalid email or password.",
+          metadata: { username },
+          reason: success ? null : "Invalid username or password.",
         },
       });
     } catch { /* audit logging must not prevent authentication */ }
@@ -89,7 +89,7 @@ export class AuthService {
 
   private toAuthenticatedUser(user: {
     user_id: bigint;
-    email: string;
+    username: string;
     firstname: string;
     lastname: string;
     require_password_change: boolean;
@@ -135,7 +135,7 @@ export class AuthService {
 
     return {
       user_id: user.user_id.toString(),
-      email: user.email,
+      username: user.username,
       firstname: user.firstname,
       lastname: user.lastname,
       require_password_change: user.require_password_change,

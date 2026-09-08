@@ -1,6 +1,6 @@
 export interface AuthenticatedUser {
   user_id: string;
-  email: string;
+  username: string;
   firstname: string;
   lastname: string;
   require_password_change: boolean;

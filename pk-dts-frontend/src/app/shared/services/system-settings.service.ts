@@ -64,7 +64,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     loginHeadline: 'Secure access for your document control center.',
     loginDescription: 'Manage the full document lifecycle from one secure workspace. This portal keeps records organized, routes access by role, and brings documents, storage, users, and permissions together in a clean panel experience.',
     loginWelcomeTitle: 'Welcome back',
-    loginWelcomeSubtitle: 'Use your email and password to continue.',
+    loginWelcomeSubtitle: 'Use your username and password to continue.',
     assistantEnabled: true,
     assistantTitle: 'Document Assistant',
     assistantWelcomeText: 'Available across the panel for faster document lookup and guided retrieval, with offline local search fallback when internet AI is unavailable.',

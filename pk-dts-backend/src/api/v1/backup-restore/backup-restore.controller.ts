@@ -60,7 +60,7 @@ export class BackupRestoreController {
   @ApiOperation({ summary: "Create a new backup" })
   @ApiCreatedResponse({ description: "Backup created successfully." })
   create(@CurrentUser() user?: AuthenticatedUser) {
-    return this.backupRestoreService.createBackup(user?.email ?? "system");
+    return this.backupRestoreService.createBackup(user?.username ?? "system");
   }
 
   @Get("backups/:id/download")
@@ -81,9 +81,9 @@ export class BackupRestoreController {
       "Content-Type",
       fileName.endsWith(".zip") ? "application/zip" : "application/json; charset=utf-8",
     );
-    response.setHeader("X-Backup-Requested-By", user?.email ?? "system");
+    response.setHeader("X-Backup-Requested-By", user?.username ?? "system");
 
-    return this.backupRestoreService.downloadBackup(id, user?.email ?? "system");
+    return this.backupRestoreService.downloadBackup(id, user?.username ?? "system");
   }
 
   @Post("backups/upload-restore")
@@ -127,7 +127,7 @@ export class BackupRestoreController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @CurrentUser() user?: AuthenticatedUser,
   ) {
-    return this.backupRestoreService.restoreUploadedBackup(file, user?.email ?? "system");
+    return this.backupRestoreService.restoreUploadedBackup(file, user?.username ?? "system");
   }
 
   @Post("backups/:id/restore")
@@ -135,7 +135,7 @@ export class BackupRestoreController {
   @ApiOperation({ summary: "Restore a backup" })
   @ApiOkResponse({ description: "Backup restored successfully." })
   restore(@Param("id") id: string, @CurrentUser() user?: AuthenticatedUser) {
-    return this.backupRestoreService.restoreBackup(id, user?.email ?? "system");
+    return this.backupRestoreService.restoreBackup(id, user?.username ?? "system");
   }
 
   @Post("reset")
@@ -147,7 +147,7 @@ export class BackupRestoreController {
     @CurrentUser() user?: AuthenticatedUser,
   ) {
     return this.backupRestoreService.factoryReset(
-      user?.email ?? "system",
+      user?.username ?? "system",
       dto.scope,
     );
   }
@@ -157,6 +157,6 @@ export class BackupRestoreController {
   @ApiOperation({ summary: "Delete a backup file" })
   @ApiOkResponse({ description: "Backup deleted successfully." })
   remove(@Param("id") id: string, @CurrentUser() user?: AuthenticatedUser) {
-    return this.backupRestoreService.deleteBackup(id, user?.email ?? "system");
+    return this.backupRestoreService.deleteBackup(id, user?.username ?? "system");
   }
 }

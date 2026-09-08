@@ -34,7 +34,7 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                     <div class="intro-copy">
                         <span class="eyebrow">Secure account request</span>
                         <h1>{{ mode() === 'register' ? 'Join your document workspace.' : 'Follow your request.' }}</h1>
-                        <p>{{ mode() === 'register' ? 'Submit your details for review. An authorized account manager will confirm your access and assign the appropriate role.' : 'Use your registration email to retrieve the latest request and see its current approval status.' }}</p>
+                        <p>{{ mode() === 'register' ? 'Submit your details for review. An authorized account manager will confirm your access and assign the appropriate role.' : 'Use your registration username to retrieve the latest request and see its current approval status.' }}</p>
                     </div>
                     <div class="process-list" *ngIf="mode() === 'register'">
                         <div><b>1</b><span><strong>Send your request</strong><small>Provide your identity and requested access.</small></span></div>
@@ -48,7 +48,7 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                     <div class="content-heading">
                         <span>Account access</span>
                         <h2>{{ mode() === 'register' ? 'Request an account' : 'Check registration status' }}</h2>
-                        <p>{{ mode() === 'register' ? 'Complete the form below. Fields marked required must be provided.' : 'Enter the email address used when you registered.' }}</p>
+                        <p>{{ mode() === 'register' ? 'Complete the form below. Fields marked required must be provided.' : 'Enter the username used when you registered.' }}</p>
                     </div>
                     <nav class="mode-tabs" aria-label="Registration options">
                         <button type="button" [class.active]="mode() === 'register'" (click)="setMode('register')"><i class="pi pi-user-plus"></i><span>New request</span></button>
@@ -63,12 +63,8 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                         ><span>Middle name <small>Optional</small></span
                         ><input formControlName="middlename"
                     /></label>
-                    <label
-                        ><span>Phone number <small>Optional</small></span
-                        ><input formControlName="phone_number" autocomplete="tel"
-                    /></label>
                     <div class="section-label wide"><i class="pi pi-briefcase"></i><span><strong>Work and access</strong><small>Help us assign the right permissions</small></span></div>
-                    <label class="wide"><span>Email address</span><input formControlName="email" type="email" autocomplete="email" /></label>
+                    <label class="wide"><span>Username</span><input formControlName="username" type="text" autocomplete="username" /></label>
                     <label class="wide"
                         ><span>Position title <small>Optional</small></span
                         ><input formControlName="position_title"
@@ -101,7 +97,7 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                 </section>
 
                 <form *ngIf="mode() === 'status' && !statusResult()" [formGroup]="statusForm" (ngSubmit)="checkStatus()" class="status-form">
-                    <label><span>Email address</span><input formControlName="email" type="email" autocomplete="email" /></label>
+                    <label><span>Username</span><input formControlName="username" type="text" autocomplete="username" /></label>
                     <div class="lookup-message" [class.found]="referenceLookupState() === 'found'" [class.missing]="referenceLookupState() === 'missing'" *ngIf="referenceLookupState() !== 'idle'" aria-live="polite">
                         <i class="pi" [ngClass]="referenceLookupState() === 'checking' ? 'pi-spin pi-spinner' : referenceLookupState() === 'found' ? 'pi-check-circle' : 'pi-info-circle'"></i>
                         <span>{{ referenceLookupMessage() }}</span>
@@ -110,7 +106,7 @@ import { RegistrationReceipt, RegistrationRole, RegistrationService, Registratio
                     <aside class="status-guide">
                         <i class="pi pi-lightbulb"></i>
                         <div>
-                            <strong>How to check your request</strong><span>Enter the same email used during registration. If a request exists, its latest reference code is filled in automatically. Then select <b>Check status</b>.</span>
+                            <strong>How to check your request</strong><span>Enter the same username used during registration. If a request exists, its latest reference code is filled in automatically. Then select <b>Check status</b>.</span>
                         </div>
                     </aside>
                     <div class="error" *ngIf="errorMessage()"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</div>
@@ -1103,18 +1099,17 @@ export class Register implements OnInit {
         firstname: ['', Validators.required],
         lastname: ['', Validators.required],
         middlename: [''],
-        phone_number: [''],
-        email: ['', [Validators.required, Validators.email]],
+        username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9][a-zA-Z0-9._@+-]{0,149}$/)]],
         position_title: [''],
         applicant_remarks: [''],
         requested_role_id: ['', Validators.required],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', Validators.required]
     });
-    statusForm = this.fb.group({ email: ['', [Validators.required, Validators.email]], reference_code: ['', Validators.required] });
+    statusForm = this.fb.group({ username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9][a-zA-Z0-9._@+-]{0,149}$/)]], reference_code: ['', Validators.required] });
     ngOnInit() {
         this.registration.roles().subscribe({ next: (r) => this.roles.set(r), error: () => this.errorMessage.set('Registration roles could not be loaded.') });
-        this.statusForm.controls.email.valueChanges.pipe(debounceTime(600), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef)).subscribe((email) => this.lookupReference(email ?? ''));
+        this.statusForm.controls.username.valueChanges.pipe(debounceTime(600), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef)).subscribe((username) => this.lookupReference(username ?? ''));
     }
     coverImage() {
         const url = this.settings().loginCoverUrl.replace(/["'()]/g, '');
@@ -1124,9 +1119,9 @@ export class Register implements OnInit {
         this.mode.set(mode);
         this.errorMessage.set('');
         this.statusResult.set(null);
-        if (mode === 'status' && !this.statusForm.controls.email.value) {
-            const email = this.registerForm.controls.email.value ?? '';
-            if (email) this.statusForm.controls.email.setValue(email);
+        if (mode === 'status' && !this.statusForm.controls.username.value) {
+            const username = this.registerForm.controls.username.value ?? '';
+            if (username) this.statusForm.controls.username.setValue(username);
         }
     }
     submitRegistration() {
@@ -1156,14 +1151,14 @@ export class Register implements OnInit {
         });
     }
     checkReceipt(result: RegistrationReceipt) {
-        this.statusForm.setValue({ email: this.registerForm.value.email ?? '', reference_code: result.reference_code }, { emitEvent: false });
+        this.statusForm.setValue({ username: this.registerForm.value.username ?? '', reference_code: result.reference_code }, { emitEvent: false });
         this.receipt.set(null);
         this.setMode('status');
         this.checkStatus();
     }
-    private lookupReference(email: string) {
-        const emailControl = this.statusForm.controls.email;
-        if (!email || emailControl.invalid) {
+    private lookupReference(username: string) {
+        const usernameControl = this.statusForm.controls.username;
+        if (!username || usernameControl.invalid) {
             this.referenceLookupState.set('idle');
             this.referenceLookupMessage.set('');
             return;
@@ -1172,30 +1167,30 @@ export class Register implements OnInit {
         this.referenceLookupState.set('checking');
         this.referenceLookupMessage.set('Looking for an existing registration request…');
         this.statusForm.controls.reference_code.setValue('');
-        this.registration.reference(email).subscribe({
+        this.registration.reference(username).subscribe({
             next: (r) => {
-                if (this.statusForm.controls.email.value?.trim().toLowerCase() !== email.trim().toLowerCase()) return;
+                if (this.statusForm.controls.username.value?.trim().toLowerCase() !== username.trim().toLowerCase()) return;
                 this.statusForm.controls.reference_code.setValue(r.reference_code);
                 this.referenceLookupState.set('found');
                 this.referenceLookupMessage.set(`Registration found (${r.status.toLowerCase()}). The reference code was filled in automatically.`);
             },
             error: () => {
-                if (this.statusForm.controls.email.value?.trim().toLowerCase() !== email.trim().toLowerCase()) return;
+                if (this.statusForm.controls.username.value?.trim().toLowerCase() !== username.trim().toLowerCase()) return;
                 this.referenceLookupState.set('missing');
-                this.referenceLookupMessage.set('No registration request was found for this email. Check the spelling or submit a new request.');
+                this.referenceLookupMessage.set('No registration request was found for this username. Check the spelling or submit a new request.');
             }
         });
     }
     checkStatus() {
         this.statusForm.markAllAsTouched();
         if (this.statusForm.invalid) {
-            this.errorMessage.set('Enter the registration email and reference code.');
+            this.errorMessage.set('Enter the registration username and reference code.');
             return;
         }
         this.loading.set(true);
         this.errorMessage.set('');
         const v = this.statusForm.getRawValue();
-        this.registration.status(v.email ?? '', v.reference_code ?? '').subscribe({
+        this.registration.status(v.username ?? '', v.reference_code ?? '').subscribe({
             next: (r) => {
                 this.statusResult.set(r);
                 this.loading.set(false);

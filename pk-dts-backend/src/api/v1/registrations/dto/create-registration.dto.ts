@@ -1,12 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { Matches, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateRegistrationDto {
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(100) firstname: string;
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(100) lastname: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(100) middlename?: string;
-  @ApiProperty() @IsEmail() @MaxLength(150) email: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(20) phone_number?: string;
+  @ApiProperty() @Matches(/^[a-zA-Z0-9][a-zA-Z0-9._@+-]{0,149}$/) @MaxLength(150) username: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(100) position_title?: string;
   @ApiPropertyOptional({ description: "Optional message for the account manager." })
   @IsOptional()

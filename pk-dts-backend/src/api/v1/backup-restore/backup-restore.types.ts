@@ -102,9 +102,6 @@ export interface BackupRestoreSnapshot {
       firstname: string;
       lastname: string;
       middlename: string | null;
-      age: number | null;
-      address: string | null;
-      phone_number: string | null;
       position_title: string | null;
       password: string;
       require_password_change: boolean;

@@ -38,7 +38,7 @@ describe("RegistrationsService administrative role protection", () => {
       service.create({
         firstname: "Test",
         lastname: "User",
-        email: "test@example.com",
+        username: "test@example.com",
         password: "password123",
         requested_role_id: "1",
       }),
@@ -51,7 +51,7 @@ describe("RegistrationsService administrative role protection", () => {
         findUnique: jest.fn().mockResolvedValue({
           registration_id: 1n,
           status: RegistrationStatus.PENDING,
-          email: "test@example.com",
+          username: "test@example.com",
         }),
       },
       role: {

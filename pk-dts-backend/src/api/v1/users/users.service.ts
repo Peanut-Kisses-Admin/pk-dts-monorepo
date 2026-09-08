@@ -32,10 +32,7 @@ export class UsersService {
           firstname: true,
           lastname: true,
           middlename: true,
-          age: true,
-          address: true,
-          phone_number: true,
-          email: true,
+          username: true,
           position_title: true,
           leader_id: true,
           leader: { select: { user_id: true, firstname: true, lastname: true } },
@@ -72,7 +69,7 @@ export class UsersService {
 
     const registration = await this.prisma.accountRegistrationRequest.findFirst({
       where: {
-        email: user.email,
+        username: user.username,
         status: RegistrationStatus.APPROVED,
       },
       select: { applicant_remarks: true },
@@ -92,10 +89,7 @@ export class UsersService {
           firstname: dto.firstname,
           lastname: dto.lastname,
           middlename: dto.middlename,
-          age: dto.age,
-          address: dto.address,
-          phone_number: dto.phone_number,
-          email: dto.email.trim().toLowerCase(),
+          username: dto.username.trim().toLowerCase(),
           position_title: dto.position_title,
           password: await bcrypt.hash(dto.password, 10),
           role_id: toBigIntId(dto.role_id, "role_id"),
@@ -118,10 +112,7 @@ export class UsersService {
           firstname: dto.firstname,
           lastname: dto.lastname,
           middlename: dto.middlename,
-          age: dto.age,
-          address: dto.address,
-          phone_number: dto.phone_number,
-          email: dto.email?.trim().toLowerCase(),
+          username: dto.username?.trim().toLowerCase(),
           position_title: dto.position_title,
           password: dto.password
             ? await bcrypt.hash(dto.password, 10)
@@ -208,7 +199,7 @@ export class UsersService {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      throw new ConflictException("A user with this email already exists.");
+      throw new ConflictException("A user with this username already exists.");
     }
 
     throw error;

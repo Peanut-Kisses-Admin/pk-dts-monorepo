@@ -49,19 +49,19 @@ const REQUEST_INCLUDE = {
       user_id: true,
       firstname: true,
       lastname: true,
-      email: true,
+      username: true,
       position_title: true,
     },
   },
   reviewer: {
-    select: { user_id: true, firstname: true, lastname: true, email: true },
+    select: { user_id: true, firstname: true, lastname: true, username: true },
   },
   approver: {
-    select: { user_id: true, firstname: true, lastname: true, email: true },
+    select: { user_id: true, firstname: true, lastname: true, username: true },
   },
   history: {
     orderBy: { created_at: "asc" },
-    include: { actor: { select: { user_id: true, firstname: true, lastname: true, email: true } } },
+    include: { actor: { select: { user_id: true, firstname: true, lastname: true, username: true } } },
   },
 } satisfies Prisma.DocumentAccessRequestInclude;
 

@@ -2448,7 +2448,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
     }
 
     currentUserName() {
-        return this.fullName(this.auth.user()) || this.auth.user()?.email || '';
+        return this.fullName(this.auth.user()) || this.auth.user()?.username || '';
     }
 
     requestorName(document: DocumentSummary) {
@@ -2467,7 +2467,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
     assignmentUsersLabel(document: DocumentSummary) {
         const assignments = document.assignments ?? [];
         if (!assignments.length) return 'Unassigned';
-        const names = assignments.map((assignment) => this.fullName(assignment.user) || assignment.user.email || 'User');
+        const names = assignments.map((assignment) => this.fullName(assignment.user) || assignment.user.username || 'User');
         return names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2} more` : names.join(', ');
     }
 
@@ -2475,7 +2475,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
         const assignments = document.assignments ?? [];
         if (!assignments.length) return 'No user-specific access assigned';
         const latest = [...assignments].sort((left, right) => new Date(right.assigned_at ?? 0).getTime() - new Date(left.assigned_at ?? 0).getTime())[0];
-        const actor = this.fullName(latest.assigner) || latest.assigner?.email || 'Administrator';
+        const actor = this.fullName(latest.assigner) || latest.assigner?.username || 'Administrator';
         return `Assigned by ${actor}${latest.assigned_at ? ` · ${this.formatDate(latest.assigned_at)}` : ''}`;
     }
 

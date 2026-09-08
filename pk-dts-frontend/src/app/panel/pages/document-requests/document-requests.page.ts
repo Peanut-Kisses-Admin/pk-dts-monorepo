@@ -454,7 +454,7 @@ export class DocumentRequestsPage implements OnInit {
         return item.status?.trim().toLowerCase() === 'draft'
             && this.auth.hasAnyPermission('documents.delete', 'document-requests.delete', 'documents.manage-own');
     }
-    currentUserName() { const user = this.auth.user(); return [user?.firstname, user?.lastname].filter(Boolean).join(' ') || user?.email || ''; }
+    currentUserName() { const user = this.auth.user(); return [user?.firstname, user?.lastname].filter(Boolean).join(' ') || user?.username || ''; }
     requester(item: DocumentSummary) { return item.requested_by_name || [item.requester?.firstname, item.requester?.lastname].filter(Boolean).join(' ') || 'Current user'; }
     statusLabel(status: DocumentSummary['status']) {
         const labels: Record<string, string> = { Draft: 'Draft', PendingApproval: 'Pending Approval', ForNotedBy: 'For Noted By', ForPlantManagerApproval: 'For Plant Manager Approval', ForDocumentControllerAdmin: 'For Document Controller/Admin Approval', ForApproval: 'For Approval', Approved: 'Approved — Pending Release', Completed: 'Completed / Released', ReturnedForCorrection: 'For Revision', ForRevision: 'For Revision', Rejected: 'Rejected', Cancelled: 'Cancelled', Disposed: 'Disposed' };

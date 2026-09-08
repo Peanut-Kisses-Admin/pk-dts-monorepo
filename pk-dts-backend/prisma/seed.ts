@@ -21,9 +21,9 @@ import {
 const prisma = new PrismaClient();
 
 const DEFAULT_ADMIN_ROLE_NAME = "Admin";
-const DEFAULT_ADMIN_EMAIL =
-  process.env.DEFAULT_ADMIN_EMAIL?.trim().toLowerCase() ||
-  "admin@document-tracking.com";
+const DEFAULT_ADMIN_USERNAME =
+  process.env.DEFAULT_ADMIN_USERNAME?.trim().toLowerCase() ||
+  "admin";
 const DEFAULT_ADMIN_PASSWORD =
   process.env.DEFAULT_ADMIN_PASSWORD?.trim() || "admin123";
 const DEFAULT_ADMIN_FIRSTNAME =
@@ -483,7 +483,7 @@ async function main() {
   );
 
   const adminUser = await prisma.user.upsert({
-    where: { email: DEFAULT_ADMIN_EMAIL },
+    where: { username: DEFAULT_ADMIN_USERNAME },
     update: {
       firstname: DEFAULT_ADMIN_FIRSTNAME,
       lastname: DEFAULT_ADMIN_LASTNAME,
@@ -493,7 +493,7 @@ async function main() {
     create: {
       firstname: DEFAULT_ADMIN_FIRSTNAME,
       lastname: DEFAULT_ADMIN_LASTNAME,
-      email: DEFAULT_ADMIN_EMAIL,
+      username: DEFAULT_ADMIN_USERNAME,
       password: hashedPassword,
       position_title: "System Administrator",
       role_id: adminRole.role_id,
@@ -578,7 +578,7 @@ async function main() {
   });
 
   console.log("Database seed completed.");
-  console.log(`Default admin email: ${DEFAULT_ADMIN_EMAIL}`);
+  console.log(`Default admin username: ${DEFAULT_ADMIN_USERNAME}`);
   console.log(
     "The default admin account is seeded with require_password_change=true.",
   );
