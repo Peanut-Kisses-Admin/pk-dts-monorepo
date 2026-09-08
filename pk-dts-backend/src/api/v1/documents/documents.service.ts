@@ -1,3 +1,5 @@
+import { rm } from "fs/promises";
+import { randomUUID } from "crypto";
 import {
   BadRequestException,
   ConflictException,
@@ -125,7 +127,7 @@ const WORKFLOW_STAGE_POLICY: Record<
   },
 };
 
-const SOFTCOPY_ARTIFACT_GENERATOR_VERSION = "office-stamp-v2";
+const SOFTCOPY_ARTIFACT_GENERATOR_VERSION = "softcopy-stamp-v3";
 const FINALIZED_DOCUMENT_STATUSES = new Set<DocumentStatus>([
   DocumentStatus.Approved,
   DocumentStatus.Completed,
@@ -4021,9 +4023,9 @@ export class DocumentsService {
       throw new NotFoundException("The softcopy revision was not found.");
     }
 
-    if (!/\.(docx|xlsx|xls)$/i.test(revision.file_name)) {
+    if (!/\.(pdf|docx|xlsx|xls)$/i.test(revision.file_name)) {
       throw new BadRequestException(
-        "Electronic stamps are supported for DOCX and Excel files only.",
+        "Electronic stamps are supported for PDF, DOCX and Excel files only.",
       );
     }
 
@@ -4099,7 +4101,7 @@ export class DocumentsService {
     const stamp = input.artifactType === SoftcopyArtifactType.CONTROLLED
       ? this.electronicDocumentStamp.buildStamp(input.documentStatus, input.revision, input.documentNumber)
       : this.electronicDocumentStamp.buildUncontrolledCopyStamp(input.revision, input.documentNumber);
-    const stamped = this.electronicDocumentStamp.stampOfficeFile(
+    const stamped = await this.electronicDocumentStamp.stampFile(
       await readFile(input.sourcePath),
       input.revision.file_name,
       stamp,
@@ -4109,7 +4111,13 @@ export class DocumentsService {
       artifactUploadsRoot,
       `${input.revisionId.toString()}-${input.artifactType.toLowerCase()}-${input.sourceFingerprint}${extname(stamped.fileName)}`,
     );
-    await writeFile(artifactPath, stamped.buffer);
+    const temporaryPath = `${artifactPath}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(temporaryPath, stamped.buffer);
+      await rename(temporaryPath, artifactPath);
+    } finally {
+      await rm(temporaryPath, { force: true });
+    }
     const artifact = await this.prisma.softcopyRevisionArtifact.upsert({
       where: {
         revision_id_artifact_type: {
@@ -4149,7 +4157,7 @@ export class DocumentsService {
   }
 
   private revisionArtifactFingerprint(
-    revision: { revision_id: bigint; file_path: string; revision_number: string; effective_date: Date | null; new_effective_date: Date | null },
+    revision: { revision_id: bigint; file_path: string; revision_number: string; effective_date: Date | null; new_effective_date: Date | null; is_current?: boolean; is_historical?: boolean; approved_at?: Date | null },
     documentStatus: DocumentStatus,
     documentNumber: string | null,
     artifactType: SoftcopyArtifactType,
@@ -4165,6 +4173,9 @@ export class DocumentsService {
         revision.revision_number,
         revision.effective_date?.toISOString() || "",
         revision.new_effective_date?.toISOString() || "",
+        revision.is_current,
+        revision.is_historical,
+        revision.approved_at?.toISOString() || "",
         documentStatus,
         documentNumber || "",
         artifactType,
@@ -4199,7 +4210,7 @@ export class DocumentsService {
       !document ||
       document.document_type !== DocumentType.SOFTCOPY ||
       !revision ||
-      !/\.(docx|xlsx|xls)$/i.test(revision.file_name)
+      !/\.(pdf|docx|xlsx|xls)$/i.test(revision.file_name)
     ) return;
 
     for (const artifactType of [SoftcopyArtifactType.CONTROLLED, SoftcopyArtifactType.UNCONTROLLED]) {

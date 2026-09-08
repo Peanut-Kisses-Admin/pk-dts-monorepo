@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { PDFDocument, PDFName, PDFString, StandardFonts, rgb } from "pdf-lib";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { DocumentRevision, DocumentStatus } from "@prisma/client";
 import AdmZip = require("adm-zip");
 import { posix } from "path";
@@ -93,6 +94,45 @@ export class ElectronicDocumentStampService {
     );
   }
 
+  async stampFile(source: Buffer, fileName: string, stamp: ElectronicDocumentStamp) {
+    try {
+      if (!/\.pdf$/i.test(fileName)) {
+        const result = this.stampOfficeFile(source, fileName, stamp);
+        const archive = new AdmZip(result.buffer);
+        archive.addFile("customXml/dts-stamp.xml", Buffer.from(`<dtsStamp color="${stamp.color}">${this.xmlEscape(stamp.text)}</dtsStamp>`));
+        const types = archive.getEntry("[Content_Types].xml");
+        if (types && !types.getData().toString("utf8").includes('PartName="/customXml/dts-stamp.xml"')) {
+          archive.updateFile("[Content_Types].xml", Buffer.from(types.getData().toString("utf8").replace("</Types>", '<Override PartName="/customXml/dts-stamp.xml" ContentType="application/xml"/></Types>')));
+        }
+        return { ...result, buffer: archive.toBuffer() };
+      }
+      const pdf = await PDFDocument.load(source);
+      const marker = PDFName.of("DTSStamp");
+      const previous = pdf.catalog.get(marker);
+      if (previous) {
+        if (previous instanceof PDFString && previous.decodeText() === stamp.text) {
+          return { buffer: source, fileName: this.stampedFileName(fileName), mimeType: "application/pdf" };
+        }
+        throw new Error("This PDF already contains a DTS stamp. Use the preserved original source file.");
+      }
+      const font = await pdf.embedFont(StandardFonts.HelveticaBold);
+      const color = rgb(...([0, 2, 4].map((offset) => parseInt(stamp.color.slice(offset, offset + 2), 16) / 255) as [number, number, number]));
+      for (const page of pdf.getPages()) {
+        const box = page.getCropBox();
+        const media = page.getMediaBox();
+        // Add a footer margin outside the source page; original content is not covered.
+        page.setMediaBox(media.x, media.y - 32, media.width, media.height + 32);
+        page.setCropBox(box.x, box.y - 32, box.width, box.height + 32);
+        const size = Math.min(9, (box.width - 24) / font.widthOfTextAtSize(stamp.text, 1));
+        page.drawText(stamp.text, { x: box.x + 12, y: box.y - 20, font, size, color });
+      }
+      pdf.catalog.set(marker, PDFString.of(stamp.text));
+      return { buffer: Buffer.from(await pdf.save()), fileName: this.stampedFileName(fileName), mimeType: "application/pdf" };
+    } catch (error) {
+      throw new BadRequestException(error instanceof Error ? `Unable to stamp the source file: ${error.message}` : "Unable to stamp the source file.");
+    }
+  }
+
   stampOfficeFile(
     source: Buffer,
     fileName: string,
@@ -149,7 +189,7 @@ export class ElectronicDocumentStampService {
 
   private stampedFileName(fileName: string) {
     const extension = fileName.match(/\.[^.]+$/)?.[0] || "";
-    const baseName = extension ? fileName.slice(0, -extension.length) : fileName;
+    const baseName = (extension ? fileName.slice(0, -extension.length) : fileName).replace(/-(stamped|uncontrolled)$/i, "");
     return `${baseName}-stamped${extension.toLowerCase() === ".xls" ? ".xlsx" : extension}`;
   }
 
@@ -179,7 +219,10 @@ export class ElectronicDocumentStampService {
     for (const target of footerTargets) {
       const footerEntry = archive.getEntry(target);
       if (!footerEntry) continue;
-      const originalFooter = footerEntry.getData().toString("utf8");
+      const originalFooter = footerEntry.getData().toString("utf8")
+        .replace(/<w:sdt>\s*<w:sdtPr><w:tag w:val="DTS_ELECTRONIC_STAMP"\/><\/w:sdtPr>[\s\S]*?<\/w:sdt>/g, "")
+        .replace(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g, (paragraph) =>
+          /<w:t[^>]*>(CONTROLLED DOCUMENT|UNCONTROLLED COPY|SUPERSEDED DOCUMENT|OBSOLETE DOCUMENT|DRAFT DOCUMENT) \| Document No\.:/.test(paragraph) ? "" : paragraph);
       if (!originalFooter.includes("</w:ftr>")) continue;
       archive.updateFile(
         target,
@@ -268,17 +311,16 @@ export class ElectronicDocumentStampService {
 
       if (headerFooterMatch) {
         const headerFooter = headerFooterMatch[0];
-        const updatedHeaderFooter = /<oddFooter\b[^>]*>[\s\S]*?<\/oddFooter>/i.test(
-          headerFooter,
-        )
-          ? headerFooter.replace(
-              /<oddFooter\b[^>]*>[\s\S]*?<\/oddFooter>/i,
-              `<oddFooter>${footer}</oddFooter>`,
-            )
-          : headerFooter.replace(
-              "</headerFooter>",
-              `<oddFooter>${footer}</oddFooter></headerFooter>`,
-            );
+        let updatedHeaderFooter = headerFooter;
+        for (const tag of ["oddFooter", "evenFooter", "firstFooter"]) {
+          const pattern = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+          const existing = updatedHeaderFooter.match(pattern)?.[1] || "";
+          const preserved = existing.replace(/(?:&#10;|\n)?&amp;C&amp;K[0-9A-F]{6}(?:CONTROLLED DOCUMENT|UNCONTROLLED COPY|SUPERSEDED DOCUMENT|OBSOLETE DOCUMENT|DRAFT DOCUMENT)[\s\S]*$/i, "");
+          const replacement = `<${tag}>${preserved}${preserved ? "&#10;" : ""}${footer}</${tag}>`;
+          updatedHeaderFooter = pattern.test(updatedHeaderFooter)
+            ? updatedHeaderFooter.replace(pattern, replacement)
+            : updatedHeaderFooter.replace("</headerFooter>", `${replacement}</headerFooter>`);
+        }
         worksheetXml = this.insertWorksheetHeaderFooter(
           worksheetXml.replace(headerFooter, ""),
           updatedHeaderFooter,
@@ -286,12 +328,12 @@ export class ElectronicDocumentStampService {
       } else if (/<headerFooter\b[^>]*\/>/i.test(worksheetXml)) {
         worksheetXml = this.insertWorksheetHeaderFooter(
           worksheetXml.replace(/<headerFooter\b[^>]*\/>/i, ""),
-          `<headerFooter><oddFooter>${footer}</oddFooter></headerFooter>`,
+          `<headerFooter><oddFooter>${footer}</oddFooter><evenFooter>${footer}</evenFooter><firstFooter>${footer}</firstFooter></headerFooter>`,
         );
       } else {
         worksheetXml = this.insertWorksheetHeaderFooter(
           worksheetXml,
-          `<headerFooter><oddFooter>${footer}</oddFooter></headerFooter>`,
+          `<headerFooter><oddFooter>${footer}</oddFooter><evenFooter>${footer}</evenFooter><firstFooter>${footer}</firstFooter></headerFooter>`,
         );
       }
 
@@ -336,7 +378,7 @@ export class ElectronicDocumentStampService {
   }
 
   private docxStampParagraph(stamp: ElectronicDocumentStamp) {
-    return `<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="${stamp.color}"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">${this.xmlEscape(stamp.text)}</w:t></w:r></w:p>`;
+    return `<w:sdt><w:sdtPr><w:tag w:val="DTS_ELECTRONIC_STAMP"/></w:sdtPr><w:sdtContent><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="${stamp.color}"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">${this.xmlEscape(stamp.text)}</w:t></w:r></w:p></w:sdtContent></w:sdt>`;
   }
 
   private docxFooterDocument(stamp: ElectronicDocumentStamp) {

@@ -1,3 +1,4 @@
+import { PDFDocument, PDFName, PDFString } from "pdf-lib";
 import { DocumentStatus } from "@prisma/client";
 import AdmZip = require("adm-zip");
 import * as XLSX from "xlsx";
@@ -140,4 +141,49 @@ describe("ElectronicDocumentStampService", () => {
       "Sheet1",
     ]);
   });
+  it("replaces managed DOCX stamps on repeated generation and keeps source content", async () => {
+    const zip = new AdmZip();
+    zip.addFile("word/document.xml", Buffer.from('<w:document><w:body><w:p><w:r><w:t>Original content</w:t></w:r></w:p><w:sectPr></w:sectPr></w:body></w:document>'));
+    zip.addFile("word/_rels/document.xml.rels", Buffer.from('<Relationships></Relationships>'));
+    zip.addFile("[Content_Types].xml", Buffer.from('<Types></Types>'));
+    const original = zip.toBuffer();
+    const first = await service.stampFile(original, 'source.docx', service.buildStamp(DocumentStatus.Completed, revision, 'DOC-001'));
+    const second = await service.stampFile(first.buffer, first.fileName, service.buildUncontrolledCopyStamp(revision, 'DOC-001'));
+    const output = new AdmZip(second.buffer);
+    const footer = output.readAsText('word/electronic-stamp-footer.xml');
+    expect(footer.match(/DTS_ELECTRONIC_STAMP/g)).toHaveLength(1);
+    expect(footer).toContain('UNCONTROLLED COPY');
+    expect(footer).toContain('FF0000');
+    expect(output.readAsText('word/document.xml')).toContain('Original content');
+    expect(new AdmZip(original).getEntry('word/electronic-stamp-footer.xml')).toBeNull();
+    expect(second.fileName).toBe('source-stamped.docx');
+  });
+
+  it("stamps all Excel footer variants without duplicate stamps", async () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Source cell']]), 'One');
+    const source = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const stamp = service.buildUncontrolledCopyStamp(revision, 'DOC-001');
+    const first = await service.stampFile(source, 'source.xlsx', stamp);
+    const second = await service.stampFile(first.buffer, 'source.xlsx', stamp);
+    const xml = new AdmZip(second.buffer).readAsText('xl/worksheets/sheet1.xml');
+    for (const tag of ['oddFooter', 'evenFooter', 'firstFooter']) {
+      expect(xml.match(new RegExp(`<${tag}>(.*?)</${tag}>`))?.[1].match(/UNCONTROLLED COPY/g)).toHaveLength(1);
+    }
+    expect(new AdmZip(second.buffer).readAsText('customXml/dts-stamp.xml')).toContain('FF0000');
+  });
+
+  it("adds a PDF footer margin, preserves the source, and prevents restamping", async () => {
+    const source = await PDFDocument.create(); source.addPage([600, 800]);
+    const bytes = Buffer.from(await source.save());
+    const stamp = service.buildStamp(DocumentStatus.Completed, revision, 'DOC-001');
+    const result = await service.stampFile(bytes, 'source.pdf', stamp);
+    const pdf = await PDFDocument.load(result.buffer);
+    expect(pdf.getPages()[0].getCropBox().height).toBe(832);
+    expect((pdf.catalog.get(PDFName.of('DTSStamp')) as PDFString).decodeText()).toBe(stamp.text);
+    expect((await PDFDocument.load(bytes)).getPages()[0].getHeight()).toBe(800);
+    expect((await service.stampFile(result.buffer, 'source.pdf', stamp)).buffer).toEqual(result.buffer);
+    await expect(service.stampFile(result.buffer, 'source.pdf', service.buildUncontrolledCopyStamp(revision))).rejects.toThrow('preserved original');
+  });
+
 });

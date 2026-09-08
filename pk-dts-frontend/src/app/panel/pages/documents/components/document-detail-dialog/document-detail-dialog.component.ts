@@ -91,6 +91,15 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                     </div>
                 </section>
 
+                <section *ngIf="selectedRevision" class="file-preview-panel" aria-label="Document file preview">
+                    <h3>{{ selectedRevision.file_name }}</h3>
+                    <p *ngIf="previewKind === 'loading'" role="status">Loading document preview?</p>
+                    <p *ngIf="previewKind === 'error'" role="alert">{{ previewError }}</p>
+                    <p *ngIf="previewKind === 'unsupported'">Preview is unavailable for this format. Use Download to inspect the original file.</p>
+                    <img *ngIf="previewKind === 'image'" [src]="previewObjectUrl" alt="Document preview" style="max-width:100%" />
+                    <iframe *ngIf="previewKind === 'pdf'" [src]="previewResourceUrl" title="Document preview" style="width:100%;height:65vh;border:0"></iframe>
+                    <iframe *ngIf="previewKind === 'office'" [srcdoc]="previewHtml" sandbox="" title="Office document preview" style="width:100%;height:65vh;border:1px solid #e5e7eb"></iframe>
+                </section>
                 <div class="workspace-grid single-column">
                     <section class="info-panel storage-panel">
                         <div class="section-heading">
@@ -112,7 +121,7 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                                 <button *ngIf="canAccessFiles" type="button" (click)="openRevision(current)"><i class="pi pi-external-link"></i>Open file</button>
                                 <button *ngIf="canAccessFiles && isStampableOfficeRevision(current)" type="button" [disabled]="downloadInProgress" (click)="downloadRevision(current, 'controlled')"><i class="pi pi-shield"></i>{{ downloadInProgress ? 'Preparing copy...' : 'Download controlled copy' }}</button>
                                 <button *ngIf="canAccessFiles" type="button" [disabled]="downloadInProgress" (click)="downloadRevision(current, 'uncontrolled')"><i class="pi pi-download"></i>{{ downloadInProgress ? 'Preparing copy...' : 'Download uncontrolled copy' }}</button>
-                                <small *ngIf="isStampableOfficeRevision(current)" class="controlled-file-note">DOCX and Excel downloads include an embedded controlled or uncontrolled stamp. The original revision remains unchanged.</small>
+                                <small *ngIf="isStampableOfficeRevision(current)" class="controlled-file-note">PDF, DOCX and Excel downloads include an embedded controlled or uncontrolled stamp. The original revision remains unchanged.</small>
                                 <small *ngIf="!isStampableOfficeRevision(current)" class="controlled-file-note">This file is downloaded from the original revision. The original revision remains unchanged.</small>
                                 <small *ngIf="downloadError" class="download-error"><i class="pi pi-exclamation-triangle"></i>{{ downloadError }}</small>
                             </div>
@@ -382,7 +391,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     private workflowErrorMessage(error: unknown) { const candidate = error as { error?: { message?: string | string[] }; message?: string }; const message = candidate?.error?.message; return Array.isArray(message) ? message.join(' ') : message || candidate?.message || 'Unable to reassign this approval step.'; }
 
     async selectRevision(revision: RevisionSummary) {
-        if (!this.canAccessFiles) return;
+        if (!this.canAccessFiles || (this.selectedRevision?.revision_id === revision.revision_id && ['loading', 'office', 'pdf', 'image'].includes(this.previewKind))) return;
         this.selectedRevision = revision;
         this.revokePreviewUrl();
         this.previewHtml = '';
@@ -394,7 +403,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
         const request = ++this.previewRequest;
         this.previewKind = 'loading';
         try {
-            const blob = stampable && !link
+            const blob = stampable
                 ? await this.loadStampedRevision(revision)
                 : await this.loadOriginalRevision(link);
             if (request !== this.previewRequest) return;
@@ -408,7 +417,9 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
                 this.previewResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.previewObjectUrl);
                 this.previewKind = 'pdf';
             } else if (this.isModernOfficeRevision(revision)) {
-                this.previewHtml = await this.buildOfficePreview(await blob.arrayBuffer(), revision);
+                const html = await this.buildOfficePreview(await blob.arrayBuffer(), revision);
+                if (request !== this.previewRequest) return;
+                this.previewHtml = html;
                 this.previewKind = 'office';
             } else {
                 this.previewKind = 'unsupported';
@@ -600,15 +611,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     handleHide() { this.close(); }
 
     async openRevision(revision: RevisionSummary) {
-        const link = this.revisionLink(revision);
-        const stampable = this.isStampableOfficeRevision(revision);
-        if (!link && !stampable) return;
-        const protocol = this.officeProtocol(revision);
-        if (!stampable && protocol && this.systemSettings.settings().officeOpenMode === 'desktop') { window.location.href = `${protocol}:ofe|u|${this.absoluteUrl(link)}`; return; }
-        if (!this.isModernOfficeRevision(revision)) { window.open(link, '_blank', 'noopener,noreferrer'); return; }
-        const target = window.open('', '_blank'); if (!target) return;
-        this.showLoadingPage(target, revision.file_name || 'Document preview');
-        await this.renderModernOfficeRevision(revision, target);
+        await this.selectRevision(revision);
     }
 
     async downloadRevision(revision: RevisionSummary, artifactType: 'controlled' | 'uncontrolled' = 'uncontrolled') {
@@ -651,7 +654,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     private isImage(name: string, mime: string) { return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name) || mime.startsWith('image/'); }
     private isExcelRevision(revision: RevisionSummary) { return /\.(xlsx|xls)$/i.test(revision.file_name || this.revisionLink(revision)); }
     private isModernOfficeRevision(revision: RevisionSummary) { return /\.(xlsx|xls|docx|pptx)$/i.test(revision.file_name || this.revisionLink(revision)); }
-    isStampableOfficeRevision(revision: RevisionSummary) { return /\.(xlsx|xls|docx)$/i.test(revision.file_name || this.revisionLink(revision)); }
+    isStampableOfficeRevision(revision: RevisionSummary) { return /\.(pdf|xlsx|xls|docx)$/i.test(revision.file_name || this.revisionLink(revision)); }
     private officeProtocol(revision: RevisionSummary) { const name = revision.file_name || this.revisionLink(revision); if (/\.(xlsx|xls|csv)$/i.test(name)) return 'ms-excel'; if (/\.(docx|doc|rtf)$/i.test(name)) return 'ms-word'; if (/\.(pptx|ppt)$/i.test(name)) return 'ms-powerpoint'; return ''; }
     private absoluteUrl(link: string) { return new URL(link, window.location.href).href; }
 
@@ -692,14 +695,19 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
 
     private async buildOfficePreview(buffer: ArrayBuffer, revision: RevisionSummary) {
         const title = this.escapeHtml(revision.file_name || `Revision ${revision.revision_number}`);
+        const archive = await JSZip.loadAsync(buffer);
+        const stampXml = await archive.file('customXml/dts-stamp.xml')?.async('string');
+        const stampNode = stampXml ? new DOMParser().parseFromString(stampXml, 'application/xml').documentElement : null;
+        const color = stampNode?.getAttribute('color') || '';
+        const stamp = stampNode && /^[0-9A-F]{6}$/i.test(color) ? { text: stampNode.textContent || '', color } : null;
+        if (this.isStampableOfficeRevision(revision) && !stamp) throw new Error('The generated copy is missing its control stamp. Please retry.');
         if (this.isExcelRevision(revision)) {
-            const workbook = XLSX.read(buffer, { type: 'array' });
-            const sheets = workbook.SheetNames.map((name) => `<section><h4>${this.escapeHtml(name)}</h4>${this.buildWorksheetPreview(workbook.Sheets[name])}${this.stampMarkup(revision)}</section>`).join('');
+            const workbook = XLSX.read(buffer, { type: 'array', sheetRows: 200 });
+            const sheets = workbook.SheetNames.slice(0, 10).map((name) => `<section><h4>${this.escapeHtml(name)}</h4>${this.buildWorksheetPreview(workbook.Sheets[name])}${this.stampMarkup(stamp)}</section>`).join('');
             return `<h4>${title}</h4>${sheets || '<p>This workbook has no worksheets.</p>'}`;
         }
 
         const isWord = /\.docx$/i.test(revision.file_name || '');
-        const archive = await JSZip.loadAsync(buffer);
         const entries = Object.values(archive.files)
             .filter((entry) => !entry.dir && (isWord ? /word\/document\.xml$/i.test(entry.name) : /ppt\/slides\/slide\d+\.xml$/i.test(entry.name)))
             .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
@@ -708,7 +716,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
             const xml = await entry.async('string');
             const parsed = new DOMParser().parseFromString(xml, 'application/xml');
             const text = Array.from(parsed.getElementsByTagName('*')).filter((node) => ['w:t', 'a:t'].includes(node.nodeName)).map((node) => node.textContent || '').filter(Boolean);
-            return `<section><h4>${isWord ? title : `Slide ${index + 1}`}</h4>${text.map((value) => `<p>${this.escapeHtml(value)}</p>`).join('')}${isWord ? this.stampMarkup(revision) : ''}</section>`;
+            return `<section><h4>${isWord ? title : `Slide ${index + 1}`}</h4>${text.map((value) => `<p>${this.escapeHtml(value)}</p>`).join('')}${isWord ? this.stampMarkup(stamp) : ''}</section>`;
         }));
         return sections.join('');
     }
@@ -740,32 +748,18 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     private async renderModernOfficeRevision(revision: RevisionSummary, target: Window) {
         try {
             const link = this.revisionLink(revision);
-            const body = await this.buildOfficePreview(await (link ? (await this.loadOriginalRevision(link)).arrayBuffer() : (await this.loadStampedRevision(revision)).arrayBuffer()), revision);
-            const stamp = this.stampMarkup(revision, 'fixed');
+            const body = await this.buildOfficePreview(await (this.isStampableOfficeRevision(revision) ? (await this.loadStampedRevision(revision)).arrayBuffer() : (await this.loadOriginalRevision(link)).arrayBuffer()), revision);
+            const stamp = body.match(/<div class="electronic-stamp inline"[\s\S]*?<\/div>/)?.[0]?.replace('electronic-stamp inline', 'electronic-stamp fixed') || '';
             target.document.open(); target.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${this.escapeHtml(revision.file_name || 'Preview')}</title><style>body{font-family:Arial,sans-serif;color:#111;margin:28px;padding-bottom:46px}h4{border-bottom:2px solid #b91c1c;padding-bottom:8px}section{margin-bottom:24px;break-after:page}section:last-child{break-after:auto}table{width:max-content;min-width:100%;border-collapse:collapse;font-size:12px}td,th{border:1px solid #aaa;padding:5px 7px}p{margin:5px 0;line-height:1.5}.electronic-stamp.inline{margin-top:18px;padding-top:8px;border-top:2px solid currentColor;text-align:center;font:700 11px Arial,sans-serif}.electronic-stamp.fixed{display:none}@media print{.electronic-stamp.inline{display:none}.electronic-stamp.fixed{display:block;position:fixed;left:0;right:0;bottom:0;margin:0;padding:8px 12px;border-top:2px solid currentColor;background:#fff;text-align:center;font:700 11px Arial,sans-serif}}</style></head><body>${body}${stamp}</body></html>`); target.document.close();
         } catch (error) { this.showPreviewError(target, error); }
     }
 
     private showLoadingPage(target: Window, title: string) { target.document.open(); target.document.write(`<!doctype html><html><head><title>${this.escapeHtml(title)}</title></head><body style="font-family:Arial,sans-serif;padding:24px">Preparing preview...</body></html>`); target.document.close(); }
     private showPreviewError(target: Window, error: unknown) { const message = error instanceof Error ? error.message : 'Unable to preview this file.'; target.document.open(); target.document.write(`<!doctype html><html><head><title>Preview unavailable</title></head><body style="font-family:Arial,sans-serif;padding:24px"><h1>Preview unavailable</h1><p>${this.escapeHtml(message)}</p></body></html>`); target.document.close(); }
-    private stampMarkup(revision: RevisionSummary, variant: 'inline' | 'fixed' = 'inline') {
-        const stamp = this.electronicStamp(revision);
-        return `<div class="electronic-stamp ${variant}" style="color:#${stamp.color};">${this.escapeHtml(stamp.text)}</div>`;
+    private stampMarkup(stamp: { color: string; text: string } | null, variant: 'inline' | 'fixed' = 'inline') {
+        return stamp ? `<div class="electronic-stamp ${variant}" style="color:#${stamp.color};border-top:2px solid currentColor;margin-top:18px;padding:8px;text-align:center;font:bold 11px Arial">${this.escapeHtml(stamp.text)}</div>` : '';
     }
-    private electronicStamp(revision: RevisionSummary) {
-        const status = this.document?.status;
-        const number = this.document?.document_number || 'N/A';
-        const revisionNumber = revision.revision_number || 'N/A';
-        const effectiveDate = revision.effective_date || revision.new_effective_date;
-        const effective = effectiveDate ? new Date(effectiveDate).toISOString().slice(0, 10) : 'N/A';
-        const metadata = `Document No.: ${number} | Rev. ${revisionNumber}`;
-        if (revision.is_historical || (!revision.is_current && revision.approved_at)) return { color: '666666', text: `SUPERSEDED DOCUMENT | ${metadata} | NOT FOR CURRENT USE.` };
-        if (status === 'Cancelled' || status === 'Disposed') return { color: '666666', text: `OBSOLETE DOCUMENT | ${metadata} | NOT FOR USE.` };
-        if (status === 'Rejected') return { color: 'FF0000', text: `UNCONTROLLED COPY | ${metadata} | Verify the current revision before use.` };
-        if (status === 'Approved' || status === 'Completed') return { color: '0000FF', text: `CONTROLLED DOCUMENT | ${metadata} | Effective Date: ${effective}` };
-        return { color: 'C65D00', text: `DRAFT DOCUMENT | ${metadata} | NOT APPROVED FOR USE.` };
-    }
-    private resetPreview() { this.selectedRevision = null; this.previewKind = 'idle'; this.previewHtml = ''; this.previewError = ''; this.copiedRoute = false; this.revokePreviewUrl(); }
+    private resetPreview() { this.previewRequest++; this.selectedRevision = null; this.previewKind = 'idle'; this.previewHtml = ''; this.previewError = ''; this.copiedRoute = false; this.revokePreviewUrl(); }
     private revokePreviewUrl() { if (this.previewObjectUrl) URL.revokeObjectURL(this.previewObjectUrl); this.previewObjectUrl = ''; this.previewResourceUrl = null; }
     private escapeHtml(value: string) { return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character] || character); }
 }
