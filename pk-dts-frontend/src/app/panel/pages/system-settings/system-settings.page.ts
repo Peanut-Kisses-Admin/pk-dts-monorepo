@@ -177,28 +177,6 @@ import { COLOR_THEME_OPTIONS, DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSet
                     >
                 </article>
 
-                <article *ngIf="activeTab() === 'infrastructure'" id="storage-api" class="setting-card">
-                    <div class="card-heading">
-                        <div class="card-icon"><i class="pi pi-cloud"></i></div>
-                        <div>
-                            <h2>Backblaze B2</h2>
-                            <p>Off-site backup synchronization is managed by the backend backup worker.</p>
-                        </div>
-                    </div>
-                    <div class="integration-list">
-                        <div>
-                            <i class="pi pi-key"></i><span><strong>Application credentials</strong><small>Protected server setting</small></span>
-                        </div>
-                        <div>
-                            <i class="pi pi-database"></i><span><strong>Bucket and backup prefix</strong><small>Configured through deployment environment</small></span>
-                        </div>
-                        <div>
-                            <i class="pi pi-sync"></i><span><strong>Sync and retry policy</strong><small>Handled by the background automation service</small></span>
-                        </div>
-                    </div>
-                    <div class="security-note"><i class="pi pi-shield"></i><span>B2 key IDs, application keys, and bucket IDs are intentionally never sent to the browser.</span></div>
-                </article>
-
                 <article *ngIf="activeTab() === 'infrastructure'" class="setting-card">
                     <div class="card-heading">
                         <div class="card-icon"><i class="pi pi-server"></i></div>
