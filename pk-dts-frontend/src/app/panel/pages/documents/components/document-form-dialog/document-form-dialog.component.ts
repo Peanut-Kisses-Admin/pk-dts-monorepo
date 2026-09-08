@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -216,7 +216,7 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                 </div>
                 <div class="field" *ngIf="!isHardcopy()">
                     <label for="document-type">Document type <span class="text-red-500">*</span></label>
-                    <select id="document-type" [(ngModel)]="form.document_type" class="select-field">
+                    <select id="document-type" [(ngModel)]="form.document_type" (ngModelChange)="onDocumentTypeChange()" class="select-field">
                         <option *ngFor="let type of documentTypes" [value]="type">{{ type }}</option>
                     </select>
                 </div>
@@ -533,7 +533,7 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
         `
     ]
 })
-export class DocumentFormDialogComponent {
+export class DocumentFormDialogComponent implements OnChanges {
     @Input() users: DocumentUserSummary[] = [];
     @Input() canAssignUsers = false;
     @Input() canDirectCreate = false;
@@ -549,7 +549,6 @@ export class DocumentFormDialogComponent {
         this._visible = value;
         if (value) {
             this.submitted = false;
-            if (this.mode === 'create') this.loadPublishedWorkflows();
         }
     }
 
@@ -618,6 +617,18 @@ export class DocumentFormDialogComponent {
     publishedWorkflows: PublishedWorkflowVersion[] = [];
     workflowsLoading = false;
     workflowLoadError = '';
+    private workflowLoadId = 0;
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (this.visible && this.mode === 'create' && (changes['visible'] || changes['form'] || changes['mode'])) this.loadPublishedWorkflows();
+    }
+
+    onDocumentTypeChange() {
+        this.form.workflow_version_id = '';
+        this.form.workflow_editable = false;
+        this.applyWorkflowPreset('RECOMMENDED');
+        this.loadPublishedWorkflows();
+    }
 
     submit(action: 'DRAFT' | 'SUBMIT') {
         this.submitted = true;
@@ -723,10 +734,12 @@ export class DocumentFormDialogComponent {
     }
 
     loadPublishedWorkflows() {
+        const loadId = ++this.workflowLoadId;
         this.workflowsLoading = true;
         this.workflowLoadError = '';
         this.workflowBuilderService.published(this.form.document_type).subscribe({
             next: (workflows) => {
+                if (loadId !== this.workflowLoadId) return;
                 this.publishedWorkflows = workflows;
                 this.workflowsLoading = false;
                 if (!this.form.workflow_version_id && !this.form.workflow_editable) {
@@ -735,7 +748,7 @@ export class DocumentFormDialogComponent {
                     if (recommended) this.selectPublishedWorkflow(recommended.workflow_version_id);
                 }
             },
-            error: () => { this.publishedWorkflows = []; this.workflowsLoading = false; this.workflowLoadError = 'Unable to load approval workflows. Retry before saving this request.'; }
+            error: () => { if (loadId !== this.workflowLoadId) return; this.publishedWorkflows = []; this.workflowsLoading = false; this.workflowLoadError = 'Unable to load approval workflows. Retry before saving this request.'; }
         });
     }
 
