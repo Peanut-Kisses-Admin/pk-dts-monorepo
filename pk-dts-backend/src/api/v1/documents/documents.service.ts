@@ -1764,7 +1764,7 @@ export class DocumentsService {
               "Admin",
               "DOCUMENT_CONTROLLER",
               "DOCUMENT CONTROLLER",
-              "Document Controller",
+              "Documentation Officer", "Document Controller",
               "Document Controller Officer",
               "ADMIN",
               "Administrator",
@@ -1783,7 +1783,7 @@ export class DocumentsService {
               "Administrator",
               "DOCUMENT_CONTROLLER",
               "DOCUMENT CONTROLLER",
-              "Document Controller",
+              "Documentation Officer", "Document Controller",
               "Document Controller Officer",
               "Plant Manager",
               "PLANT_MANAGER",
@@ -2209,7 +2209,7 @@ export class DocumentsService {
           "super admin",
           "superadmin",
           "super-admin",
-          "document controller",
+          "documentation officer", "document controller",
           "document_controller",
           "document controller officer",
           "document_controller_officer",
@@ -2229,7 +2229,7 @@ export class DocumentsService {
           "super admin",
           "superadmin",
           "super-admin",
-          "document controller",
+          "documentation officer", "document controller",
           "document_controller",
           "document controller officer",
           "document_controller_officer",
@@ -2339,8 +2339,8 @@ export class DocumentsService {
       const byId = new Map(configuredUsers.map((configuredUser) => [configuredUser.user_id.toString(), configuredUser]));
       this.assertConfiguredApprover(byId, dto.noted_by_user_id, "Noted By", ["document-requests.approve-noted-by"]);
       this.assertConfiguredApprover(byId, dto.plant_manager_user_id, "Plant Manager", ["document-requests.approve-plant-manager"], ["plant manager", "plant_manager", "plant-manager"]);
-      this.assertConfiguredApprover(byId, dto.document_controller_user_id, "Document Controller/Admin", ["document-requests.approve-document-controller"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin"]);
-      this.assertConfiguredApprover(byId, dto.hardcopy_approver_user_id, "Hardcopy", ["document-requests.approve-hardcopy"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin", "plant manager", "plant_manager", "plant-manager"]);
+      this.assertConfiguredApprover(byId, dto.document_controller_user_id, "Document Controller/Admin", ["document-requests.approve-document-controller"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "documentation officer", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin"]);
+      this.assertConfiguredApprover(byId, dto.hardcopy_approver_user_id, "Hardcopy", ["document-requests.approve-hardcopy"], ["admin", "administrator", "super admin", "superadmin", "super-admin", "documentation officer", "document controller", "document_controller", "document controller officer", "document_controller_officer", "document controller/admin", "plant manager", "plant_manager", "plant-manager"]);
       this.assertConfiguredApprover(byId, dto.access_approver_user_id, "Document Access", ["document-access-requests.approve"]);
       this.assertConfiguredApprover(byId, dto.document_owner_user_id, "Document Owner", ["document-access-requests.approve"]);
     }

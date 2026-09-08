@@ -235,7 +235,7 @@ export class HardcopyTransfersService {
   }
 
   private async findApproverId() {
-    const user = await this.prisma.user.findFirst({ where: { role: { role_name: { in: ["Admin", "ADMIN", "Administrator", "DOCUMENT_CONTROLLER", "Document Controller", "Document Controller Officer", "PLANT_MANAGER", "Plant Manager"] } } }, select: { user_id: true }, orderBy: { user_id: "asc" } });
+    const user = await this.prisma.user.findFirst({ where: { role: { role_name: { in: ["Admin", "ADMIN", "Administrator", "DOCUMENT_CONTROLLER", "Documentation Officer", "Document Controller", "Document Controller Officer", "PLANT_MANAGER", "Plant Manager"] } } }, select: { user_id: true }, orderBy: { user_id: "asc" } });
     return user?.user_id ?? null;
   }
 

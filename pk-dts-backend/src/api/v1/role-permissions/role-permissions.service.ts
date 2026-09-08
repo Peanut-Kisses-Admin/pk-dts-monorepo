@@ -1,3 +1,4 @@
+import { DEFAULT_INTERNAL_AUDIT_PERMISSION_NAMES } from "../../../common/constants/permission-catalog";
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { toBigIntId } from '../../../common/utils/prisma-id.util';
@@ -36,8 +37,8 @@ export class RolePermissionsService {
     ]);
     if (!role || !permission) throw new NotFoundException('Role or permission was not found.');
     const normalizedRole = role.role_name.trim().toLowerCase();
-    if (normalizedRole === 'viewer' && !['dashboard.view', 'documents.view', 'softcopy-folders.view'].includes(permission.permission_name)) {
-      throw new BadRequestException('Viewer is a protected read-only role and can only receive view permissions.');
+    if (normalizedRole === 'internal audit' && !(DEFAULT_INTERNAL_AUDIT_PERMISSION_NAMES as readonly string[]).includes(permission.permission_name)) {
+      throw new BadRequestException('Internal Audit is a protected read-only role and can only receive view permissions.');
     }
     return this.prisma.rolePermission.create({
       data: {
@@ -54,8 +55,8 @@ export class RolePermissionsService {
       include: { role: true, permission: true },
     });
     if (!existing) throw new NotFoundException('Role permission was not found.');
-    if (existing.role.role_name.trim().toLowerCase() === 'viewer') {
-      throw new BadRequestException('Viewer is a protected read-only role. Its required view permissions cannot be removed.');
+    if (existing.role.role_name.trim().toLowerCase() === 'internal audit') {
+      throw new BadRequestException('Internal Audit is a protected read-only role. Its required view permissions cannot be removed.');
     }
     return this.prisma.rolePermission.delete({ where: { role_permission_id: rolePermissionId } });
   }

@@ -17,6 +17,23 @@ async function main() {
   try {
     await prisma.$connect();
 
+    // Rename existing identifiers before db push, preserving accounts and audit history.
+    for (const [table, oldColumn, newColumn] of [
+      ['users', 'email', 'username'],
+      ['account_registration_requests', 'email', 'username'],
+      ['audit_logs', 'user_email', 'user_username'],
+    ]) {
+      await prisma.$executeRawUnsafe(`DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='${table}' AND column_name='${oldColumn}')
+          AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='${table}' AND column_name='${newColumn}') THEN
+          ALTER TABLE "${table}" RENAME COLUMN "${oldColumn}" TO "${newColumn}";
+        END IF;
+      END $$;`);
+    }
+    await prisma.$executeRawUnsafe(`ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS age, DROP COLUMN IF EXISTS address, DROP COLUMN IF EXISTS phone_number`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE IF EXISTS account_registration_requests DROP COLUMN IF EXISTS phone_number`);
+
+
     await prisma.$executeRawUnsafe(`
       DO $$
       BEGIN

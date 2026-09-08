@@ -365,6 +365,25 @@ async function main() {
     update: { description: "Approves and completes requests assigned to Document Control." },
     create: { role_name: "Documentation Officer", description: "Approves and completes requests assigned to Document Control." },
   });
+  // db-push deployments also need the role consolidation used by SQL migrations.
+  const systemRoles = [adminRole, viewerRole, staffRole, plantManagerRole, documentControllerRole];
+  const obsoleteRoles = await prisma.role.findMany({ where: { role_id: { notIn: systemRoles.map((role) => role.role_id) } } });
+  for (const oldRole of obsoleteRoles) {
+    const normalized = oldRole.role_name.trim().toLowerCase().replace(/ /g, "");
+    const target = ["admin", "administrator", "superadmin", "super-admin"].includes(normalized) ? adminRole
+      : normalized === "viewer" ? viewerRole
+      : ["documentcontroller", "document_controller", "documentcontrollerofficer", "documentationofficer"].includes(normalized) ? documentControllerRole
+      : normalized === "plantmanager" ? plantManagerRole : staffRole;
+    await prisma.$transaction(async (tx) => {
+      await tx.user.updateMany({ where: { role_id: oldRole.role_id }, data: { role_id: target.role_id } });
+      await tx.accountRegistrationRequest.updateMany({ where: { requested_role_id: oldRole.role_id }, data: { requested_role_id: target.role_id } });
+      await tx.accountRegistrationRequest.updateMany({ where: { assigned_role_id: oldRole.role_id }, data: { assigned_role_id: target.role_id } });
+      await tx.documentWorkflowStep.updateMany({ where: { assigned_role_id: oldRole.role_id }, data: { assigned_role_id: target.role_id } });
+      await tx.rolePermission.deleteMany({ where: { role_id: oldRole.role_id } });
+      await tx.role.delete({ where: { role_id: oldRole.role_id } });
+    });
+  }
+
   for (const [role, permissionNames] of [
     [staffRole, DEFAULT_STAFF_PERMISSION_NAMES],
     [plantManagerRole, DEFAULT_PLANT_MANAGER_PERMISSION_NAMES],
