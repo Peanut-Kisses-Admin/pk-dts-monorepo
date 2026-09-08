@@ -39,7 +39,7 @@ export class WorkflowBuilderPage implements OnInit {
     createOpen = false;
     createForm = { workflow_key: '', name: '', description: '', document_type: '' as '' | 'SOFTCOPY' | 'HARDCOPY' };
 
-    readonly outcomes: WorkflowOutcome[] = ['APPROVE', 'REJECT', 'RETURN'];
+    readonly outcomes: WorkflowOutcome[] = ['APPROVE', 'REJECT', 'RETURN', 'DEFAULT'];
     readonly conditionFields: WorkflowCondition['field'][] = ['document_type', 'action_requested', 'business_document_type', 'requester_type'];
 
     ngOnInit() { this.load(); }

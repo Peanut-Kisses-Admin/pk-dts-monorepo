@@ -64,7 +64,7 @@ describe('Workflow Builder execution', () => {
         { workflow_step_id: 11n, node_key: 'extra', stage: 'CUSTOM', assigned_user_id: 8n, status: 'QUEUED' },
       ],
     }).mockResolvedValueOnce({ document_id: 1n, status: 'PendingApproval' });
-    await service.transition('1', '7', action, '', { ...actor, role: { ...actor.role, permissions: [permission] } });
+    await service.transition('1', '7', action, '', { ...actor, role: { ...actor.role, permissions: [permission, 'custom.review'] } });
     expect(prisma.documentWorkflowStep.update).toHaveBeenCalledWith({ where: { workflow_step_id: 11n }, data: { status: 'PENDING' } });
     expect(prisma.document.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ workflow_current_node_key: 'extra' }) }));
   });
@@ -76,6 +76,21 @@ describe('Workflow Builder execution', () => {
       ],
     }).mockResolvedValueOnce({ document_id: 1n, status: 'Approved' });
     await expect(service.transition('1', '7', 'approve', '', actor)).resolves.toMatchObject({ status: 'Approved' });
+  });
+
+  it.each(['Cancelled', 'Draft', 'Rejected'])('cannot approve a stale pending step on a %s request', async status => {
+    prisma.document.findUnique.mockResolvedValue({ document_id: 1n, document_type: 'HARDCOPY', created_by: 3n, status, workflow_steps: [
+      { workflow_step_id: 10n, node_key: 'review', stage: 'CUSTOM', assigned_user_id: 7n, status: 'PENDING' },
+    ] });
+    await expect(service.transition('1', '7', 'approve', '', actor)).rejects.toThrow(`Cannot approve a ${status} request.`);
+    expect(prisma.documentWorkflowStep.update).not.toHaveBeenCalled();
+  });
+
+  it('denies a custom decision when its configured permission is missing', async () => {
+    prisma.document.findUnique.mockResolvedValue({ document_id: 1n, document_type: 'HARDCOPY', created_by: 3n, status: 'PendingApproval', workflow_version_id: 2n, workflow_steps: [
+      { workflow_step_id: 10n, node_key: 'review', stage: 'CUSTOM', assigned_user_id: 7n, status: 'PENDING', required_permission: 'custom.review' },
+    ] });
+    await expect(service.transition('1', '7', 'reject', '', actor)).rejects.toThrow('permission to approve this workflow stage');
   });
 
   it('does not substitute a legacy approver for an unresolved Builder role', async () => {

@@ -1730,12 +1730,14 @@ export class DocumentsService {
         const fallback = await this.findUserByRoleId(
           tx,
           toBigIntId(plannedStep.assigned_role_id, "workflow_assigned_role_id"),
+          creatorId,
+          plannedStep.required_permission,
         );
         assignedUserId = fallback?.user_id ?? null;
         assignmentSource = "WORKFLOW_ROLE";
       }
       if (!assignedUserId && plannedStep.assignment_type === "PERMISSION" && plannedStep.required_permission) {
-        const fallback = await this.findUserByPermission(tx, plannedStep.required_permission);
+        const fallback = await this.findUserByPermission(tx, plannedStep.required_permission, creatorId);
         assignedUserId = fallback?.user_id ?? null;
         assignmentSource = "WORKFLOW_PERMISSION";
       }
@@ -1896,17 +1898,18 @@ export class DocumentsService {
     });
   }
 
-  private async findUserByRoleId(tx: Prisma.TransactionClient, roleId: bigint) {
+  private async findUserByRoleId(tx: Prisma.TransactionClient, roleId: bigint, creatorId: bigint, permission?: string) {
     return tx.user.findFirst({
-      where: { role_id: roleId },
+      where: { role_id: roleId, user_id: { not: creatorId }, ...(permission ? { role: { role_permissions: { some: { permission: { permission_name: permission } } } } } : {}) },
       select: { user_id: true },
       orderBy: { user_id: "asc" },
     });
   }
 
-  private async findUserByPermission(tx: Prisma.TransactionClient, permissionName: string) {
+  private async findUserByPermission(tx: Prisma.TransactionClient, permissionName: string, creatorId: bigint) {
     return tx.user.findFirst({
       where: {
+        user_id: { not: creatorId },
         role: {
           role_permissions: {
             some: { permission: { permission_name: permissionName } },
@@ -2434,7 +2437,11 @@ export class DocumentsService {
         },
       });
       if (!newUser) throw new BadRequestException("The replacement approver was not found.");
-      this.assertApproverForStage(
+      if (step.required_permission) {
+        if (!this.isAdministrativeRole(newUser.role.role_name) && !newUser.role.role_permissions.some(({ permission }) => permission.permission_name === step.required_permission)) {
+          throw new BadRequestException(`The replacement approver needs ${step.required_permission}.`);
+        }
+      } else this.assertApproverForStage(
         new Map([[newUser.user_id.toString(), newUser]]),
         newUser.user_id.toString(),
         step.stage,
@@ -2615,6 +2622,7 @@ export class DocumentsService {
         },
       });
       if (!current) return null;
+      const originalNodeKey = current.workflow_current_node_key;
       const pendingStep = current.workflow_steps.find(
         (candidate) =>
           candidate.status === WorkflowStepStatus.PENDING &&
@@ -2622,6 +2630,8 @@ export class DocumentsService {
       ) ?? current.workflow_steps.find(
         (candidate) => candidate.status === WorkflowStepStatus.PENDING,
       );
+      const builderDecision = !!current.workflow_version_id && !!pendingStep &&
+        ["approve", "reject", "request-revision"].includes(action) && !FINALIZED_DOCUMENT_STATUSES.has(current.status);
 
       let receivedAt: Date | null = null;
       let releasedAt: Date | null = null;
@@ -2636,12 +2646,12 @@ export class DocumentsService {
               : action === "reject"
                 ? "document-requests.reject"
                 : undefined;
-        if (actionPermission && !hasAnyPermission(actor, [actionPermission])) {
+        if (actionPermission && !builderDecision && !hasAnyPermission(actor, [actionPermission])) {
           throw new ForbiddenException("You do not have permission to perform this request action.");
         }
       }
 
-      if (actor && action === "approve") {
+      if (actor && (action === "approve" || builderDecision)) {
         if (current.created_by === actorId) throw new ForbiddenException("A request creator cannot approve their own request.");
         const isRequesterLeaderNotedBy =
           pendingStep?.stage === DocumentWorkflowStage.NOTED_BY &&
@@ -2789,6 +2799,9 @@ export class DocumentsService {
         nextStatus = DocumentStatus.ForRevision;
         current.workflow_current_node_key = null;
       } else {
+        if (![DocumentStatus.PendingApproval, DocumentStatus.ForApproval, DocumentStatus.ForNotedBy, DocumentStatus.ForPlantManagerApproval, DocumentStatus.ForDocumentControllerAdmin].includes(current.status as never)) {
+          throw new ConflictException(`Cannot ${action} a ${current.status} request.`);
+        }
         step = pendingStep;
         if (!step) {
           throw new ConflictException(`Cannot ${action} a ${current.status} request.`);
@@ -2896,7 +2909,7 @@ export class DocumentsService {
       }
 
       const result = await tx.document.updateMany({
-        where: { document_id: documentId, status: current.status },
+        where: { document_id: documentId, status: current.status, ...(originalNodeKey !== undefined ? { workflow_current_node_key: originalNodeKey } : {}) },
         data: {
           status: nextStatus,
           workflow_current_node_key: current.workflow_current_node_key,

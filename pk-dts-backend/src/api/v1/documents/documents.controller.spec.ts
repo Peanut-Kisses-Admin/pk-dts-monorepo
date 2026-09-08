@@ -20,7 +20,7 @@ describe("DocumentsController update permissions", () => {
     expect(update).toHaveBeenCalledWith("42", {
       document_title: "Updated",
       action: undefined,
-    });
+    }, user);
     expect(updateRequest).not.toHaveBeenCalled();
   });
 
@@ -30,7 +30,7 @@ describe("DocumentsController update permissions", () => {
 
     controller.update("42", dto, user);
 
-    expect(updateRequest).toHaveBeenCalledWith("42", dto, "7");
+    expect(updateRequest).toHaveBeenCalledWith("42", dto, "7", user);
     expect(update).not.toHaveBeenCalled();
   });
 });

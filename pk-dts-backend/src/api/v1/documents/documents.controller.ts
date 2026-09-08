@@ -287,7 +287,7 @@ export class DocumentsController {
   }
 
   @Post(":id/request-revision")
-  @RequirePermissions("document-requests.request-revision")
+  // transition() checks either the assigned Builder step or revision-request permission.
   requestRevision(
     @Param("id") id: string,
     @Body() dto: WorkflowActionDto,
@@ -303,7 +303,7 @@ export class DocumentsController {
   }
 
   @Post(":id/reject")
-  @RequirePermissions("document-requests.reject")
+  // transition() checks the assigned step and its decision permissions.
   reject(
     @Param("id") id: string,
     @Body() dto: WorkflowActionDto,

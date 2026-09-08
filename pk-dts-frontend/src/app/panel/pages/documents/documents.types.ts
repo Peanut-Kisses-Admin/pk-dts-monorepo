@@ -54,6 +54,7 @@ export interface DocumentWorkflowStepSummary {
     stage: DocumentWorkflowStageValue;
     stage_label?: string | null;
     sequence: number;
+    node_key?: string | null;
     status: WorkflowStepStatusValue;
     assignment_source?: string | null;
     required_permission?: string | null;
