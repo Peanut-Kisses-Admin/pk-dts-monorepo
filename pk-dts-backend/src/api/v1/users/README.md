@@ -21,10 +21,7 @@ Returned fields:
 - `firstname`
 - `lastname`
 - `middlename`
-- `age`
-- `address`
-- `phone_number`
-- `email`
+- `username`
 - `position_title`
 - `created_at`
 - `updated_at`
@@ -39,10 +36,7 @@ Returned fields:
   "firstname": "Juan",
   "lastname": "Dela Cruz",
   "middlename": "Santos",
-  "age": 30,
-  "address": "Manila, Philippines",
-  "phone_number": "+639171234567",
-  "email": "juan@example.com",
+  "username": "juan@example.com",
   "position_title": "Document Controller",
   "password": "password123",
   "role_id": "1"
@@ -51,7 +45,7 @@ Returned fields:
 
 Validation notes:
 
-- `firstname`, `lastname`, `email`, `password`, and `role_id` are required on create
+- `firstname`, `lastname`, `username`, `password`, and `role_id` are required on create
 - `role_id` must be sent as a string
 - `Update` accepts the same fields as optional
 - Every authenticated user may update their own account through `PATCH /:id`, even without `user-accounts.edit`

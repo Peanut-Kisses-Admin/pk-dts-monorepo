@@ -379,6 +379,21 @@ async function main() {
       await tx.accountRegistrationRequest.updateMany({ where: { requested_role_id: oldRole.role_id }, data: { requested_role_id: target.role_id } });
       await tx.accountRegistrationRequest.updateMany({ where: { assigned_role_id: oldRole.role_id }, data: { assigned_role_id: target.role_id } });
       await tx.documentWorkflowStep.updateMany({ where: { assigned_role_id: oldRole.role_id }, data: { assigned_role_id: target.role_id } });
+      // Published graph role assignments must keep pointing to the replacement role.
+      const versions = await tx.workflowVersion.findMany({ select: { workflow_version_id: true, graph: true } });
+      const remapGraph = (value: unknown): unknown => {
+        if (Array.isArray(value)) return value.map(remapGraph);
+        if (!value || typeof value !== "object") return value;
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key,
+          (key === "role_id" || key === "assigned_role_id") && String(item) === String(oldRole.role_id)
+            ? String(target.role_id) : remapGraph(item)]));
+      };
+      for (const version of versions) {
+        const graph = remapGraph(version.graph) as Prisma.InputJsonValue;
+        if (JSON.stringify(graph) !== JSON.stringify(version.graph)) {
+          await tx.workflowVersion.update({ where: { workflow_version_id: version.workflow_version_id }, data: { graph } });
+        }
+      }
       await tx.rolePermission.deleteMany({ where: { role_id: oldRole.role_id } });
       await tx.role.delete({ where: { role_id: oldRole.role_id } });
     });
@@ -488,8 +503,13 @@ async function main() {
     ),
   );
 
+  const existingAdmin = await prisma.user.findFirst({
+    where: { role_id: adminRole.role_id }, orderBy: { user_id: "asc" },
+  });
+  const adminUsername = process.env.DEFAULT_ADMIN_USERNAME?.trim().toLowerCase()
+    || existingAdmin?.username || DEFAULT_ADMIN_USERNAME;
   const adminUser = await prisma.user.upsert({
-    where: { username: DEFAULT_ADMIN_USERNAME },
+    where: { username: adminUsername },
     update: {
       firstname: DEFAULT_ADMIN_FIRSTNAME,
       lastname: DEFAULT_ADMIN_LASTNAME,
@@ -499,7 +519,7 @@ async function main() {
     create: {
       firstname: DEFAULT_ADMIN_FIRSTNAME,
       lastname: DEFAULT_ADMIN_LASTNAME,
-      username: DEFAULT_ADMIN_USERNAME,
+      username: adminUsername,
       password: hashedPassword,
       position_title: "System Administrator",
       role_id: adminRole.role_id,
