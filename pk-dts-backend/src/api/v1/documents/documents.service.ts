@@ -1303,7 +1303,7 @@ export class DocumentsService {
     }
     const selectedWorkflow = dto.workflow_version_id
       ? await this.loadPublishedWorkflowVersion(dto.workflow_version_id, dto.document_type)
-      : null;
+      : !dto.workflow_plan ? await this.loadDefaultWorkflowVersion(dto.document_type, dto.action_requested) : null;
     const workflowPlan = selectedWorkflow
       ? this.workflowGraphToPlan(selectedWorkflow.graph, dto)
       : this.parseWorkflowPlan(
@@ -1403,7 +1403,7 @@ export class DocumentsService {
           data: {
             document_id: document.document_id,
             configured_by_user_id: createdBy,
-            workflow_name: dto.workflow_name?.trim() || this.defaultWorkflowName(dto.document_type, dto.action_requested),
+            workflow_name: selectedWorkflow?.workflow_definition.name || dto.workflow_name?.trim() || this.defaultWorkflowName(dto.document_type, dto.action_requested),
             workflow_version: selectedWorkflow?.version_number ?? this.parseWorkflowVersion(dto.workflow_version),
             workflow_plan: workflowPlan as unknown as Prisma.InputJsonValue,
           },
@@ -1695,13 +1695,18 @@ export class DocumentsService {
       }),
       tx.document.findUnique({
         where: { document_id: documentId },
-        select: { action_requested: true },
+        select: { action_requested: true, business_document_type: true, requested_by_name: true, workflow_snapshot: true },
       }),
     ]);
     const configured = await tx.documentApproverConfiguration.findUnique({
       where: { document_id: documentId },
     });
-    const plan = this.parseWorkflowPlan(
+    const plan = document?.workflow_snapshot ? this.workflowGraphToPlan(document.workflow_snapshot, {
+      document_type: documentType,
+      action_requested: document.action_requested,
+      business_document_type: document.business_document_type ?? undefined,
+      requester_type: document.requested_by_name ? "MANUAL_NAME" : "CURRENT_USER",
+    } as CreateDocumentDto) : this.parseWorkflowPlan(
       configured?.workflow_plan,
       documentType,
       document?.action_requested ?? DocumentActionRequested.CREATE,
@@ -1913,8 +1918,18 @@ export class DocumentsService {
     });
   }
 
-  private async loadPublishedWorkflowVersion(id: string, documentType: DocumentType) {
-    const version = await this.prisma.workflowVersion.findFirst({
+  private async loadDefaultWorkflowVersion(documentType: DocumentType, action?: DocumentActionRequested, database: Prisma.TransactionClient = this.prisma) {
+    const key = documentType === DocumentType.HARDCOPY ? "system-hardcopy-direct-approval"
+      : action === DocumentActionRequested.CANCELLATION ? "system-softcopy-cancellation" : "system-softcopy-standard";
+    return database.workflowVersion.findFirst({
+      where: { status: "PUBLISHED", workflow_definition: { workflow_key: key, is_active: true } },
+      include: { workflow_definition: true },
+      orderBy: { version_number: "desc" },
+    });
+  }
+
+  private async loadPublishedWorkflowVersion(id: string, documentType: DocumentType, database: Prisma.TransactionClient = this.prisma) {
+    const version = await database.workflowVersion.findFirst({
       where: {
         workflow_version_id: toBigIntId(id, "workflow_version_id"),
         status: "PUBLISHED",
@@ -2542,7 +2557,7 @@ export class DocumentsService {
     return paginatedResponse(items, total, page, limit);
   }
 
-  async updateRequest(id: string, dto: UpdateDocumentDto, actorUserId: string) {
+  async updateRequest(id: string, dto: UpdateDocumentDto, actorUserId: string, actor?: AuthenticatedUser) {
     const existing = await this.prisma.document.findUnique({
       where: { document_id: toBigIntId(id, "document_id") },
     });
@@ -2561,7 +2576,7 @@ export class DocumentsService {
         "Only draft or revision-requested records can be edited.",
       );
     }
-    return this.update(id, { ...dto, action: undefined });
+    return this.update(id, { ...dto, action: undefined }, actor);
   }
 
   async updateOwned(id: string, dto: UpdateDocumentDto, actor: AuthenticatedUser) {
@@ -2578,7 +2593,7 @@ export class DocumentsService {
       select: { document_id: true },
     });
     if (!owned) throw new ForbiddenException("Staff can only manage documents they created or that are assigned to them.");
-    return this.update(id, { ...dto, action: undefined });
+    return this.update(id, { ...dto, action: undefined }, actor);
   }
 
   async transition(
@@ -3046,7 +3061,53 @@ export class DocumentsService {
     });
   }
 
-  async update(id: string, dto: UpdateDocumentDto) {
+  private async updateDraftWorkflow(
+    tx: Prisma.TransactionClient,
+    documentId: bigint,
+    existing: { created_by: bigint; status: DocumentStatus; document_type: DocumentType; workflow_version_id: bigint | null; workflow_snapshot: Prisma.JsonValue | null; action_requested: DocumentActionRequested; business_document_type: CreateDocumentDto["business_document_type"] | null; requested_by_name: string | null },
+    dto: UpdateDocumentDto,
+    actor?: AuthenticatedUser,
+  ): Promise<Prisma.DocumentUncheckedUpdateInput> {
+    if (dto.workflow_version_id === undefined && dto.workflow_plan === undefined) return {};
+    if (existing.status !== DocumentStatus.Draft) {
+      throw new ConflictException("The workflow definition is locked after submission. Reassign a pending step with an audit reason instead.");
+    }
+    if (dto.workflow_plan && actor && !hasAnyPermission(actor, [DOCUMENT_WORKFLOW_CONFIGURATION_PERMISSION])) {
+      throw new ForbiddenException("You do not have permission to customize document approval workflows.");
+    }
+    const documentType = dto.document_type ?? existing.document_type;
+    const action = dto.action_requested ?? existing.action_requested;
+    const keepSnapshot = !!dto.workflow_version_id && dto.workflow_version_id === existing.workflow_version_id?.toString() && !!existing.workflow_snapshot && documentType === existing.document_type;
+    // Existing drafts retain their immutable version, even after a newer version is published.
+    const version = keepSnapshot ? null : dto.workflow_version_id
+      ? await this.loadPublishedWorkflowVersion(dto.workflow_version_id, documentType, tx)
+      : !dto.workflow_plan ? await this.loadDefaultWorkflowVersion(documentType, action, tx) : null;
+    const snapshot = keepSnapshot ? existing.workflow_snapshot : version?.graph;
+    const plan = snapshot ? this.workflowGraphToPlan(snapshot, {
+      document_type: documentType,
+      action_requested: action,
+      business_document_type: dto.business_document_type ?? existing.business_document_type ?? undefined,
+      requester_type: (dto.requested_by_name !== undefined ? dto.requested_by_name : existing.requested_by_name) ? "MANUAL_NAME" : "CURRENT_USER",
+    } as CreateDocumentDto) : this.parseWorkflowPlan(dto.workflow_plan, documentType, action);
+    const configuration = await tx.documentApproverConfiguration.findUnique({ where: { document_id: documentId } });
+    const data = {
+      workflow_name: version?.workflow_definition.name || (keepSnapshot ? configuration?.workflow_name : dto.workflow_name?.trim()) || this.defaultWorkflowName(documentType, action),
+      workflow_version: version?.version_number ?? (keepSnapshot ? configuration?.workflow_version ?? 1 : this.parseWorkflowVersion(dto.workflow_version)),
+      workflow_plan: plan as unknown as Prisma.InputJsonValue,
+    };
+    await tx.documentApproverConfiguration.upsert({
+      where: { document_id: documentId },
+      create: { document_id: documentId, configured_by_user_id: actor ? toBigIntId(actor.user_id, "current_user_id") : existing.created_by, ...data },
+      update: data,
+    });
+    return {
+      workflow_version_id: keepSnapshot ? existing.workflow_version_id : version?.workflow_version_id ?? null,
+      workflow_snapshot: snapshot ? snapshot as Prisma.InputJsonValue : Prisma.DbNull,
+      workflow_current_node_key: null,
+    };
+  }
+
+  async update(id: string, dto: UpdateDocumentDto, actor?: AuthenticatedUser) {
     const document_id = toBigIntId(id, "document_id");
 
     try {
@@ -3056,6 +3117,12 @@ export class DocumentsService {
           select: {
             status: true,
             document_type: true,
+            created_by: true,
+            workflow_version_id: true,
+            workflow_snapshot: true,
+            action_requested: true,
+            business_document_type: true,
+            requested_by_name: true,
             softcopy: { select: { softcopy_id: true, document_number: true, series_number: true } },
           },
         });
@@ -3076,6 +3143,7 @@ export class DocumentsService {
         }
 
         const nextDocumentType = dto.document_type ?? existingDocument.document_type;
+        const workflowData = await this.updateDraftWorkflow(tx, document_id, existingDocument, dto, actor);
         const isSoftcopy = nextDocumentType === DocumentType.SOFTCOPY;
         const nextActionRequested = dto.action_requested;
         const requestedDocumentNumber = dto.document_number?.trim() || null;
@@ -3117,6 +3185,7 @@ export class DocumentsService {
         const document = await tx.document.update({
           where: { document_id },
           data: {
+            ...workflowData,
             ...(dto.document_title
               ? { document_title: dto.document_title.trim().toUpperCase() }
               : {}),

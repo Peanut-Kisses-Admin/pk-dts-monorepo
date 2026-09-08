@@ -112,9 +112,11 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
                         <span *ngIf="selectedPublishedWorkflow() as selected">Version {{ selected.version_number }}</span>
                     </div>
                     <select id="published-workflow" [(ngModel)]="form.workflow_version_id" (ngModelChange)="selectPublishedWorkflow($event)" class="select-field" [disabled]="saving || workflowsLoading">
-                        <option value="">System default workflow</option>
+                        <option value="">System default / configured legacy workflow</option>
+                        <option *ngIf="form.workflow_version_id && !selectedPublishedWorkflow()" [value]="form.workflow_version_id">{{ form.workflow_name }} ? Version {{ form.workflow_version }} (saved on this draft)</option>
                         <option *ngFor="let workflow of publishedWorkflows" [value]="workflow.workflow_version_id">{{ workflow.workflow_definition.name }} · Version {{ workflow.version_number }}</option>
                     </select>
+                    <small *ngIf="workflowLoadError" class="field-note text-red-500">{{ workflowLoadError }} <button type="button" (click)="loadPublishedWorkflows()">Retry</button></small>
                     <small *ngIf="workflowsLoading" class="field-note">Loading published workflows…</small>
                     <small *ngIf="!workflowsLoading && !publishedWorkflows.length" class="field-note">No compatible published workflow is active. The preserved system default will be used.</small>
                     <div *ngIf="selectedPublishedWorkflow() as selected" class="system-generated-field"><i class="pi pi-sitemap"></i><span><strong>{{ selected.workflow_definition.name }}</strong><small class="field-note">{{ selected.graph.nodes.length }} configured nodes · published versions are immutable</small></span></div>
@@ -615,9 +617,11 @@ export class DocumentFormDialogComponent {
     selectedWorkflowPreset = 'RECOMMENDED';
     publishedWorkflows: PublishedWorkflowVersion[] = [];
     workflowsLoading = false;
+    workflowLoadError = '';
 
     submit(action: 'DRAFT' | 'SUBMIT') {
         this.submitted = true;
+        if (this.mode === 'create' && (this.workflowsLoading || this.workflowLoadError)) return;
         if (this.mode === 'create' && this.canAssignUsers && !this.form.workflow_version_id && !this.form.workflow_steps.length) {
             this.applyWorkflowPreset('RECOMMENDED');
         }
@@ -640,6 +644,7 @@ export class DocumentFormDialogComponent {
         const requesterType = this.isHardcopy() ? 'CURRENT_USER' : this.form.requester_type;
         this.save.emit({
             ...this.form,
+            workflow_editable: this.mode === 'create',
             action,
             requester_type: requesterType,
             requested_by_name: requesterType === 'MANUAL_NAME' ? this.form.requested_by_name : '',
@@ -704,7 +709,13 @@ export class DocumentFormDialogComponent {
             this.form.brief_description = '';
             this.form.proposed_change = '';
         }
-        if (this.selectedWorkflowPreset === 'RECOMMENDED') this.applyWorkflowPreset('RECOMMENDED');
+        const selectedKey = this.selectedPublishedWorkflow()?.workflow_definition.workflow_key;
+        if (selectedKey === 'system-softcopy-standard' || selectedKey === 'system-softcopy-cancellation') {
+            const key = this.form.action_requested === 'CANCELLATION' ? 'system-softcopy-cancellation' : 'system-softcopy-standard';
+            const recommended = this.publishedWorkflows.find(workflow => workflow.workflow_definition.workflow_key === key);
+            if (recommended) this.selectPublishedWorkflow(recommended.workflow_version_id);
+        }
+        if (!this.form.workflow_version_id && this.selectedWorkflowPreset === 'RECOMMENDED') this.applyWorkflowPreset('RECOMMENDED');
     }
 
     isRevisionAction() {
@@ -713,13 +724,18 @@ export class DocumentFormDialogComponent {
 
     loadPublishedWorkflows() {
         this.workflowsLoading = true;
+        this.workflowLoadError = '';
         this.workflowBuilderService.published(this.form.document_type).subscribe({
             next: (workflows) => {
                 this.publishedWorkflows = workflows;
                 this.workflowsLoading = false;
-                if (this.form.workflow_version_id && !this.selectedPublishedWorkflow()) this.form.workflow_version_id = '';
+                if (!this.form.workflow_version_id && !this.form.workflow_editable) {
+                    const key = this.isHardcopy() ? 'system-hardcopy-direct-approval' : this.form.action_requested === 'CANCELLATION' ? 'system-softcopy-cancellation' : 'system-softcopy-standard';
+                    const recommended = workflows.find(workflow => workflow.workflow_definition.workflow_key === key);
+                    if (recommended) this.selectPublishedWorkflow(recommended.workflow_version_id);
+                }
             },
-            error: () => { this.publishedWorkflows = []; this.workflowsLoading = false; }
+            error: () => { this.publishedWorkflows = []; this.workflowsLoading = false; this.workflowLoadError = 'Unable to load approval workflows. Retry before saving this request.'; }
         });
     }
 

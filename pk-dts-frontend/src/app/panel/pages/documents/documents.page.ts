@@ -2019,9 +2019,11 @@ export class DocumentsPage implements OnInit, OnDestroy {
                   initial_revision_number: document.softcopy?.current_revision?.revision_number || '',
                   initial_file: null,
                   attached_scan_files: [], assigned_user_ids: [],
+                  workflow_editable: document.status === 'Draft',
+                  workflow_version_id: document.workflow_version_id || '',
                   workflow_name: document.approver_configuration?.workflow_name || '',
                   workflow_version: document.approver_configuration?.workflow_version || 1,
-                  workflow_steps: (document.workflow_steps || []).map((step) => ({
+                  workflow_steps: document.approver_configuration?.workflow_plan || (document.workflow_steps || []).map((step) => ({
                       stage: step.stage,
                       assigned_user_id: step.assignee?.user_id || ''
                   })),

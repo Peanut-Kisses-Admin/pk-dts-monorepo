@@ -23,6 +23,7 @@ describe('Workflow Builder execution', () => {
       documentWorkflowStep: { update: jest.fn(), updateMany: jest.fn(), createMany: jest.fn() },
       documentStatusHistory: { create: jest.fn() },
       documentApproverConfiguration: { findUnique: jest.fn(), upsert: jest.fn() },
+      workflowVersion: { findFirst: jest.fn() },
       user: { findUnique: jest.fn().mockResolvedValue({ firstname: 'Assigned', lastname: 'Reviewer' }), findFirst: jest.fn(), findMany: jest.fn() },
       $transaction: (fn: any) => fn(prisma),
     };
@@ -85,5 +86,32 @@ describe('Workflow Builder execution', () => {
     prisma.user.findFirst.mockResolvedValue(null);
     await expect(service.initializeWorkflowSteps(prisma, 1n, 3n, 'SOFTCOPY')).rejects.toThrow('does not have an eligible approver');
     expect(prisma.documentWorkflowStep.createMany).not.toHaveBeenCalled();
+  });
+
+  const draft = { status: 'Draft', document_type: 'SOFTCOPY', action_requested: 'CREATE', workflow_version_id: null, workflow_snapshot: null, business_document_type: 'Forms', requested_by_name: null };
+
+  it('persists a selected published version when a draft is saved', async () => {
+    prisma.workflowVersion.findFirst.mockResolvedValue({ workflow_version_id: 12n, version_number: 3, graph, workflow_definition: { name: 'Technical review' } });
+    const data = await service.updateDraftWorkflow(prisma, 1n, draft, { workflow_version_id: '12' }, actor);
+    expect(data).toMatchObject({ workflow_version_id: 12n, workflow_snapshot: graph });
+    expect(prisma.documentApproverConfiguration.upsert).toHaveBeenCalledWith(expect.objectContaining({ update: expect.objectContaining({ workflow_name: 'Technical review', workflow_version: 3 }) }));
+  });
+
+  it('retains an archived version already snapshotted on a draft', async () => {
+    prisma.documentApproverConfiguration.findUnique.mockResolvedValue({ workflow_name: 'Original route', workflow_version: 2 });
+    const data = await service.updateDraftWorkflow(prisma, 1n, { ...draft, workflow_version_id: 11n, workflow_snapshot: graph }, { workflow_version_id: '11' }, actor);
+    expect(data.workflow_snapshot).toEqual(graph);
+    expect(prisma.workflowVersion.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('locks submitted workflow definitions and rejects unauthorized custom plans', async () => {
+    await expect(service.updateDraftWorkflow(prisma, 1n, { ...draft, status: 'ForRevision' }, { workflow_version_id: '12' }, actor)).rejects.toThrow('locked after submission');
+    await expect(service.updateDraftWorkflow(prisma, 1n, draft, { workflow_plan: '[{"stage":"NOTED_BY"}]' }, actor)).rejects.toThrow('permission to customize');
+  });
+
+  it('resolves the published cancellation default from Builder', async () => {
+    prisma.workflowVersion.findFirst.mockResolvedValue(null);
+    await service.loadDefaultWorkflowVersion('SOFTCOPY', 'CANCELLATION', prisma);
+    expect(prisma.workflowVersion.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { status: 'PUBLISHED', workflow_definition: { workflow_key: 'system-softcopy-cancellation', is_active: true } } }));
   });
 });

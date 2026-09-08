@@ -255,9 +255,11 @@ export class DocumentRequestsPage implements OnInit {
             page_number: item.softcopy?.current_revision?.page_number || '',
             initial_file: null,
             attached_scan_files: [], assigned_user_ids: [],
+            workflow_editable: isDraft,
+            workflow_version_id: item.workflow_version_id || '',
             workflow_name: item.approver_configuration?.workflow_name || '',
             workflow_version: item.approver_configuration?.workflow_version || 1,
-            workflow_steps: (item.workflow_steps || []).map((step) => ({ stage: step.stage, assigned_user_id: step.assignee?.user_id || '' })),
+            workflow_steps: item.approver_configuration?.workflow_plan || (item.workflow_steps || []).map((step) => ({ stage: step.stage, assigned_user_id: step.assignee?.user_id || '' })),
             retention_enabled: item.hardcopy?.retention_enabled ?? false,
             retention_start_date: item.hardcopy?.retention_start_date?.slice(0, 10) || '', retention_end_date: item.hardcopy?.retention_end_date?.slice(0, 10) || ''
         };

@@ -265,7 +265,9 @@ export interface DocumentSummary {
     approver_configuration?: {
         workflow_name?: string | null;
         workflow_version?: number;
+        workflow_plan?: WorkflowPlanStepValue[];
     } | null;
+    workflow_version_id?: string | null;
     workflow_steps?: DocumentWorkflowStepSummary[];
 }
 
@@ -293,6 +295,7 @@ export interface DocumentFormValue {
     workflow_name: string;
     workflow_version: number;
     workflow_version_id?: string;
+    workflow_editable?: boolean;
     direct_create?: boolean;
     direct_creation_reason?: string;
     workflow_steps: WorkflowPlanStepValue[];

@@ -29,6 +29,7 @@ describe('DocumentsService', () => {
     process.env.MISTRAL_ENABLED = 'false';
 
     prisma = {
+      workflowVersion: { findFirst: jest.fn().mockResolvedValue(null) },
       area: {
         findMany: jest.fn(),
         create: jest.fn(),

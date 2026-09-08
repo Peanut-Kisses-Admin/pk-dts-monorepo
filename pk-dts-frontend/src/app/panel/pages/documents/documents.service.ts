@@ -326,6 +326,14 @@ export class DocumentsService {
     private cleanDocumentPayload(payload: DocumentFormValue, createdBy: string, isUpdate: boolean) {
         if (isUpdate) {
             return {
+                ...(payload.workflow_editable ? {
+                    workflow_version_id: payload.workflow_version_id || '',
+                    ...(!payload.workflow_version_id && payload.workflow_steps.length ? {
+                        workflow_name: payload.workflow_name,
+                        workflow_version: String(payload.workflow_version || 1),
+                        workflow_plan: JSON.stringify(payload.workflow_steps)
+                    } : {})
+                } : {}),
                 ...(payload.document_type === 'SOFTCOPY' ? { document_number: payload.document_number.trim() || null } : {}),
                 document_title: payload.document_title.trim(),
                 document_type: payload.document_type,

@@ -246,12 +246,12 @@ export class DocumentsController {
     @CurrentUser() user?: AuthenticatedUser,
   ) {
     if (isAdministrativeRole(user!.role.role_name) || user!.role.permissions.includes("documents.edit")) {
-      return this.documentsService.update(id, { ...dto, action: undefined });
+      return this.documentsService.update(id, { ...dto, action: undefined }, user);
     }
 
     if (user!.role.permissions.includes("documents.manage-own"))
       return this.documentsService.updateOwned(id, dto, user!);
-    return this.documentsService.updateRequest(id, dto, user!.user_id);
+    return this.documentsService.updateRequest(id, dto, user!.user_id, user);
   }
 
   @Post(":id/submit")
