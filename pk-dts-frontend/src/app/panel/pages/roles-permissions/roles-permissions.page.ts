@@ -51,12 +51,11 @@ interface DeleteTarget {
                             <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Role and Permission</div>
                             <div>
                                 <h1 class="m-0 text-3xl font-black tracking-tight text-slate-900">Access control workspace</h1>
-                                <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Create roles, manage permissions, inspect the current access map, and assign multiple permissions to a role in one place.</p>
+                                <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Inspect the five system roles and manage their permission assignments.</p>
                             </div>
                         </div>
 
                         <div class="flex flex-wrap gap-3">
-                            <p-button *ngIf="canManage()" label="Create Role" icon="pi pi-plus" (onClick)="openRoleDialog()" />
                         </div>
                     </div>
 
@@ -94,9 +93,8 @@ interface DeleteTarget {
                 <div class="section-head">
                     <div>
                         <h2 class="m-0 text-xl font-black text-slate-900">Roles</h2>
-                        <p class="m-0 mt-1 text-sm text-slate-500">Create, inspect, edit, and remove roles.</p>
+                        <p class="m-0 mt-1 text-sm text-slate-500">Admin, Internal Audit, Documentation Officer, Staff, and Plant Manager.</p>
                     </div>
-                    <p-button *ngIf="canManage()" label="Create Role" icon="pi pi-plus" (onClick)="openRoleDialog()" />
                 </div>
 
                 <app-data-view-switch [(mode)]="viewMode" title="Role results" />
@@ -134,14 +132,12 @@ interface DeleteTarget {
                                 <td class="px-4 py-4">
                                     <div class="flex justify-end gap-2">
                                         <p-button icon="pi pi-eye" [rounded]="true" [outlined]="true" (onClick)="openRoleView(role)" />
-                                        <p-button *ngIf="canManage()" icon="pi pi-pencil" [rounded]="true" [outlined]="true" (onClick)="openRoleDialog(role)" />
                                         <p-button *ngIf="canManage()" icon="pi pi-link" [rounded]="true" [outlined]="true" (onClick)="openAssignmentDialog(role)" />
-                                        <p-button *ngIf="canManage()" icon="pi pi-trash" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete('role', roleId(role), role.role_name)" />
                                     </div>
                                 </td>
                             </tr>
                             <tr *ngIf="!roles().length && !isLoading()">
-                                <td colspan="4" class="px-4 py-10 text-center text-slate-500">No roles found. Create the first role to start.</td>
+                                <td colspan="4" class="px-4 py-10 text-center text-slate-500">No system roles found.</td>
                             </tr>
                         </tbody>
                 </app-table-shell>
@@ -154,9 +150,7 @@ interface DeleteTarget {
                         </div>
                         <div record-actions>
                             <p-button label="View" icon="pi pi-eye" size="small" [outlined]="true" (onClick)="openRoleView(role)" />
-                            <p-button *ngIf="canManage()" icon="pi pi-pencil" size="small" [rounded]="true" [outlined]="true" (onClick)="openRoleDialog(role)" />
                             <p-button *ngIf="canManage()" icon="pi pi-link" size="small" [rounded]="true" [outlined]="true" (onClick)="openAssignmentDialog(role)" />
-                            <p-button *ngIf="canManage()" icon="pi pi-trash" size="small" [rounded]="true" [outlined]="true" severity="danger" (onClick)="requestDelete('role', roleId(role), role.role_name)" />
                         </div>
                     </app-record-card>
                 </app-record-grid>

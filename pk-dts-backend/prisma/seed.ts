@@ -8,7 +8,7 @@ import * as bcrypt from "bcrypt";
 import {
   DEFAULT_PERMISSION_CATALOG,
   DEFAULT_DOCUMENT_CONTROLLER_PERMISSION_NAMES,
-  DEFAULT_NOTED_BY_PERMISSION_NAMES,
+  DEFAULT_INTERNAL_AUDIT_PERMISSION_NAMES,
   DEFAULT_PLANT_MANAGER_PERMISSION_NAMES,
   DEFAULT_STAFF_PERMISSION_NAMES,
   DEFAULT_VIEWER_PERMISSION_NAMES,
@@ -344,27 +344,15 @@ async function main() {
     },
   });
   const viewerRole = await prisma.role.upsert({
-    where: { role_name: "Viewer" },
+    where: { role_name: "Internal Audit" },
     update: {
       description:
         "Read-only access to assigned documents and their folder hierarchy.",
     },
     create: {
-      role_name: "Viewer",
+      role_name: "Internal Audit",
       description:
         "Read-only access to assigned documents and their folder hierarchy.",
-    },
-  });
-  const notedByRole = await prisma.role.upsert({
-    where: { role_name: "Noted By" },
-    update: {
-      description:
-        "Staff self-service access plus approval of requests assigned to the Noted By stage.",
-    },
-    create: {
-      role_name: "Noted By",
-      description:
-        "Staff self-service access plus approval of requests assigned to the Noted By stage.",
     },
   });
   const plantManagerRole = await prisma.role.upsert({
@@ -373,16 +361,15 @@ async function main() {
     create: { role_name: "Plant Manager", description: "Approves requests assigned to the Plant Manager stage." },
   });
   const documentControllerRole = await prisma.role.upsert({
-    where: { role_name: "Document Controller" },
+    where: { role_name: "Documentation Officer" },
     update: { description: "Approves and completes requests assigned to Document Control." },
-    create: { role_name: "Document Controller", description: "Approves and completes requests assigned to Document Control." },
+    create: { role_name: "Documentation Officer", description: "Approves and completes requests assigned to Document Control." },
   });
   for (const [role, permissionNames] of [
     [staffRole, DEFAULT_STAFF_PERMISSION_NAMES],
-    [notedByRole, DEFAULT_NOTED_BY_PERMISSION_NAMES],
     [plantManagerRole, DEFAULT_PLANT_MANAGER_PERMISSION_NAMES],
     [documentControllerRole, DEFAULT_DOCUMENT_CONTROLLER_PERMISSION_NAMES],
-    [viewerRole, DEFAULT_VIEWER_PERMISSION_NAMES],
+    [viewerRole, DEFAULT_INTERNAL_AUDIT_PERMISSION_NAMES],
   ] as const) {
     const allowed = new Set<string>(permissionNames);
     const allowedPermissionIds = permissionRecords

@@ -642,3 +642,12 @@ export const DEFAULT_DOCUMENT_CONTROLLER_PERMISSION_NAMES = [
   "document-access-requests.revoke",
   "document-access-requests.expire",
 ] as const;
+
+export const DEFAULT_INTERNAL_AUDIT_PERMISSION_NAMES = [
+  ...DEFAULT_VIEWER_PERMISSION_NAMES,
+  "documents.search",
+  "documents.download",
+  "activity-logs.view_logs",
+] as const;
+
+export const SYSTEM_ROLE_NAMES = ["Admin", "Internal Audit", "Documentation Officer", "Staff", "Plant Manager"] as const;

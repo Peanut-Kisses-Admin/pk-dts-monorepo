@@ -38,7 +38,7 @@ export class RolesService {
           },
           _count: {
             select: {
-              users: true,
+              users: { select: { user_id: true, firstname: true, lastname: true, username: true } },
             },
           },
         },
@@ -54,56 +54,21 @@ export class RolesService {
     return this.prisma.role.findUnique({
       where: { role_id: toBigIntId(id, 'role_id') },
       include: {
-        users: true,
+        users: { select: { user_id: true, firstname: true, lastname: true, username: true } },
         role_permissions: { include: { permission: true } },
       },
     });
   }
 
-  create(dto: CreateRoleDto) {
-    return this.prisma.role.create({ data: dto });
+  create(_dto: CreateRoleDto) {
+    throw new BadRequestException('The five system roles are fixed. Additional roles cannot be created.');
   }
 
-  update(id: string, dto: UpdateRoleDto) {
-    return this.prisma.role.update({
-      where: { role_id: toBigIntId(id, 'role_id') },
-      data: dto,
-    });
+  update(_id: string, _dto: UpdateRoleDto) {
+    throw new BadRequestException('System roles cannot be renamed. Manage their permissions instead.');
   }
 
-  async remove(id: string) {
-    const roleId = toBigIntId(id, 'role_id');
-    const role = await this.prisma.role.findUnique({
-      where: { role_id: roleId },
-      select: {
-        role_id: true,
-        role_name: true,
-        _count: {
-          select: {
-            users: true,
-          },
-        },
-      },
-    });
-
-    if (!role) {
-      throw new NotFoundException('Role not found.');
-    }
-
-    if (role._count.users > 0) {
-      throw new BadRequestException(
-        'Role cannot be deleted while users are assigned to it.',
-      );
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      await tx.rolePermission.deleteMany({
-        where: { role_id: roleId },
-      });
-
-      return tx.role.delete({
-        where: { role_id: roleId },
-      });
-    });
+  async remove(_id: string) {
+    throw new BadRequestException('System roles cannot be deleted.');
   }
 }
