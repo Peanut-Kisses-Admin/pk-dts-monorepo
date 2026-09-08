@@ -38,7 +38,7 @@ export class RolesService {
           },
           _count: {
             select: {
-              users: { select: { user_id: true, firstname: true, lastname: true, username: true } },
+              users: true,
             },
           },
         },
