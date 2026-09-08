@@ -153,6 +153,7 @@ export class WorkflowDefinitionsService {
     const nodes = graph.nodes as WorkflowGraphNode[];
     const edges = graph.edges as WorkflowGraphEdge[];
     const nodeKeys = new Set<string>();
+    const assignmentLookups = new Map<string, Promise<unknown>>();
     for (const node of nodes) {
       if (!node || !/^[a-z0-9][a-z0-9_-]{0,99}$/i.test(node.key || "")) throw new BadRequestException("Every workflow node needs a valid unique key.");
       if (nodeKeys.has(node.key)) throw new BadRequestException(`Workflow node key ${node.key} is duplicated.`);
@@ -160,7 +161,7 @@ export class WorkflowDefinitionsService {
       if (!node.label?.trim() || node.label.length > 150) throw new BadRequestException(`Workflow node ${node.key} needs a label.`);
       if (!["APPROVAL", "END"].includes(node.type)) throw new BadRequestException(`Workflow node ${node.key} has an invalid type.`);
       if (node.type === "APPROVAL" && !node.assignment) throw new BadRequestException(`Approval node ${node.label} needs an assignment rule.`);
-      if (node.assignment) await this.validateAssignment(node, database);
+      if (node.assignment) await this.validateAssignment(node, database, assignmentLookups);
     }
     if (!graph.start_node_key || !nodeKeys.has(graph.start_node_key)) throw new BadRequestException("Select a valid workflow start node.");
     if (nodes.find((node) => node.key === graph.start_node_key)?.type !== "APPROVAL") throw new BadRequestException("A workflow must start at an approval step.");
@@ -177,23 +178,28 @@ export class WorkflowDefinitionsService {
     return { schema_version: 2, start_node_key: graph.start_node_key, nodes, edges };
   }
 
-  private async validateAssignment(node: WorkflowGraphNode, database: Prisma.TransactionClient | PrismaService) {
+  private async validateAssignment(node: WorkflowGraphNode, database: Prisma.TransactionClient | PrismaService, lookups: Map<string, Promise<unknown>>) {
+    const lookup = (key: string, read: () => Promise<unknown>) => {
+      let result = lookups.get(key);
+      if (!result) { result = read(); lookups.set(key, result); }
+      return result;
+    };
     const assignment = node.assignment!;
     if (!["USER", "ROLE", "REQUESTER_LEADER", "PERMISSION"].includes(assignment.type)) throw new BadRequestException(`Node ${node.label} has an invalid assignment type.`);
     if (assignment.type === "USER") {
       if (!assignment.user_id) throw new BadRequestException(`Node ${node.label} needs an assigned user.`);
-      const user = await database.user.findUnique({ where: { user_id: toBigIntId(assignment.user_id, "workflow_user_id") }, select: { user_id: true } });
+      const user = await lookup(`user:${assignment.user_id}`, () => database.user.findUnique({ where: { user_id: toBigIntId(assignment.user_id!, "workflow_user_id") }, select: { user_id: true } }));
       if (!user) throw new BadRequestException(`The assigned user for ${node.label} does not exist.`);
     }
     if (assignment.type === "ROLE") {
       if (!assignment.role_id) throw new BadRequestException(`Node ${node.label} needs an assigned role.`);
-      const role = await database.role.findUnique({ where: { role_id: toBigIntId(assignment.role_id, "workflow_role_id") }, select: { role_id: true } });
+      const role = await lookup(`role:${assignment.role_id}`, () => database.role.findUnique({ where: { role_id: toBigIntId(assignment.role_id!, "workflow_role_id") }, select: { role_id: true } }));
       if (!role) throw new BadRequestException(`The assigned role for ${node.label} does not exist.`);
     }
     const permission = assignment.type === "PERMISSION" ? assignment.permission : node.required_permission;
     if (assignment.type === "PERMISSION" && !assignment.permission?.trim()) throw new BadRequestException(`Node ${node.label} needs an assigned permission.`);
     if (permission) {
-      const found = await database.permission.findUnique({ where: { permission_name: permission }, select: { permission_id: true } });
+      const found = await lookup(`permission:${permission}`, () => database.permission.findUnique({ where: { permission_name: permission }, select: { permission_id: true } }));
       if (!found) throw new BadRequestException(`Permission ${permission} used by ${node.label} does not exist.`);
     }
   }

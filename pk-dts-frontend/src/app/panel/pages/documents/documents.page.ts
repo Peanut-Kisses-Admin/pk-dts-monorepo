@@ -2331,9 +2331,7 @@ export class DocumentsPage implements OnInit, OnDestroy {
 
     private openDetailDialogById(documentId: string, documentType?: string) {
         this.documentsService.getDocument(documentId).pipe(
-            switchMap((detail) => detail?.document_type === 'SOFTCOPY' || documentType === 'SOFTCOPY'
-                ? forkJoin({ detail: of(detail), revisions: this.documentsService.listRevisions(documentId) })
-                : of({ detail, revisions: [] as RevisionSummary[] }))
+            map(detail => ({ detail, revisions: detail?.softcopy?.revisions || [] }))
         ).subscribe({
             next: ({ detail, revisions }) => {
                 if (!detail) {
@@ -2362,10 +2360,9 @@ export class DocumentsPage implements OnInit, OnDestroy {
             return;
         }
 
-        forkJoin({
-            detail: this.documentsService.getDocument(document.document_id),
-            revisions: this.documentsService.listRevisions(document.document_id)
-        }).subscribe({
+        this.documentsService.getDocument(document.document_id).pipe(
+            map(detail => ({ detail, revisions: detail?.softcopy?.revisions || [] }))
+        ).subscribe({
             next: ({ detail, revisions }) => {
                 this.revisionTargetDocumentId = document.document_id;
                 this.revisionTargetStatus = detail?.status || document.status || '';

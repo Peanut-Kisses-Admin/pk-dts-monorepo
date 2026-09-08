@@ -2507,13 +2507,14 @@ export class DocumentsService {
     prioritizeForRevision = false,
   ) {
     const { page, limit, skip, take } = getPagination(query);
+    const publicUser = { select: { user_id: true, firstname: true, lastname: true, username: true, position_title: true } } as const;
     const include: Prisma.DocumentInclude = {
-      creator: true,
-      requester: true,
-      reviewer: true,
+      creator: publicUser,
+      requester: publicUser,
+      reviewer: publicUser,
       status_history: {
         orderBy: { created_at: "desc" },
-        include: { actor: true },
+        include: { actor: publicUser },
       },
       approver_configuration: true,
       workflow_steps: { orderBy: { sequence: "asc" }, include: { assignee: { select: { user_id: true, firstname: true, lastname: true } } } },
