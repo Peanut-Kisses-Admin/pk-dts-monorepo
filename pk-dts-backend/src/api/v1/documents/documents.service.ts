@@ -1,3 +1,4 @@
+import { systemWorkflowKey } from "../../../common/constants/system-workflow";
 import { rm } from "fs/promises";
 import { randomUUID } from "crypto";
 import {
@@ -1139,7 +1140,7 @@ export class DocumentsService {
               lastname: true,
             },
           },
-          creator: true,
+          creator: { select: { user_id: true, firstname: true, lastname: true, username: true, position_title: true } },
           hardcopy: {
             include: {
               asset: true,
@@ -1303,9 +1304,11 @@ export class DocumentsService {
     } else if (file && dto.document_type === DocumentType.SOFTCOPY) {
       throw new ConflictException("Revision files can be uploaded only after the Document Control Request completes all required approvals.");
     }
-    const selectedWorkflow = dto.workflow_version_id
-      ? await this.loadPublishedWorkflowVersion(dto.workflow_version_id, dto.document_type)
-      : !dto.workflow_plan ? await this.loadDefaultWorkflowVersion(dto.document_type, dto.action_requested) : null;
+    const selectedWorkflow = await this.loadDefaultWorkflowVersion(dto.document_type, dto.action_requested);
+    if (!selectedWorkflow) throw new ConflictException("No active system-default approval workflow is published. Ask an administrator to publish it in Workflow Builder.");
+    if (dto.workflow_version_id && dto.workflow_version_id !== selectedWorkflow.workflow_version_id.toString()) {
+      throw new BadRequestException("Only the current system-default published workflow can be selected for this request. Reload the workflow selection.");
+    }
     const workflowPlan = selectedWorkflow
       ? this.workflowGraphToPlan(selectedWorkflow.graph, dto)
       : this.parseWorkflowPlan(
@@ -1553,7 +1556,7 @@ export class DocumentsService {
                 },
               },
             },
-            creator: true,
+            creator: { select: { user_id: true, firstname: true, lastname: true, username: true, position_title: true } },
             requester: {
               select: {
                 user_id: true,
@@ -1655,10 +1658,9 @@ export class DocumentsService {
     );
   }
 
-  async findApprovalQueue(query: PaginationQueryDto, actor: AuthenticatedUser) {
+  private approvalQueueWhere(actor: AuthenticatedUser): Prisma.DocumentWhereInput {
     const actorId = toBigIntId(actor.user_id, "current_user_id");
-    return this.findScopedRequests(
-      {
+    return {
         OR: [
           {
             workflow_steps: {
@@ -1679,9 +1681,20 @@ export class DocumentsService {
             reviewed_by_user_id: actorId,
           },
         ],
-      },
-      query,
-    );
+      };
+  }
+
+  async findApprovalQueue(query: PaginationQueryDto, actor: AuthenticatedUser) {
+    return this.findScopedRequests(this.approvalQueueWhere(actor), query);
+  }
+
+  async findApprovalDocument(id: string, actor: AuthenticatedUser) {
+    const available = await this.prisma.document.findFirst({
+      where: { document_id: toBigIntId(id, "document_id"), ...this.approvalQueueWhere(actor) },
+      select: { document_id: true },
+    });
+    if (!available) throw new NotFoundException("This document is no longer assigned to your approval queue.");
+    return this.findOne(id);
   }
 
   private async initializeWorkflowSteps(
@@ -1924,8 +1937,7 @@ export class DocumentsService {
   }
 
   private async loadDefaultWorkflowVersion(documentType: DocumentType, action?: DocumentActionRequested, database: Prisma.TransactionClient = this.prisma) {
-    const key = documentType === DocumentType.HARDCOPY ? "system-hardcopy-direct-approval"
-      : action === DocumentActionRequested.CANCELLATION ? "system-softcopy-cancellation" : "system-softcopy-standard";
+    const key = systemWorkflowKey(documentType, action);
     return database.workflowVersion.findFirst({
       where: { status: "PUBLISHED", workflow_definition: { workflow_key: key, is_active: true } },
       include: { workflow_definition: true },
@@ -2937,7 +2949,7 @@ export class DocumentsService {
       return tx.document.findUnique({
         where: { document_id: documentId },
         include: {
-          creator: true,
+          creator: { select: { user_id: true, firstname: true, lastname: true, username: true, position_title: true } },
           requester: true,
           reviewer: true,
           status_history: {
@@ -3092,11 +3104,17 @@ export class DocumentsService {
     }
     const documentType = dto.document_type ?? existing.document_type;
     const action = dto.action_requested ?? existing.action_requested;
-    const keepSnapshot = !!dto.workflow_version_id && dto.workflow_version_id === existing.workflow_version_id?.toString() && !!existing.workflow_snapshot && documentType === existing.document_type;
-    // Existing drafts retain their immutable version, even after a newer version is published.
-    const version = keepSnapshot ? null : dto.workflow_version_id
-      ? await this.loadPublishedWorkflowVersion(dto.workflow_version_id, documentType, tx)
-      : !dto.workflow_plan ? await this.loadDefaultWorkflowVersion(documentType, action, tx) : null;
+    let keepSnapshot = !!dto.workflow_version_id && dto.workflow_version_id === existing.workflow_version_id?.toString() && !!existing.workflow_snapshot && documentType === existing.document_type;
+    if (keepSnapshot) {
+      const savedVersion = await tx.workflowVersion.findUnique({ where: { workflow_version_id: existing.workflow_version_id! }, select: { workflow_definition: { select: { workflow_key: true } } } });
+      keepSnapshot = savedVersion?.workflow_definition.workflow_key === systemWorkflowKey(documentType, action);
+    }
+    // A saved default snapshot remains immutable after newer versions are published.
+    const version = keepSnapshot ? null : await this.loadDefaultWorkflowVersion(documentType, action, tx);
+    if (!keepSnapshot && !version) throw new ConflictException("No active system-default approval workflow is published.");
+    if (!keepSnapshot && dto.workflow_version_id && dto.workflow_version_id !== version?.workflow_version_id.toString()) {
+      throw new BadRequestException("Only the current system-default published workflow can be selected. Reload the workflow selection.");
+    }
     const snapshot = keepSnapshot ? existing.workflow_snapshot : version?.graph;
     const plan = snapshot ? this.workflowGraphToPlan(snapshot, {
       document_type: documentType,
@@ -3369,7 +3387,7 @@ export class DocumentsService {
                 lastname: true,
               },
             },
-            creator: true,
+            creator: { select: { user_id: true, firstname: true, lastname: true, username: true, position_title: true } },
             hardcopy: {
               include: {
                 asset: true,
@@ -4625,7 +4643,7 @@ export class DocumentsService {
   ) {
     if (!user) return;
     const document = await this.prisma.document.findFirst({
-      where: { document_id: documentId, ...this.documentAccessWhere(user) },
+      where: { document_id: documentId, OR: [this.documentAccessWhere(user), this.approvalQueueWhere(user)] },
       select: { document_id: true },
     });
     if (!document)

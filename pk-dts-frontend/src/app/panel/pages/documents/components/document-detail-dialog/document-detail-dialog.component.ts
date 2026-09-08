@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { firstValueFrom } from 'rxjs';
 import { SystemSettingsService } from '@/app/shared/services/system-settings.service';
-import { DocumentDetail, DocumentUserSummary, DocumentWorkflowStepSummary, RevisionSummary } from '../../documents.types';
+import { SoftcopyAttachmentSummary, DocumentDetail, DocumentUserSummary, DocumentWorkflowStepSummary, RevisionSummary } from '../../documents.types';
 import { DocumentsService } from '../../documents.service';
 
 type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupported' | 'error';
@@ -187,7 +187,7 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                         <a *ngIf="document.softcopy?.current_revision as currentFile" [href]="canAccessFiles && !isStampableOfficeRevision(currentFile) ? revisionLink(currentFile) : null" target="_blank" rel="noopener" [class.disabled]="!canAccessFiles" (click)="openRevisionLink($event, currentFile)">
                             <i [class]="revisionIcon(currentFile)"></i><span><strong>{{ currentFile.file_name || 'Current softcopy file' }}</strong><small>Current softcopy file · Revision {{ currentFile.revision_number }}</small></span><i class="pi pi-external-link"></i>
                         </a>
-                        <a *ngFor="let attachment of documentAttachments()" [href]="canAccessFiles ? attachment.file_url : null" target="_blank" rel="noopener" [class.disabled]="!canAccessFiles">
+                        <a *ngFor="let attachment of documentAttachments()" [href]="canAccessFiles ? attachment.file_url : null" target="_blank" rel="noopener" [class.disabled]="!canAccessFiles" (click)="previewAttachment($event, attachment)">
                             <i class="pi pi-paperclip"></i><span><strong>{{ attachment.file_name }}</strong><small>{{ attachment.mime_type || 'File' }} · {{ formatDate(attachment.created_at) }}</small></span><i class="pi pi-external-link"></i><button *ngIf="canDeleteAttachments" type="button" title="Delete attachment" (click)="$event.preventDefault(); $event.stopPropagation(); attachmentDelete.emit(attachment.attachment_id)"><i class="pi pi-trash"></i></button>
                             <small class="attachment-approval-status">{{ attachmentApprovalLabel(attachment) }}</small>
                         </a>
@@ -364,7 +364,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     }
 
     trackRevision = (_index: number, revision: RevisionSummary) => revision.revision_id;
-    documentAttachments() { return this.document?.document_type === 'SOFTCOPY' ? (this.document.softcopy?.attachments || []).filter((attachment) => attachment.status !== 'Rejected' && attachment.status !== 'Cancelled') : []; }
+    documentAttachments() { return this.document?.document_type === 'SOFTCOPY' ? (this.document.softcopy?.attachments || []).filter((attachment) => attachment.status !== 'Rejected' && attachment.status !== 'Cancelled') : (this.document?.hardcopy?.attachments || []); }
     attachmentApprovalLabel(attachment: { status?: string | null }) { return attachment.status === 'Approved' ? 'Approved attachment' : 'Pending Plant Manager approval'; }
     supportingEvidenceCount() { return (this.document?.softcopy?.current_revision ? 1 : 0) + this.documentAttachments().length; }
 
@@ -389,6 +389,11 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     }
     private initializeWorkflowReassignments() { this.workflowReassignments = Object.fromEntries((this.document?.workflow_steps || []).map((step) => [step.workflow_step_id, { user_id: '', reason: '', saving: false, error: '' }])); }
     private workflowErrorMessage(error: unknown) { const candidate = error as { error?: { message?: string | string[] }; message?: string }; const message = candidate?.error?.message; return Array.isArray(message) ? message.join(' ') : message || candidate?.message || 'Unable to reassign this approval step.'; }
+
+    previewAttachment(event: Event, attachment: SoftcopyAttachmentSummary) {
+        event.preventDefault();
+        void this.selectRevision({ ...attachment, revision_id: `attachment-${attachment.attachment_id}`, revision_number: '', created_at: attachment.created_at || '' } as RevisionSummary);
+    }
 
     async selectRevision(revision: RevisionSummary) {
         if (!this.canAccessFiles || (this.selectedRevision?.revision_id === revision.revision_id && ['loading', 'office', 'pdf', 'image'].includes(this.previewKind))) return;
@@ -654,7 +659,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     private isImage(name: string, mime: string) { return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name) || mime.startsWith('image/'); }
     private isExcelRevision(revision: RevisionSummary) { return /\.(xlsx|xls)$/i.test(revision.file_name || this.revisionLink(revision)); }
     private isModernOfficeRevision(revision: RevisionSummary) { return /\.(xlsx|xls|docx|pptx)$/i.test(revision.file_name || this.revisionLink(revision)); }
-    isStampableOfficeRevision(revision: RevisionSummary) { return /\.(pdf|xlsx|xls|docx)$/i.test(revision.file_name || this.revisionLink(revision)); }
+    isStampableOfficeRevision(revision: RevisionSummary) { return !revision.revision_id.startsWith('attachment-') && /\.(pdf|xlsx|xls|docx)$/i.test(revision.file_name || this.revisionLink(revision)); }
     private officeProtocol(revision: RevisionSummary) { const name = revision.file_name || this.revisionLink(revision); if (/\.(xlsx|xls|csv)$/i.test(name)) return 'ms-excel'; if (/\.(docx|doc|rtf)$/i.test(name)) return 'ms-word'; if (/\.(pptx|ppt)$/i.test(name)) return 'ms-powerpoint'; return ''; }
     private absoluteUrl(link: string) { return new URL(link, window.location.href).href; }
 

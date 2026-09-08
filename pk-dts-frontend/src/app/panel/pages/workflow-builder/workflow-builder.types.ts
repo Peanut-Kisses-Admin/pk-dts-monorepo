@@ -62,3 +62,9 @@ export interface WorkflowDefinition {
 export interface PublishedWorkflowVersion extends WorkflowVersion {
     workflow_definition: WorkflowDefinition;
 }
+
+export interface PublishedWorkflowOption {
+    workflow_version_id: string;
+    version_number: number;
+    workflow_definition: { workflow_key: string; name: string };
+}

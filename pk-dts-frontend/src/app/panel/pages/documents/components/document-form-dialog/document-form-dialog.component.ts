@@ -14,7 +14,7 @@ import {
 import { AreaReference, AssetReference, DocumentFormValue, DocumentStatusValue, DocumentTypeValue, DocumentUserSummary, LocationReference, SequenceReference, SoftcopyCategoryReference, SpecificReference, WorkflowPlanStepValue } from '../../documents.types';
 import { DocumentsService } from '../../documents.service';
 import { WorkflowBuilderService } from '../../../workflow-builder/workflow-builder.service';
-import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-builder.types';
+import { PublishedWorkflowOption } from '../../../workflow-builder/workflow-builder.types';
 
 @Component({
     selector: 'app-document-form-dialog',
@@ -108,21 +108,21 @@ import { PublishedWorkflowVersion } from '../../../workflow-builder/workflow-bui
 
                 <div class="field md:col-span-2 workflow-builder" *ngIf="mode === 'create'">
                     <div class="workflow-builder-heading">
-                        <div><label for="published-workflow">Published approval workflow</label><small class="field-note">The exact published version, assignments, conditions, and paths are snapshotted onto this request.</small></div>
+                        <div><label for="published-workflow">Published approval workflow</label><small class="field-note">The published system-default workflow from Workflow Builder is saved with this request.</small></div>
                         <span *ngIf="selectedPublishedWorkflow() as selected">Version {{ selected.version_number }}</span>
                     </div>
                     <select id="published-workflow" [(ngModel)]="form.workflow_version_id" (ngModelChange)="selectPublishedWorkflow($event)" class="select-field" [disabled]="saving || workflowsLoading">
-                        <option value="">System default / configured legacy workflow</option>
+                        <option value="" disabled>Select the published system-default workflow</option>
                         <option *ngIf="form.workflow_version_id && !selectedPublishedWorkflow()" [value]="form.workflow_version_id">{{ form.workflow_name }} ? Version {{ form.workflow_version }} (saved on this draft)</option>
                         <option *ngFor="let workflow of publishedWorkflows" [value]="workflow.workflow_version_id">{{ workflow.workflow_definition.name }} · Version {{ workflow.version_number }}</option>
                     </select>
                     <small *ngIf="workflowLoadError" class="field-note text-red-500">{{ workflowLoadError }} <button type="button" (click)="loadPublishedWorkflows()">Retry</button></small>
                     <small *ngIf="workflowsLoading" class="field-note">Loading published workflows…</small>
-                    <small *ngIf="!workflowsLoading && !publishedWorkflows.length" class="field-note">No compatible published workflow is active. The preserved system default will be used.</small>
-                    <div *ngIf="selectedPublishedWorkflow() as selected" class="system-generated-field"><i class="pi pi-sitemap"></i><span><strong>{{ selected.workflow_definition.name }}</strong><small class="field-note">{{ selected.graph.nodes.length }} configured nodes · published versions are immutable</small></span></div>
+                    <small *ngIf="!workflowsLoading && !publishedWorkflows.length" class="field-note">No system-default workflow is published. Ask an administrator to publish it in Workflow Builder.</small>
+                    <div *ngIf="selectedPublishedWorkflow() as selected" class="system-generated-field"><i class="pi pi-sitemap"></i><span><strong>{{ selected.workflow_definition.name }}</strong><small class="field-note">Published system-default workflow</small></span></div>
                 </div>
 
-                <div class="field md:col-span-2 workflow-builder" *ngIf="mode === 'create' && canAssignUsers && !form.workflow_version_id">
+                <div class="field md:col-span-2 workflow-builder" *ngIf="false">
                     <div class="workflow-builder-heading">
                         <div><label for="workflow-preset">Approval workflow</label><small class="field-note">The route is saved with this request. Named users are snapshotted when submitted, while the actual person and position are recorded when they act.</small></div>
                         <span>Version {{ form.workflow_version }}</span>
@@ -614,7 +614,7 @@ export class DocumentFormDialogComponent implements OnChanges {
     businessDocumentTypes = ['Forms', 'Manual', 'Procedures', 'WorkInstruction', 'Monitoring', 'Others'];
     readonly searchableThreshold = SEARCHABLE_DROPDOWN_THRESHOLD;
     selectedWorkflowPreset = 'RECOMMENDED';
-    publishedWorkflows: PublishedWorkflowVersion[] = [];
+    publishedWorkflows: PublishedWorkflowOption[] = [];
     workflowsLoading = false;
     workflowLoadError = '';
     private workflowLoadId = 0;
@@ -632,7 +632,7 @@ export class DocumentFormDialogComponent implements OnChanges {
 
     submit(action: 'DRAFT' | 'SUBMIT') {
         this.submitted = true;
-        if (this.mode === 'create' && (this.workflowsLoading || this.workflowLoadError)) return;
+        if (this.mode === 'create' && (this.workflowsLoading || this.workflowLoadError || !this.form.workflow_version_id)) return;
         if (this.mode === 'create' && this.canAssignUsers && !this.form.workflow_version_id && !this.form.workflow_steps.length) {
             this.applyWorkflowPreset('RECOMMENDED');
         }
@@ -720,13 +720,8 @@ export class DocumentFormDialogComponent implements OnChanges {
             this.form.brief_description = '';
             this.form.proposed_change = '';
         }
-        const selectedKey = this.selectedPublishedWorkflow()?.workflow_definition.workflow_key;
-        if (selectedKey === 'system-softcopy-standard' || selectedKey === 'system-softcopy-cancellation') {
-            const key = this.form.action_requested === 'CANCELLATION' ? 'system-softcopy-cancellation' : 'system-softcopy-standard';
-            const recommended = this.publishedWorkflows.find(workflow => workflow.workflow_definition.workflow_key === key);
-            if (recommended) this.selectPublishedWorkflow(recommended.workflow_version_id);
-        }
-        if (!this.form.workflow_version_id && this.selectedWorkflowPreset === 'RECOMMENDED') this.applyWorkflowPreset('RECOMMENDED');
+        this.form.workflow_version_id = '';
+        this.loadPublishedWorkflows();
     }
 
     isRevisionAction() {
@@ -737,12 +732,12 @@ export class DocumentFormDialogComponent implements OnChanges {
         const loadId = ++this.workflowLoadId;
         this.workflowsLoading = true;
         this.workflowLoadError = '';
-        this.workflowBuilderService.published(this.form.document_type).subscribe({
+        this.workflowBuilderService.publishedDefault(this.form.document_type, this.form.action_requested || "CREATE").subscribe({
             next: (workflows) => {
                 if (loadId !== this.workflowLoadId) return;
                 this.publishedWorkflows = workflows;
                 this.workflowsLoading = false;
-                if (!this.form.workflow_version_id && !this.form.workflow_editable) {
+                if (!this.form.workflow_version_id) {
                     const key = this.isHardcopy() ? 'system-hardcopy-direct-approval' : this.form.action_requested === 'CANCELLATION' ? 'system-softcopy-cancellation' : 'system-softcopy-standard';
                     const recommended = workflows.find(workflow => workflow.workflow_definition.workflow_key === key);
                     if (recommended) this.selectPublishedWorkflow(recommended.workflow_version_id);

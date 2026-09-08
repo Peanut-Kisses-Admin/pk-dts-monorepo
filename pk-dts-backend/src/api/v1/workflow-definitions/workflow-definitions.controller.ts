@@ -15,6 +15,12 @@ export class WorkflowDefinitionsController {
   @RequirePermissions("document-workflow.view", "document-workflow.configure")
   list(@Query("include_inactive") includeInactive?: string) { return this.service.list(includeInactive === "true"); }
 
+  @Get("published-default")
+  @RequirePermissions("document-requests.create", "document-workflow.view", "document-workflow.configure")
+  publishedDefault(@Query("document_type") documentType: string, @Query("action_requested") action?: string) {
+    return this.service.publishedDefault(documentType, action);
+  }
+
   @Get("published")
   @RequirePermissions("document-requests.create", "document-workflow.view", "document-workflow.configure")
   published(@Query("document_type") documentType?: string) { return this.service.published(documentType); }

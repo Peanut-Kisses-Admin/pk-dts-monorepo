@@ -60,6 +60,10 @@ export class DocumentsService {
         return this.http.post<ApiResponse<DocumentDetail>>(`${DOCUMENTS_API}/${id}/${action}`, { remarks }).pipe(map((response) => this.unwrap(response)), tap(() => this.invalidateListCache()));
     }
 
+    getApprovalDocument(id: string) {
+        return this.http.get<ApiResponse<DocumentDetail>>(`${DOCUMENTS_API}/${id}/approval-view`).pipe(map((response) => this.unwrap(response)));
+    }
+
     getDocument(id: string) {
         return this.http.get<ApiResponse<DocumentDetail | null>>(`${DOCUMENTS_API}/${id}`).pipe(map((response) => this.unwrap(response)));
     }

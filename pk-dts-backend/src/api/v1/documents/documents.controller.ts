@@ -116,6 +116,12 @@ export class DocumentsController {
     return this.documentsService.findApprovalQueue(query, user!);
   }
 
+  @Get(":id/approval-view")
+  @ApiOperation({ summary: "Inspect a document assigned to the current reviewer" })
+  approvalView(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.documentsService.findApprovalDocument(id, user);
+  }
+
   @Get(":id")
   @RequirePermissions(
     "documents.view",

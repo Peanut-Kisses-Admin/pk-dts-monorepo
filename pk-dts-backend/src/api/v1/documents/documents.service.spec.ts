@@ -29,7 +29,13 @@ describe('DocumentsService', () => {
     process.env.MISTRAL_ENABLED = 'false';
 
     prisma = {
-      workflowVersion: { findFirst: jest.fn().mockResolvedValue(null) },
+      workflowVersion: { findFirst: jest.fn().mockResolvedValue({
+        workflow_version_id: 100n, version_number: 1, workflow_definition: { name: 'System default', workflow_key: 'system-softcopy-standard' },
+        graph: { schema_version: 2, start_node_key: 'review', nodes: [
+          { key: 'review', label: 'Review', type: 'APPROVAL', stage: 'HARDCOPY_APPROVAL', assignment: { type: 'REQUESTER_LEADER' } },
+          { key: 'end', label: 'Approved', type: 'END' }
+        ], edges: [{ key: 'approve', from: 'review', to: 'end', outcome: 'APPROVE' }] }
+      }) },
       area: {
         findMany: jest.fn(),
         create: jest.fn(),
@@ -1410,4 +1416,27 @@ describe('DocumentsService', () => {
       },
     });
   });
+  it('rejects arbitrary workflow versions on a request', async () => {
+    await expect(service.createRequest({ document_type: DocumentType.SOFTCOPY, document_title: 'Test', document_number: 'T-1', series_number: '1', workflow_version_id: '999' } as any, '6')).rejects.toThrow('Only the current system-default');
+    expect(prisma.document.create).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when no system default is published', async () => {
+    prisma.workflowVersion.findFirst.mockResolvedValue(null);
+    await expect(service.createRequest({ document_type: DocumentType.SOFTCOPY, document_title: 'Test', document_number: 'T-1', series_number: '1' } as any, '6')).rejects.toThrow('No active system-default');
+  });
+
+  it('does not disclose approval details to an unassigned reviewer', async () => {
+    prisma.document.findFirst.mockResolvedValue(null);
+    await expect(service.findApprovalDocument('12', regularUser)).rejects.toThrow('no longer assigned');
+    expect(prisma.document.findFirst).toHaveBeenCalledTimes(1);
+    expect(prisma.document.findFirst.mock.calls[0][0].where.OR[0].workflow_steps.some.assigned_user_id).toBe(7n);
+  });
+
+  it('invalidates a controlled artifact when its revision becomes historical', () => {
+    const revision = { revision_id: 1n, file_path: 'source.docx', revision_number: '1', effective_date: null, new_effective_date: null, is_current: true, is_historical: false };
+    const fingerprint = (value: any) => (service as any).revisionArtifactFingerprint(value, DocumentStatus.Completed, 'DOC-1', 'CONTROLLED', { size: 100, mtimeMs: 1 });
+    expect(fingerprint(revision)).not.toBe(fingerprint({ ...revision, is_current: false, is_historical: true }));
+  });
+
 });

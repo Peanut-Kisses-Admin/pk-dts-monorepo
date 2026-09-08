@@ -36,4 +36,13 @@ describe("WorkflowDefinitionsService", () => {
     const service = new WorkflowDefinitionsService(prisma);
     await expect(service.updateVersion("1", "2", { graph })).rejects.toBeInstanceOf(ConflictException);
   });
+  it('looks up only the current published system default for the request action', async () => {
+    const findFirst = jest.fn().mockResolvedValue({ workflow_version_id: 3n });
+    const service = new WorkflowDefinitionsService({ workflowVersion: { findFirst } } as any);
+    await expect(service.publishedDefault('SOFTCOPY', 'CANCELLATION')).resolves.toEqual([{ workflow_version_id: 3n }]);
+    expect(findFirst.mock.calls[0][0].where).toEqual({ status: 'PUBLISHED', workflow_definition: { workflow_key: 'system-softcopy-cancellation', is_active: true } });
+    expect(findFirst.mock.calls[0][0].select).not.toHaveProperty('graph');
+    await expect(service.publishedDefault('INVALID')).rejects.toThrow('valid document type');
+  });
+
 });

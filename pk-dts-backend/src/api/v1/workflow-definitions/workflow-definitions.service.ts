@@ -1,3 +1,4 @@
+import { systemWorkflowKey } from "../../../common/constants/system-workflow";
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma, WorkflowVersionStatus } from "@prisma/client";
 import { AuthenticatedUser } from "../../../common/auth/authenticated-user.interface";
@@ -30,6 +31,17 @@ export class WorkflowDefinitionsService {
       include: WORKFLOW_INCLUDE,
       orderBy: [{ document_type: "asc" }, { name: "asc" }],
     });
+  }
+
+  async publishedDefault(documentType: string, action?: string) {
+    if (!["SOFTCOPY", "HARDCOPY"].includes(documentType)) throw new BadRequestException("A valid document type is required.");
+    if (action && !["CREATE", "REVISE", "CREATE_REVISE", "CANCELLATION"].includes(action)) throw new BadRequestException("Invalid document request action.");
+    const version = await this.prisma.workflowVersion.findFirst({
+      where: { status: WorkflowVersionStatus.PUBLISHED, workflow_definition: { workflow_key: systemWorkflowKey(documentType, action), is_active: true } },
+      orderBy: { version_number: "desc" },
+      select: { workflow_version_id: true, version_number: true, workflow_definition: { select: { workflow_key: true, name: true } } },
+    });
+    return version ? [version] : [];
   }
 
   async published(documentType?: string) {

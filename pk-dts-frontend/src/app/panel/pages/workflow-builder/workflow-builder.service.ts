@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs';
 import { BACKEND_API_BASE_URL } from '@/app/config/api-config';
-import { PublishedWorkflowVersion, WorkflowDefinition, WorkflowGraph, WorkflowVersion } from './workflow-builder.types';
+import { PublishedWorkflowOption, PublishedWorkflowVersion, WorkflowDefinition, WorkflowGraph, WorkflowVersion } from './workflow-builder.types';
 
 type Envelope<T> = T | { data: T };
 const API = `${BACKEND_API_BASE_URL}/workflow-definitions`;
@@ -13,6 +13,12 @@ export class WorkflowBuilderService {
 
     list(includeInactive = true) {
         return this.http.get<Envelope<WorkflowDefinition[]>>(API, { params: { include_inactive: includeInactive } }).pipe(map(this.unwrap));
+    }
+
+    publishedDefault(documentType: 'SOFTCOPY' | 'HARDCOPY', action: string) {
+        return this.http.get<Envelope<PublishedWorkflowOption[]>>(`${API}/published-default`, {
+            params: { document_type: documentType, action_requested: action }
+        }).pipe(map(this.unwrap));
     }
 
     published(documentType?: 'SOFTCOPY' | 'HARDCOPY') {
