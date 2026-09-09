@@ -32,6 +32,7 @@
                         "styles": [
                             "src/assets/styles.scss",
                             "src/document-grid.scss",
+                            "src/document-detail-modern.scss",
                             "src/assets/tailwind.css"
                         ],
                         "scripts": []
@@ -63,7 +64,8 @@
                 "serve": {
                     "builder": "@angular-devkit/build-angular:dev-server",
                     "options": {
-                    "allowedHosts": ["jab-batboy-bobble.ngrok-free.dev"]},
+                        "allowedHosts": ["jab-batboy-bobble.ngrok-free.dev"]
+                    },
                     "configurations": {
                         "production": {
                             "buildTarget": "sakai-ng:build:production"
@@ -88,7 +90,8 @@
                         ],
                         "styles": [
                             "src/assets/styles.scss",
-                            "src/document-grid.scss"
+                            "src/document-grid.scss",
+                            "src/document-detail-modern.scss"
                         ],
                         "scripts": []
                     }
