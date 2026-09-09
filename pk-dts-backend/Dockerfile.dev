@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM node:20-bookworm-slim
 
 WORKDIR /app
@@ -16,10 +17,29 @@ ENV NODE_ENV=development \
     TSC_WATCHDIRECTORY=DynamicPriorityPolling \
     npm_config_fetch_retries=5 \
     npm_config_fetch_retry_mintimeout=20000 \
-    npm_config_fetch_retry_maxtimeout=120000
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=5
 
 COPY package*.json ./
-RUN npm ci
+
+# Reuse npm downloads between Docker builds and retry transient connection
+# failures instead of failing the whole dev environment on the first timeout.
+RUN --mount=type=cache,target=/root/.npm \
+    sh -c 'set -e; \
+      for attempt in 1 2 3 4; do \
+        echo "npm ci attempt ${attempt}/4"; \
+        if npm ci --prefer-offline --no-audit --no-fund; then \
+          exit 0; \
+        fi; \
+        if [ "$attempt" -eq 4 ]; then \
+          echo "npm ci failed after 4 attempts" >&2; \
+          exit 1; \
+        fi; \
+        delay=$((attempt * 10)); \
+        echo "npm ci failed; retrying in ${delay}s..."; \
+        sleep "$delay"; \
+      done'
 
 # Seed the named node_modules volume from the image. Application source is
 # bind-mounted by compose.dev.yaml, so normal code edits never rebuild this image.
