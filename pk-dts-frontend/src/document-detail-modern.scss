@@ -1,356 +1,167 @@
-/* Document Details UX refresh
-   Keeps business logic untouched and simplifies the UI hierarchy. */
-
-.p-dialog:has(.document-detail-shell) {
-    width: min(72rem, 96vw) !important;
-    max-height: 94vh;
+/* Scoped Document Details layout. Uses the same reading order for sight and keyboard navigation. */
+.document-details-dialog {
+    --detail-surface: #fff;
+    --detail-subtle: #f8fafc;
+    --detail-text: #172033;
+    --detail-muted: #526174;
+    --detail-border: #dce2e9;
+    --detail-accent: #991b1b;
+    max-height: 92dvh;
+    border: 1px solid var(--detail-border);
+    border-radius: 16px;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
-    border-radius: 1.25rem;
-    background: #fff;
-    box-shadow: 0 24px 70px rgba(15,23,42,.18);
+    background: var(--detail-surface);
+    color: var(--detail-text);
+    box-shadow: 0 24px 80px #0f172a30;
+    .p-dialog-header, .p-dialog-footer { flex-shrink: 0; padding: 16px 24px; background: var(--detail-surface); }
+    .p-dialog-header { border-bottom: 1px solid var(--detail-border); }
+    .p-dialog-title { color: var(--detail-text); font-size: 18px; font-weight: 650; }
+    .p-dialog-footer { border-top: 1px solid var(--detail-border); }
+    .p-dialog-content { padding: 0 24px 24px; background: var(--detail-surface); overflow-y: auto; }
 }
-.p-dialog:has(.document-detail-shell) .p-dialog-header,
-.p-dialog:has(.document-detail-shell) .p-dialog-footer {
-    position: sticky;
-    z-index: 20;
-    border-color: #e2e8f0;
-    background: rgba(255,255,255,.96);
-    backdrop-filter: blur(14px);
+.app-dark .document-details-dialog {
+    --detail-surface: #181b21;
+    --detail-subtle: #222731;
+    --detail-text: #f1f5f9;
+    --detail-muted: #b4bfcd;
+    --detail-border: #3c4654;
+    --detail-accent: #fca5a5;
 }
-.p-dialog:has(.document-detail-shell) .p-dialog-header {
-    top: 0; min-height: 4.25rem; border-bottom: 1px solid #e2e8f0; padding: 1rem 1.25rem;
+.document-details-dialog .document-detail-shell {
+    color: var(--detail-text);
+    font-size: 14px;
+    line-height: 1.5;
+    *, *::before, *::after { box-sizing: border-box; }
+    h2, h3, h4, p { margin: 0; }
+    h3 { font-size: 16px; font-weight: 650; line-height: 1.4; }
+    small, .section-subtitle, .field-label { font-size: 13px; color: var(--detail-muted); }
+    strong { font-weight: 600; }
+    button, input, select { font: inherit; }
+    button {
+        display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+        min-height: 40px; padding: 8px 12px; border: 1px solid var(--detail-border);
+        border-radius: 7px; background: var(--detail-surface); color: var(--detail-text); cursor: pointer; line-height: 1.4;
+    }
+    button:hover:not(:disabled) { background: var(--detail-subtle); border-color: var(--detail-accent); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    :is(button, a, summary, input, select):focus-visible { outline: 3px solid var(--detail-accent); outline-offset: 3px; }
+    .document-hero { display: flex; align-items: flex-start; gap: 16px; padding: 24px 0 20px; }
+    .hero-icon { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 10px; background: var(--detail-subtle); color: var(--detail-accent); font-size: 22px; }
+    .hero-copy { flex: 1; min-width: 0; }
+    .hero-kicker { color: var(--detail-muted); font-size: 13px; margin-bottom: 4px; }
+    .hero-copy h2 { font-size: clamp(20px, 2vw, 25px); line-height: 1.3; font-weight: 650; overflow-wrap: anywhere; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; color: var(--detail-muted); font-size: 13px; }
+    .hero-meta span { display: inline-flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+    .hero-badges { flex: 0 1 240px; text-align: right; }
+    .status-badge, .revision-state-badge { display: inline-block; padding: 5px 10px; border: 1px solid var(--detail-border); border-radius: 6px; background: var(--detail-subtle); color: var(--detail-text); font-size: 12px; font-weight: 600; }
+    .status-badge:is([data-status="Completed"], [data-status="Approved"], [data-status="Transferred"]), .revision-state-badge.current { background: #edf9f1; border-color: #a9d5b8; color: #186138; }
+    .status-badge:is([data-status="Rejected"], [data-status="Disposed"]) { background: #fff1f2; border-color: #f4b6bf; color: #9f1239; }
+    .status-badge:is([data-status="ForRevision"], [data-status="ReturnedForCorrection"], [data-status="PendingApproval"]) { background: #fffbeb; border-color: #e7ce87; color: #854d0e; }
+    .summary-strip { display: flex; flex-wrap: wrap; gap: 16px 32px; padding: 0 0 20px; }
+    .summary-card { flex: 1 1 160px; min-width: 0; }
+    .summary-card-icon { display: none; }
+    .summary-card span, .summary-card strong, .summary-card small { display: block; overflow-wrap: anywhere; }
+    .summary-card span { color: var(--detail-muted); font-size: 13px; margin-bottom: 3px; }
+    .summary-card small { margin-top: 4px; }
+    .workspace-grid, .approval-route-panel, .softcopy-record-section, .revisions-section { border-top: 1px solid var(--detail-border); padding: 20px 0; }
+    .section-heading, .approval-route-heading, .evidence-heading { display: flex; align-items: center; gap: 12px; }
+    .section-icon { color: var(--detail-muted); font-size: 18px; }
+    .section-heading > div > span, .approval-route-heading > div > span, .evidence-heading > div > span, .revision-heading > div > span { display: none; }
+    .section-subtitle { display: block; margin-top: 4px; }
+    .storage-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 16px; background: var(--detail-subtle); border-radius: 8px; padding: 16px; margin: 16px 0 0; }
+    .storage-fields > div { min-width: 0; }
+    dt { color: var(--detail-muted); font-size: 13px; }
+    dd { margin: 4px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+    .digital-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+    .current-file-name { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 2px; overflow-wrap: anywhere; }
+    .current-file-name i { color: var(--detail-accent); }
+    .digital-file-actions > button:first-of-type { background: #991b1b; border-color: #991b1b; color: #fff; }
+    .digital-file-actions > button:first-of-type:hover { background: #7f1d1d; }
+    .controlled-file-note, .download-error { flex-basis: 100%; }
+    .download-error, .workflow-reassign-error { color: var(--detail-accent); }
+    .access-note, .empty-state { margin-top: 16px; padding: 14px; border-radius: 8px; background: var(--detail-subtle); color: var(--detail-muted); }
+    .retention-detail, .disposal-note { display: flex; gap: 10px; padding: 14px; margin-top: 16px; border: 1px solid var(--detail-border); border-radius: 8px; background: var(--detail-subtle); }
+    .retention-detail div, .disposal-note div { display: grid; gap: 4px; }
+    .retention-detail-alert, .disposal-note { border-left: 3px solid var(--detail-accent); }
+    .file-preview-panel { scroll-margin: 16px; margin: 0 0 20px; border: 1px solid var(--detail-border); border-radius: 8px; overflow: hidden; }
+    .preview-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px; background: var(--detail-subtle); }
+    .preview-heading > div { min-width: 0; overflow-wrap: anywhere; }
+    .preview-heading button { flex-shrink: 0; }
+    .file-preview-panel > p { padding: 16px; }
+    .file-preview-panel img { display: block; max-height: 65vh; margin: auto; object-fit: contain; }
+    .file-preview-panel iframe { display: block; background: #fff; }
+    .approval-route-list { margin-top: 16px; }
+    .approval-route-step { display: grid; grid-template-columns: 30px minmax(0, 1fr) minmax(0, 290px); align-items: start; gap: 14px; padding: 14px 0; }
+    .approval-route-step + .approval-route-step { border-top: 1px solid var(--detail-border); }
+    .approval-step-number { display: grid; place-items: center; height: 30px; border: 1px solid var(--detail-border); border-radius: 50%; font-weight: 600; background: var(--detail-subtle); }
+    .completed .approval-step-number { color: #186138; background: #edf9f1; border-color: #a9d5b8; }
+    .current .approval-step-number { background: #991b1b; color: #fff; border-color: #991b1b; }
+    .approval-step-copy { display: grid; gap: 3px; overflow-wrap: anywhere; }
+    .approval-step-copy > span { color: var(--detail-muted); font-size: 13px; }
+    .workflow-reassign-controls { font-size: 13px; }
+    .workflow-reassign-controls summary { cursor: pointer; padding: 9px 4px; color: var(--detail-accent); }
+    .workflow-reassign-controls label { display: block; margin: 12px 0 4px; }
+    .workflow-reassign-controls select, .workflow-reassign-controls input { width: 100%; min-height: 40px; padding: 8px; background: var(--detail-surface); color: var(--detail-text); border: 1px solid var(--detail-border); border-radius: 6px; }
+    .workflow-reassign-controls button { margin-top: 12px; }
+    .workflow-reassign-error { display: block; margin-top: 8px; }
+    .metadata-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; cursor: pointer; }
+    summary { list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    .workflow-reassign-controls summary { list-style: disclosure-closed inside; }
+    .workflow-reassign-controls[open] summary { list-style-type: disclosure-open; }
+    .disclosure-icon { color: var(--detail-muted); flex-shrink: 0; font-size: 13px; }
+    details[open] > summary > .disclosure-icon { transform: rotate(180deg); }
+    .metadata-grid, .revision-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin-top: 16px; }
+    .metadata-item, .revision-detail-item { padding: 12px 0; border-bottom: 1px solid var(--detail-border); min-width: 0; }
+    .metadata-item > span, .revision-detail-item > span { display: block; font-size: 13px; color: var(--detail-muted); }
+    .metadata-item > strong, .revision-detail-item > strong { display: block; margin-top: 4px; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .metadata-item-wide, .revision-detail-wide { grid-column: 1 / -1; }
+    .revisions-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .revisions-title > strong { color: var(--detail-muted); font-size: 13px; white-space: nowrap; }
+    .revision-heading:not(:first-child) { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--detail-border); }
+    .attachment-list { display: grid; gap: 8px; margin-top: 16px; }
+    .attachment-row { display: flex; gap: 8px; align-items: center; border: 1px solid var(--detail-border); border-radius: 8px; padding-right: 10px; }
+    .attachment-row a { display: flex; align-items: center; flex: 1; min-width: 0; gap: 12px; padding: 14px; color: var(--detail-text); text-decoration: none; }
+    .attachment-row a:hover:not(.disabled) { background: var(--detail-subtle); }
+    .attachment-row a > span { display: grid; flex: 1; min-width: 0; overflow-wrap: anywhere; gap: 3px; }
+    .attachment-row a.disabled { color: var(--detail-muted); pointer-events: none; }
+    .delete-attachment { color: var(--detail-accent); flex-shrink: 0; }
+    .revision-list { margin-top: 16px; }
+    .revision-card { border: 1px solid var(--detail-border); border-radius: 8px; margin-top: 10px; overflow: visible; }
+    .revision-summary { display: flex; gap: 14px; align-items: center; padding: 16px; cursor: pointer; }
+    .revision-summary:hover { background: var(--detail-subtle); border-radius: 8px; }
+    .file-thumbnail { width: 42px; flex: 0 0 42px; height: 52px; display: grid; place-items: center; border-radius: 6px; color: var(--detail-accent); background: var(--detail-subtle); }
+    .file-thumbnail > span { font-size: 10px; }
+    .file-thumbnail > i { font-size: 20px; }
+    .revision-copy { flex: 1; min-width: 0; }
+    .revision-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+    .revision-title-row > div { display: flex; gap: 5px; }
+    .revision-copy h4 { margin: 6px 0; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+    .revision-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--detail-muted); font-size: 12px; }
+    .revision-meta i, .revision-copy p i { margin-right: 5px; }
+    .revision-copy p { color: var(--detail-muted); margin-top: 6px; font-size: 13px; overflow-wrap: anywhere; }
+    .revision-expanded { padding: 0 16px 16px; border-top: 1px solid var(--detail-border); }
+    .revision-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .no-revisions { display: grid; justify-items: center; gap: 6px; background: var(--detail-subtle); color: var(--detail-muted); text-align: center; padding: 24px; margin-top: 16px; border-radius: 8px; }
+    .no-revisions > i { font-size: 24px; }
 }
-.p-dialog:has(.document-detail-shell) .p-dialog-footer {
-    bottom: 0; border-top: 1px solid #e2e8f0; padding: .85rem 1.25rem;
-}
-.p-dialog:has(.document-detail-shell) .p-dialog-content {
-    background: #f8fafc;
-    padding: 1rem 1.25rem 1.5rem;
-}
-
-.document-detail-shell {
-    display: flex !important;
-    flex-direction: column;
-    gap: .875rem;
-    color: #0f172a;
-}
-.document-detail-shell > .document-hero { order: 1; }
-.document-detail-shell > .summary-strip { order: 2; }
-.document-detail-shell > .softcopy-view-hint { order: 3; }
-.document-detail-shell > .workspace-grid { order: 4; }
-.document-detail-shell > .file-preview-panel { order: 5; }
-.document-detail-shell > .approval-route-panel { order: 6; }
-.document-detail-shell > .softcopy-record-section { order: 7; }
-.document-detail-shell > .revisions-section { order: 8; }
-
-.document-detail-shell .document-hero,
-.document-detail-shell .document-hero.hardcopy {
-    min-height: 0;
-    overflow: visible;
-    display: grid;
-    grid-template-columns: auto minmax(0,1fr) auto;
-    align-items: center;
-    gap: .9rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    background: #fff;
-    padding: 1rem;
-    color: #0f172a;
-    box-shadow: none;
-}
-.document-detail-shell .document-hero::before,
-.document-detail-shell .document-hero::after { display: none; }
-
-.document-detail-shell .hero-icon {
-    width: 2.75rem; height: 2.75rem;
-    border: 0; border-radius: .75rem;
-    background: #991b1b; color: #fff;
-    box-shadow: none; font-size: 1rem;
-}
-.document-detail-shell .hero-kicker {
-    color: #64748b; font-size: .66rem; font-weight: 800; letter-spacing: .08em;
-}
-.document-detail-shell .hero-copy h2 {
-    overflow: visible;
-    margin: .2rem 0 .35rem;
-    color: #0f172a;
-    font-size: clamp(1.05rem,1.7vw,1.35rem);
-    font-weight: 800;
-    line-height: 1.3;
-    letter-spacing: -.02em;
-    white-space: normal;
-}
-.document-detail-shell .hero-meta { gap: .75rem; }
-.document-detail-shell .hero-meta span { color: #64748b; font-size: .74rem; font-weight: 600; }
-.document-detail-shell .hero-meta i { color: #991b1b; }
-.document-detail-shell .hero-badges { align-self: start; justify-content: flex-end; gap: .4rem; }
-.document-detail-shell .type-badge,
-.document-detail-shell .status-badge {
-    border: 1px solid #e2e8f0;
-    border-radius: 999px;
-    background: #f8fafc;
-    padding: .36rem .6rem;
-    color: #475569;
-    font-size: .65rem;
-    font-weight: 800;
-    letter-spacing: .03em;
-    box-shadow: none;
-}
-.document-detail-shell .status-badge {
-    border-color: #bbf7d0; background: #f0fdf4; color: #166534;
-}
-
-.document-detail-shell .summary-strip {
-    display: grid;
-    grid-template-columns: repeat(4,minmax(0,1fr));
-    gap: 0;
-    margin: 0;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-    border-radius: .9rem;
-    background: #fff;
-}
-.document-detail-shell .summary-strip > div {
-    min-width: 0;
-    border: 0;
-    border-right: 1px solid #e2e8f0;
-    border-radius: 0;
-    background: transparent;
-    padding: .75rem .9rem;
-}
-.document-detail-shell .summary-strip > div:last-child { border-right: 0; }
-.document-detail-shell .summary-card-icon { display: none; }
-.document-detail-shell .summary-strip span {
-    color: #94a3b8; font-size: .61rem; font-weight: 800; letter-spacing: .06em;
-}
-.document-detail-shell .summary-strip strong {
-    margin-top: .2rem; color: #0f172a; font-size: .76rem; font-weight: 700;
-}
-.document-detail-shell .summary-strip small { color: #64748b; }
-
-.document-detail-shell .softcopy-view-hint { display: none !important; }
-
-.document-detail-softcopy .workspace-grid { margin: 0; }
-.document-detail-softcopy .storage-panel {
-    border: 1px solid #dbeafe;
-    border-radius: 1rem;
-    background: #fff;
-    padding: 0;
-    box-shadow: none;
-}
-.document-detail-softcopy .storage-panel > .section-heading,
-.document-detail-softcopy .digital-route-heading,
-.document-detail-softcopy .digital-live-progress,
-.document-detail-softcopy .digital-route { display: none !important; }
-
-.document-detail-softcopy .digital-visual { margin: 0; padding: 0; background: transparent; }
-.document-detail-softcopy .digital-file-actions {
-    display: grid !important;
-    grid-template-columns: minmax(14rem,1fr) auto auto auto;
-    align-items: center;
-    gap: .55rem;
-    margin: 0;
-    border: 0;
-    border-radius: 1rem;
-    background: linear-gradient(180deg,#fff,#f8fbff);
-    padding: .9rem;
-}
-.document-detail-softcopy .digital-file-actions > div { min-width: 0; }
-.document-detail-softcopy .digital-file-actions > div > span {
-    display: block; color: #2563eb; font-size: .62rem; font-weight: 800;
-    letter-spacing: .07em; text-transform: uppercase;
-}
-.document-detail-softcopy .digital-file-actions > div > strong {
-    display: block; overflow: hidden; margin-top: .2rem;
-    color: #0f172a; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap;
-}
-.document-detail-softcopy .digital-file-actions button {
-    min-height: 2.35rem;
-    border: 1px solid #cbd5e1;
-    border-radius: .7rem;
-    background: #fff;
-    padding: .55rem .7rem;
-    color: #334155;
-    font-size: .72rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-.document-detail-softcopy .digital-file-actions button:hover:not(:disabled) {
-    border-color: #991b1b; background: #991b1b; color: #fff;
-}
-.document-detail-softcopy .digital-file-actions .controlled-file-note,
-.document-detail-softcopy .digital-file-actions .download-error {
-    grid-column: 1 / -1; margin: 0; color: #64748b; font-size: .68rem; line-height: 1.45;
-}
-.document-detail-softcopy .digital-file-actions .download-error { color: #b91c1c; }
-
-.document-detail-shell .file-preview-panel {
-    overflow: hidden;
-    margin: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    background: #fff;
-    padding: 0;
-}
-.document-detail-shell .file-preview-panel > h3,
-.document-detail-shell .file-preview-panel > p {
-    margin: 0; border-bottom: 1px solid #e2e8f0; padding: .8rem 1rem;
-}
-.document-detail-shell .file-preview-panel > h3 {
-    color: #0f172a; font-size: .82rem; font-weight: 700;
-}
-.document-detail-shell .file-preview-panel iframe,
-.document-detail-shell .file-preview-panel img {
-    display: block; width: 100% !important; max-height: 64vh; background: #fff;
-}
-
-.document-detail-shell .approval-route-panel {
-    margin: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    background: #fff;
-    padding: 1rem;
-    box-shadow: none;
-}
-.document-detail-shell .approval-route-heading {
-    align-items: center; padding-bottom: .75rem; border-bottom: 1px solid #f1f5f9;
-}
-.document-detail-shell .approval-route-heading h3 {
-    margin: .1rem 0; color: #0f172a; font-size: .88rem;
-}
-.document-detail-shell .approval-route-list { display: grid; gap: 0; margin-top: .7rem; }
-.document-detail-shell .approval-route-step {
-    display: grid;
-    grid-template-columns: 2rem minmax(0,1fr) minmax(0,auto);
-    gap: .65rem;
-    align-items: start;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    padding: .6rem 0;
-}
-.document-detail-shell .approval-route-step + .approval-route-step { border-top: 1px solid #f1f5f9; }
-.document-detail-shell .approval-step-number {
-    width: 1.75rem; height: 1.75rem;
-    border: 1px solid #cbd5e1; background: #fff; color: #64748b; box-shadow: none;
-}
-.document-detail-shell .approval-route-step.completed .approval-step-number {
-    border-color: #86efac; background: #f0fdf4; color: #15803d;
-}
-.document-detail-shell .approval-route-step.current .approval-step-number {
-    border-color: #991b1b; background: #991b1b; color: #fff;
-}
-
-.document-detail-shell .softcopy-record-section,
-.document-detail-shell .revisions-section {
-    margin: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    background: #fff;
-    box-shadow: none;
-}
-.document-detail-shell .softcopy-record-section { overflow: hidden; }
-.document-detail-shell .metadata-section-heading {
-    padding: .9rem 1rem; cursor: pointer; list-style: none;
-}
-.document-detail-shell .metadata-section-heading::-webkit-details-marker { display: none; }
-.document-detail-shell .metadata-section-heading::after {
-    content: 'Show details'; margin-left: auto; color: #64748b; font-size: .68rem; font-weight: 700;
-}
-.document-detail-shell .softcopy-record-section[open] .metadata-section-heading::after { content: 'Hide details'; }
-.document-detail-shell .metadata-section-caption { display: none; }
-.document-detail-shell .metadata-grid {
-    border-top: 1px solid #e2e8f0; background: #fbfdff; padding: 1rem;
-}
-.document-detail-shell .revisions-section { padding: 1rem; }
-.document-detail-shell .revisions-title:not(.revision-heading) > strong { display: none; }
-.document-detail-shell .attachment-list:has(> a:nth-child(2)) > a:first-child { display: none; }
-
-.document-detail-shell .revision-card {
-    display: block;
-    border: 1px solid #e2e8f0;
-    border-radius: .85rem;
-    background: #fff;
-    padding: 0;
-    transform: none;
-    box-shadow: none;
-}
-.document-detail-shell .revision-card:hover {
-    border-color: #cbd5e1; background: #fbfdff; transform: none; box-shadow: none;
-}
-.document-detail-shell .revision-summary {
-    display: grid; grid-template-columns: 3.25rem minmax(0,1fr);
-    gap: .75rem; align-items: center; padding: .75rem; cursor: pointer;
-}
-.document-detail-shell .file-thumbnail { width: 3.1rem; height: 3.55rem; border-radius: .55rem; }
-.document-detail-shell .revision-copy p { display: none; }
-.document-detail-shell .revision-expanded {
-    border-top: 1px solid #f1f5f9; background: #f8fafc; padding: .85rem;
-}
-
-.document-detail-shell:not(.document-detail-softcopy) .workspace-grid { margin: 0; }
-.document-detail-shell:not(.document-detail-softcopy) .storage-panel {
-    border: 1px solid #e2e8f0; border-radius: 1rem; background: #fff; box-shadow: none;
-}
-.document-detail-shell:not(.document-detail-softcopy) .physical-visual {
-    grid-template-columns: minmax(0,1fr);
-    margin-top: .8rem;
-    border-radius: .85rem;
-    background: #f8fafc;
-    padding: .85rem;
-    color: #0f172a;
-}
-.document-detail-shell:not(.document-detail-softcopy) .shelf-icon,
-.document-detail-shell:not(.document-detail-softcopy) .route-live-progress,
-.document-detail-shell:not(.document-detail-softcopy) .route-guide-head button { display: none !important; }
-.document-detail-shell:not(.document-detail-softcopy) .route-steps {
-    display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem;
-}
-.document-detail-shell:not(.document-detail-softcopy) .route-node {
-    min-width: 0;
-    flex: 1 1 9rem;
-    border: 1px solid #e2e8f0;
-    border-radius: .7rem;
-    background: #fff;
-    padding: .65rem;
-    color: #0f172a;
-    box-shadow: none;
-}
-.document-detail-shell:not(.document-detail-softcopy) .route-connector { display: none; }
-
-.app-dark .p-dialog:has(.document-detail-shell),
-.app-dark .p-dialog:has(.document-detail-shell) .p-dialog-header,
-.app-dark .p-dialog:has(.document-detail-shell) .p-dialog-footer,
-.app-dark .document-detail-shell .document-hero,
-.app-dark .document-detail-shell .summary-strip,
-.app-dark .document-detail-shell .approval-route-panel,
-.app-dark .document-detail-shell .file-preview-panel,
-.app-dark .document-detail-shell .softcopy-record-section,
-.app-dark .document-detail-shell .revisions-section,
-.app-dark .document-detail-softcopy .storage-panel,
-.app-dark .document-detail-shell:not(.document-detail-softcopy) .storage-panel {
-    border-color: #333;
-    background: #171717;
-    color: #e5e5e5;
-}
-.app-dark .p-dialog:has(.document-detail-shell) .p-dialog-content { background: #101010; }
-
-@media (max-width: 900px) {
-    .document-detail-shell .summary-strip { grid-template-columns: repeat(2,minmax(0,1fr)); }
-    .document-detail-softcopy .digital-file-actions { grid-template-columns: 1fr 1fr; }
-    .document-detail-softcopy .digital-file-actions > div,
-    .document-detail-softcopy .digital-file-actions .controlled-file-note,
-    .document-detail-softcopy .digital-file-actions .download-error { grid-column: 1 / -1; }
-    .document-detail-shell .approval-route-step { grid-template-columns: 2rem minmax(0,1fr); }
-    .document-detail-shell .workflow-reassign-controls { grid-column: 2; max-width: none; }
-}
-@media (max-width: 640px) {
-    .p-dialog:has(.document-detail-shell) .p-dialog-content { padding: .75rem; }
-    .document-detail-shell .document-hero,
-    .document-detail-shell .document-hero.hardcopy { grid-template-columns: auto minmax(0,1fr); padding: .85rem; }
-    .document-detail-shell .hero-badges { grid-column: 1 / -1; justify-content: flex-start; }
-    .document-detail-shell .summary-strip { grid-template-columns: 1fr; }
-    .document-detail-softcopy .digital-file-actions { grid-template-columns: 1fr; }
-    .document-detail-softcopy .digital-file-actions > * { grid-column: 1 !important; }
+@media (max-width: 700px) {
+    .document-details-dialog { max-height: 96dvh; }
+    .document-details-dialog .p-dialog-header, .document-details-dialog .p-dialog-footer { padding: 14px 16px; }
+    .document-details-dialog .p-dialog-content { padding: 0 16px 16px; }
+    .document-details-dialog .document-detail-shell {
+        .document-hero { flex-wrap: wrap; gap: 12px; padding-top: 20px; }
+        .hero-badges { flex-basis: 100%; text-align: left; }
+        .summary-strip { gap: 16px; }
+        .summary-card { flex-basis: calc(50% - 16px); }
+        .metadata-grid, .revision-detail-grid { grid-template-columns: 1fr; }
+        .approval-route-step { grid-template-columns: 30px minmax(0, 1fr); }
+        .workflow-reassign-controls { grid-column: 2; }
+        .digital-file-actions > button, .revision-actions > button { flex: 1 1 100%; min-height: 44px; }
+        .preview-heading { align-items: flex-start; flex-direction: column; }
+        .revision-summary { padding: 12px; gap: 10px; }
+        .revision-title-row { align-items: flex-start; flex-direction: column; }
+        .file-thumbnail { display: none; }
+        .revision-meta { flex-direction: column; }
+    }
 }
