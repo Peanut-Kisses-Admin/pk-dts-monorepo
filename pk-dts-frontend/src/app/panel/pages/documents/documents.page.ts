@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { Observable, catchError, forkJoin, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import * as XLSX from 'xlsx';
 import { AuthService } from '@/app/auth/auth.service';
 import { AlertModalComponent } from '@/app/shared/components/alert-modal/alert-modal.component';
