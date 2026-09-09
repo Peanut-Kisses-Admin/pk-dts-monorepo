@@ -1,4 +1,4 @@
-name: pk-dms
+name: pk-dms-dev
 
 services:
   db:
@@ -22,14 +22,14 @@ services:
   backend:
     build:
       context: ../pk-dts-backend
-      dockerfile: Dockerfile
-      target: build
+      dockerfile: Dockerfile.dev
     command:
       [
         "sh",
         "-c",
-        "node scripts/prepare-postgres-startup.js && node scripts/prisma-db-push-retry.js && npm run prisma:seed && npm run start:dev",
+        "node scripts/prisma-env.js generate && node scripts/prepare-postgres-startup.js && node scripts/prisma-db-push-retry.js && npm run prisma:seed && npm run start:dev",
       ]
+    init: true
     restart: unless-stopped
     env_file:
       - ./.env
@@ -50,12 +50,9 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../pk-dts-backend/src:/app/src
-      - ../pk-dts-backend/prisma:/app/prisma
-      - ../pk-dts-backend/scripts:/app/scripts
-      - ../pk-dts-backend/nest-cli.json:/app/nest-cli.json:ro
-      - ../pk-dts-backend/tsconfig.json:/app/tsconfig.json:ro
-      - ../pk-dts-backend/tsconfig.build.json:/app/tsconfig.build.json:ro
+      - ../pk-dts-backend:/app
+      - backend_node_modules:/app/node_modules
+      - backend_dist:/app/dist
       - ./backups:/app/backup-store
       - ./data/uploads:/app/uploads
     ports:
@@ -69,14 +66,14 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 45s
+      start_period: 60s
 
   frontend:
     build:
       context: ../pk-dts-frontend
-      dockerfile: Dockerfile
-      target: build
-    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "1000"]
+      dockerfile: Dockerfile.dev
+    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "1000", "--hmr"]
+    init: true
     restart: unless-stopped
     environment:
       BACKEND_API_BASE_URL: ${PUBLIC_API_URL}
@@ -86,14 +83,9 @@ services:
       backend:
         condition: service_healthy
     volumes:
-      - ../pk-dts-frontend/src:/app/src
-      - ../pk-dts-frontend/public:/app/public
-      - ../pk-dts-frontend/scripts:/app/scripts
-      - ../pk-dts-frontend/angular.json:/app/angular.json:ro
-      - ../pk-dts-frontend/tsconfig.json:/app/tsconfig.json:ro
-      - ../pk-dts-frontend/tsconfig.app.json:/app/tsconfig.app.json:ro
-      - ../pk-dts-frontend/tsconfig.spec.json:/app/tsconfig.spec.json:ro
-      - ../pk-dts-frontend/.postcssrc.json:/app/.postcssrc.json:ro
+      - ../pk-dts-frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_angular_cache:/app/.angular
     ports:
       - "${FRONTEND_PORT:-3000}:4200"
     healthcheck:
@@ -105,4 +97,10 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 45s
+      start_period: 60s
+
+volumes:
+  backend_node_modules:
+  backend_dist:
+  frontend_node_modules:
+  frontend_angular_cache:
