@@ -103,6 +103,20 @@ Then run:
 docker compose -f compose.dev.yaml up -d --build
 ```
 
+### npm timeout recovery
+
+The development Dockerfiles use a persistent BuildKit npm cache, longer fetch timeouts, reduced network concurrency, and automatic retry/backoff for transient `ETIMEDOUT` failures.
+
+If a dependency build still fails because the connection drops, simply run the same command again:
+
+```powershell
+docker compose -f compose.dev.yaml up -d --build
+```
+
+Do **not** prune the Docker builder cache between retries unless you specifically want to discard downloaded npm packages. The cache makes the next attempt cheaper and more likely to finish.
+
+Warnings about deprecated transitive npm packages are not build failures by themselves. The build has failed only when npm/Docker ends with a non-zero exit code such as `ETIMEDOUT`.
+
 If dependency volumes need a completely clean reset:
 
 ```powershell
