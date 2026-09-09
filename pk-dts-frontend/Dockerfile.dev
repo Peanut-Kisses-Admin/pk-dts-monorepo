@@ -14,21 +14,40 @@ ENV NODE_ENV=development \
 
 COPY package*.json ./
 
-# Keep the base image npm version. Avoiding a global npm upgrade removes one
-# extra network install before dependencies are even fetched.
+# The frontend lockfile is maintained with npm 11. Keep that npm major in the
+# dev image, but cache downloads and retry transient network failures.
 RUN --mount=type=cache,target=/root/.npm \
     sh -c 'set -e; \
+      for attempt in 1 2 3 4; do \
+        echo "Installing npm 11 (attempt ${attempt}/4)"; \
+        if npm install -g npm@11.16.0 --no-audit --no-fund; then \
+          break; \
+        fi; \
+        if [ "$attempt" -eq 4 ]; then \
+          echo "Unable to install npm 11 after 4 attempts" >&2; \
+          exit 1; \
+        fi; \
+        delay=$((attempt * 10)); \
+        echo "npm upgrade failed; retrying in ${delay}s..."; \
+        sleep "$delay"; \
+      done; \
       for attempt in 1 2 3 4; do \
         echo "npm ci attempt ${attempt}/4"; \
         if npm ci --prefer-offline --no-audit --no-fund; then \
           exit 0; \
         fi; \
+        if [ "$attempt" -eq 1 ]; then \
+          echo "npm ci rejected the lockfile; trying a development-only install without rewriting package-lock.json"; \
+          if npm install --prefer-offline --no-audit --no-fund --package-lock=false; then \
+            exit 0; \
+          fi; \
+        fi; \
         if [ "$attempt" -eq 4 ]; then \
-          echo "npm ci failed after 4 attempts" >&2; \
+          echo "Frontend dependency installation failed after 4 attempts" >&2; \
           exit 1; \
         fi; \
         delay=$((attempt * 10)); \
-        echo "npm ci failed; retrying in ${delay}s..."; \
+        echo "Dependency install failed; retrying in ${delay}s..."; \
         sleep "$delay"; \
       done'
 
