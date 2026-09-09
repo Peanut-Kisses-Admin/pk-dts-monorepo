@@ -103,19 +103,15 @@ Then run:
 docker compose -f compose.dev.yaml up -d --build
 ```
 
-### npm timeout recovery
+The frontend dev image uses npm 11 (matching the frontend dependency setup). It tries `npm ci` first. If a stale lockfile is rejected during development, it falls back to `npm install --package-lock=false` inside the image so the dev environment can still start without modifying the repository lockfile. The proper long-term fix for an intentionally changed dependency tree is still to regenerate and commit `pk-dts-frontend/package-lock.json` with npm 11.
 
-The development Dockerfiles use a persistent BuildKit npm cache, longer fetch timeouts, reduced network concurrency, and automatic retry/backoff for transient `ETIMEDOUT` failures.
-
-If a dependency build still fails because the connection drops, simply run the same command again:
+If a build fails with a temporary npm `ETIMEDOUT`, retry the same command:
 
 ```powershell
 docker compose -f compose.dev.yaml up -d --build
 ```
 
-Do **not** prune the Docker builder cache between retries unless you specifically want to discard downloaded npm packages. The cache makes the next attempt cheaper and more likely to finish.
-
-Warnings about deprecated transitive npm packages are not build failures by themselves. The build has failed only when npm/Docker ends with a non-zero exit code such as `ETIMEDOUT`.
+The development Dockerfiles keep a BuildKit npm download cache and automatically retry transient npm failures, so previously downloaded packages can be reused on the next attempt. Do not run `docker builder prune` while recovering from a flaky connection because that removes the useful build cache.
 
 If dependency volumes need a completely clean reset:
 
