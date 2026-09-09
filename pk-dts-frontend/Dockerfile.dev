@@ -1,0 +1,16 @@
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=development \
+    CHOKIDAR_USEPOLLING=true \
+    WATCHPACK_POLLING=true
+
+COPY package*.json ./
+RUN npm install -g npm@11.16.0 && npm ci
+
+# Source is bind-mounted by compose.dev.yaml. node_modules stays in a Docker
+# volume, so Angular can hot reload without rebuilding the image.
+EXPOSE 4200
+
+CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "1000", "--hmr"]
