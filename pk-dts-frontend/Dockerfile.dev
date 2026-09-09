@@ -1,13 +1,36 @@
+# syntax=docker/dockerfile:1.7
 FROM node:20-bookworm-slim
 
 WORKDIR /app
 
 ENV NODE_ENV=development \
     CHOKIDAR_USEPOLLING=true \
-    WATCHPACK_POLLING=true
+    WATCHPACK_POLLING=true \
+    npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=5
 
 COPY package*.json ./
-RUN npm install -g npm@11.16.0 && npm ci
+
+# Keep the base image npm version. Avoiding a global npm upgrade removes one
+# extra network install before dependencies are even fetched.
+RUN --mount=type=cache,target=/root/.npm \
+    sh -c 'set -e; \
+      for attempt in 1 2 3 4; do \
+        echo "npm ci attempt ${attempt}/4"; \
+        if npm ci --prefer-offline --no-audit --no-fund; then \
+          exit 0; \
+        fi; \
+        if [ "$attempt" -eq 4 ]; then \
+          echo "npm ci failed after 4 attempts" >&2; \
+          exit 1; \
+        fi; \
+        delay=$((attempt * 10)); \
+        echo "npm ci failed; retrying in ${delay}s..."; \
+        sleep "$delay"; \
+      done'
 
 # Source is bind-mounted by compose.dev.yaml. node_modules stays in a Docker
 # volume, so Angular can hot reload without rebuilding the image.
