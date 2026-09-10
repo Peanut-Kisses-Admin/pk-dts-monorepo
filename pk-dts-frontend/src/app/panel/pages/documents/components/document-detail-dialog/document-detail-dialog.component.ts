@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { TabsModule } from 'primeng/tabs';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { firstValueFrom } from 'rxjs';
@@ -16,7 +17,7 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
 @Component({
     selector: 'app-document-detail-dialog',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, DialogModule],
+    imports: [CommonModule, FormsModule, ButtonModule, DialogModule, TabsModule],
     template: `
         <p-dialog
             [(visible)]="visible"
@@ -28,7 +29,7 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
             [focusOnShow]="true"
             styleClass="document-details-dialog"
             [appendTo]="'body'"
-            [style]="{ width: '68rem', maxWidth: '96vw' }"
+            [style]="{ width: '66rem', maxWidth: '96vw' }"
             [breakpoints]="{ '1100px': '95vw', '640px': '98vw' }"
             header="Document Details"
             (onHide)="handleHide()"
@@ -46,7 +47,6 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                         </div>
                     </div>
                     <div class="hero-badges">
-                        
                         <span class="status-badge" [attr.data-status]="document.status">{{ statusLabel(document.status) }}</span>
                     </div>
                 </div>
@@ -58,6 +58,14 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                     <div *ngIf="document.document_type === 'SOFTCOPY' && document.softcopy?.current_revision?.revision_number" class="summary-card"><span class="summary-card-icon accent"><i class="pi pi-history"></i></span><div><span>Current revision</span><strong>{{ document.softcopy?.current_revision?.revision_number }}</strong></div></div>
                 </div>
 
+                <p-tabs [(value)]="activeTab" class="detail-tabs">
+                    <p-tablist aria-label="Document sections">
+                        <p-tab value="overview"><i class="pi pi-info-circle" aria-hidden="true"></i>Overview</p-tab>
+                        <p-tab value="workflow"><i class="pi pi-sitemap" aria-hidden="true"></i>Workflow<span class="tab-count">{{ document.workflow_steps?.length || 0 }}</span></p-tab>
+                        <p-tab value="files"><i class="pi pi-folder" aria-hidden="true"></i>Files<span class="tab-count">{{ revisions.length + documentAttachments().length }}</span></p-tab>
+                    </p-tablist>
+                    <p-tabpanels>
+                        <p-tabpanel value="overview">
                 <div class="workspace-grid single-column">
                     <section class="info-panel storage-panel">
                         <div class="section-heading">
@@ -69,14 +77,14 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                             <dl class="storage-fields" *ngIf="softcopyJourneySteps().length">
                                 <div *ngFor="let step of softcopyJourneySteps()"><dt>{{ step.label }}</dt><dd>{{ step.value }}</dd></div>
                             </dl>
-                            <p *ngIf="!document.softcopy?.current_revision" class="empty-state">No current file is available. Uploaded versions appear in Revision history below.</p>
+                            <p *ngIf="!document.softcopy?.current_revision" class="empty-state">No current file is available. View uploaded versions in the Files tab.</p>
                             <div *ngIf="document.softcopy?.current_revision as current" class="digital-file-actions">
                                 <div class="current-file-name"><i [class]="revisionIcon(current)" aria-hidden="true"></i><strong>{{ current.file_name }}</strong></div>
                                 <button *ngIf="canAccessFiles" type="button" (click)="openRevision(current)"><i class="pi pi-eye" aria-hidden="true"></i>Preview file</button>
                                 <button *ngIf="canAccessFiles && isStampableOfficeRevision(current)" type="button" [disabled]="downloadInProgress" (click)="downloadRevision(current, 'controlled')"><i class="pi pi-shield"></i>{{ downloadInProgress ? 'Preparing copy...' : 'Download controlled copy' }}</button>
                                 <button *ngIf="canAccessFiles" type="button" [disabled]="downloadInProgress" (click)="downloadRevision(current, 'uncontrolled')"><i class="pi pi-download"></i>{{ downloadInProgress ? 'Preparing copy...' : 'Download uncontrolled copy' }}</button>
-                                <small *ngIf="isStampableOfficeRevision(current)" class="controlled-file-note">PDF, DOCX and Excel downloads include an embedded controlled or uncontrolled stamp. The original revision remains unchanged.</small>
-                                <small *ngIf="!isStampableOfficeRevision(current)" class="controlled-file-note">This file is downloaded from the original revision. The original revision remains unchanged.</small>
+                                <small *ngIf="isStampableOfficeRevision(current)" class="controlled-file-note">Downloads include the selected copy stamp.</small>
+                                <small *ngIf="!isStampableOfficeRevision(current)" class="controlled-file-note">Downloads use the original file format.</small>
                                 <small *ngIf="downloadError" class="download-error" role="alert"><i class="pi pi-exclamation-triangle"></i>{{ downloadError }}</small>
                             </div>
                             <p *ngIf="!canAccessFiles" class="access-note"><i class="pi pi-lock" aria-hidden="true"></i> You do not have permission to preview or download files.</p>
@@ -105,15 +113,23 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
 
                 </div>
 
-                <section *ngIf="selectedRevision" class="file-preview-panel" aria-label="Document file preview">
-                    <div class="preview-heading"><div><span class="field-label">File preview</span><h3>{{ selectedRevision.file_name }}</h3></div><button type="button" class="secondary-action" (click)="closePreview()">Close preview</button></div>
-                    <p *ngIf="previewKind === 'loading'" role="status">Loading document preview…</p>
-                    <p *ngIf="previewKind === 'error'" role="alert">{{ previewError }}</p>
-                    <p *ngIf="previewKind === 'unsupported'">Preview is unavailable for this format. Use Download to inspect the original file.</p>
-                    <img *ngIf="previewKind === 'image'" [src]="previewObjectUrl" alt="Document preview" style="max-width:100%" />
-                    <iframe *ngIf="previewKind === 'pdf'" [src]="previewResourceUrl" title="Document preview" style="width:100%;height:65vh;border:0"></iframe>
-                    <iframe *ngIf="previewKind === 'office'" [srcdoc]="previewHtml" sandbox="" title="Office document preview" style="width:100%;height:65vh;border:1px solid #e5e7eb"></iframe>
-                </section>
+                <details *ngIf="document.document_type === 'SOFTCOPY'" class="softcopy-record-section">
+                    <summary class="metadata-section-heading">
+                        <div class="section-heading">
+                            <span class="section-icon"><i class="pi pi-file-edit"></i></span>
+                            <div><span>Complete record</span><h3>Request details</h3><small class="section-subtitle">Request fields and system-recorded control dates</small></div>
+                        </div>
+                        <i class="pi pi-chevron-down disclosure-icon" aria-hidden="true"></i>
+                    </summary>
+                    <div class="metadata-grid">
+                        <div *ngFor="let item of softcopyDocumentRows()" class="metadata-item" [class.metadata-item-wide]="item.wide">
+                            <span>{{ item.label }}</span><strong [class.breakable]="item.breakable">{{ item.value || 'Not recorded' }}</strong>
+                        </div>
+                    </div>
+                </details>
+
+                        </p-tabpanel>
+                        <p-tabpanel value="workflow">
                 <section *ngIf="document.workflow_steps?.length" class="approval-route-panel">
                     <div class="approval-route-heading">
                         <span class="section-icon"><i class="pi pi-sitemap"></i></span>
@@ -144,21 +160,18 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                     </div>
                 </section>
 
-                <details *ngIf="document.document_type === 'SOFTCOPY'" class="softcopy-record-section">
-                    <summary class="metadata-section-heading">
-                        <div class="section-heading">
-                            <span class="section-icon"><i class="pi pi-file-edit"></i></span>
-                            <div><span>Complete record</span><h3>Request details</h3><small class="section-subtitle">Request fields and system-recorded control dates</small></div>
-                        </div>
-                        <i class="pi pi-chevron-down disclosure-icon" aria-hidden="true"></i>
-                    </summary>
-                    <div class="metadata-grid">
-                        <div *ngFor="let item of softcopyDocumentRows()" class="metadata-item" [class.metadata-item-wide]="item.wide">
-                            <span>{{ item.label }}</span><strong [class.breakable]="item.breakable">{{ item.value || 'Not recorded' }}</strong>
-                        </div>
-                    </div>
-                </details>
-
+                <div *ngIf="!document.workflow_steps?.length" class="no-revisions"><i class="pi pi-sitemap" aria-hidden="true"></i><strong>No approval workflow</strong><span>No approval steps are recorded for this document.</span></div>
+                        </p-tabpanel>
+                        <p-tabpanel value="files">
+                <section *ngIf="selectedRevision" class="file-preview-panel" aria-label="Document file preview">
+                    <div class="preview-heading"><div><span class="field-label">File preview</span><h3>{{ selectedRevision.file_name }}</h3></div><button type="button" class="secondary-action" (click)="closePreview()">Close preview</button></div>
+                    <p *ngIf="previewKind === 'loading'" role="status">Loading document preview…</p>
+                    <p *ngIf="previewKind === 'error'" role="alert">{{ previewError }}</p>
+                    <p *ngIf="previewKind === 'unsupported'">Preview is unavailable for this format. Use Download to inspect the original file.</p>
+                    <img *ngIf="previewKind === 'image'" [src]="previewObjectUrl" alt="Document preview" style="max-width:100%" />
+                    <iframe *ngIf="previewKind === 'pdf'" [src]="previewResourceUrl" title="Document preview" style="width:100%;height:65vh;border:0"></iframe>
+                    <iframe *ngIf="previewKind === 'office'" [srcdoc]="previewHtml" sandbox="" title="Office document preview" style="width:100%;height:65vh;border:1px solid #e5e7eb"></iframe>
+                </section>
                 <section *ngIf="documentAttachments().length || document.document_type === 'SOFTCOPY'" class="revisions-section">
                     <ng-container *ngIf="documentAttachments().length">
                     <div class="revisions-title"><div class="evidence-heading"><span class="section-icon"><i class="pi pi-paperclip"></i></span><div><span>Supporting evidence</span><h3>Attached scan documents</h3></div></div><strong>{{ documentAttachments().length }} file{{ documentAttachments().length === 1 ? '' : 's' }}</strong></div>
@@ -211,6 +224,10 @@ type PreviewKind = 'idle' | 'loading' | 'image' | 'pdf' | 'office' | 'unsupporte
                     <ng-template #noRevisions><div class="no-revisions"><i class="pi pi-file-plus"></i><strong>No revisions uploaded</strong><span>The first uploaded softcopy will appear here with its preview and actions.</span></div></ng-template>
                     </ng-container>
                 </section>
+                <div *ngIf="document.document_type !== 'SOFTCOPY' && !documentAttachments().length" class="no-revisions"><i class="pi pi-paperclip" aria-hidden="true"></i><strong>No attached files</strong><span>Supporting scans will appear here when added.</span></div>
+                        </p-tabpanel>
+                    </p-tabpanels>
+                </p-tabs>
                 </div>
             </ng-container>
 
@@ -236,6 +253,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     @Input() canDeleteAttachments = false;
     @Output() attachmentDelete = new EventEmitter<string>();
 
+    activeTab: string | number = 'overview';
     selectedRevision: RevisionSummary | null = null;
     previewKind: PreviewKind = 'idle';
     previewObjectUrl = '';
@@ -256,6 +274,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     private readonly journeyStepDuration = 2000;
 
     ngOnChanges(changes: SimpleChanges) {
+        if ((changes['visible'] && this.visible) || (changes['document'] && changes['document'].previousValue?.document_id !== this.document?.document_id)) this.activeTab = 'overview';
         if (changes['visible'] && !this.visible) {
             this.clearRouteJourneyTimers();
             this.clearDigitalJourneyTimers();
@@ -308,7 +327,9 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
     }
 
     async selectRevision(revision: RevisionSummary) {
-        if (!this.canAccessFiles || (this.selectedRevision?.revision_id === revision.revision_id && ['loading', 'office', 'pdf', 'image'].includes(this.previewKind))) return;
+        if (!this.canAccessFiles) return;
+        this.activeTab = 'files';
+        if (this.selectedRevision?.revision_id === revision.revision_id && ['loading', 'office', 'pdf', 'image'].includes(this.previewKind)) return;
         this.selectedRevision = revision;
         this.revokePreviewUrl();
         this.previewHtml = '';

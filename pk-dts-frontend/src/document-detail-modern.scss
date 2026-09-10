@@ -6,18 +6,19 @@
     --detail-muted: #526174;
     --detail-border: #dce2e9;
     --detail-accent: #991b1b;
+    height: min(820px, 92dvh);
     max-height: 92dvh;
     border: 1px solid var(--detail-border);
-    border-radius: 16px;
+    border-radius: 20px;
     overflow: hidden;
     background: var(--detail-surface);
     color: var(--detail-text);
     box-shadow: 0 24px 80px #0f172a30;
     .p-dialog-header, .p-dialog-footer { flex-shrink: 0; padding: 16px 24px; background: var(--detail-surface); }
     .p-dialog-header { border-bottom: 1px solid var(--detail-border); }
-    .p-dialog-title { color: var(--detail-text); font-size: 18px; font-weight: 650; }
+    .p-dialog-title { color: var(--detail-text); font-size: 14px; font-weight: 600; }
     .p-dialog-footer { border-top: 1px solid var(--detail-border); }
-    .p-dialog-content { padding: 0 24px 24px; background: var(--detail-surface); overflow-y: auto; }
+    .p-dialog-content { padding: 0 28px; background: var(--detail-surface); overflow-y: auto; flex: 1; }
 }
 .app-dark .document-details-dialog {
     --detail-surface: #181b21;
@@ -26,6 +27,16 @@
     --detail-muted: #b4bfcd;
     --detail-border: #3c4654;
     --detail-accent: #fca5a5;
+}
+// Override the shared dialog theme only inside Document Details.
+html.app-dark .document-details-dialog.p-dialog {
+    .p-dialog-header, .p-dialog-content, .p-dialog-footer {
+        background: var(--detail-surface) !important;
+        border-color: var(--detail-border) !important;
+    }
+    .p-dialog-content .summary-strip > .summary-card,
+    .p-dialog-content .info-panel,
+    .p-dialog-content .revisions-section { background: transparent !important; }
 }
 .document-details-dialog .document-detail-shell {
     color: var(--detail-text);
@@ -49,35 +60,48 @@
     .hero-icon { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 10px; background: var(--detail-subtle); color: var(--detail-accent); font-size: 22px; }
     .hero-copy { flex: 1; min-width: 0; }
     .hero-kicker { color: var(--detail-muted); font-size: 13px; margin-bottom: 4px; }
-    .hero-copy h2 { font-size: clamp(20px, 2vw, 25px); line-height: 1.3; font-weight: 650; overflow-wrap: anywhere; }
+    .hero-copy h2 { font-size: clamp(19px, 2vw, 24px); letter-spacing: -.025em; line-height: 1.3; font-weight: 650; overflow-wrap: anywhere; }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; color: var(--detail-muted); font-size: 13px; }
     .hero-meta span { display: inline-flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
-    .hero-badges { flex: 0 1 240px; text-align: right; }
-    .status-badge, .revision-state-badge { display: inline-block; padding: 5px 10px; border: 1px solid var(--detail-border); border-radius: 6px; background: var(--detail-subtle); color: var(--detail-text); font-size: 12px; font-weight: 600; }
+    .hero-badges { flex: 0 1 auto; max-width: 210px; text-align: right; }
+    .status-badge, .revision-state-badge { display: inline-block; padding: 5px 10px; border: 1px solid var(--detail-border); border-radius: 999px; background: var(--detail-subtle); color: var(--detail-text); font-size: 12px; font-weight: 600; }
     .status-badge:is([data-status="Completed"], [data-status="Approved"], [data-status="Transferred"]), .revision-state-badge.current { background: #edf9f1; border-color: #a9d5b8; color: #186138; }
     .status-badge:is([data-status="Rejected"], [data-status="Disposed"]) { background: #fff1f2; border-color: #f4b6bf; color: #9f1239; }
     .status-badge:is([data-status="ForRevision"], [data-status="ReturnedForCorrection"], [data-status="PendingApproval"]) { background: #fffbeb; border-color: #e7ce87; color: #854d0e; }
-    .summary-strip { display: flex; flex-wrap: wrap; gap: 16px 32px; padding: 0 0 20px; }
-    .summary-card { flex: 1 1 160px; min-width: 0; }
+    .summary-strip { display: flex; flex-wrap: wrap; gap: 16px 24px; padding: 18px 20px; margin-bottom: 24px; background: var(--detail-subtle); border-radius: 12px; }
+    .summary-card { flex: 1 1 160px; min-width: 0; background: transparent; border: 0; box-shadow: none; padding: 0; }
+    .summary-card > div { background: transparent; }
     .summary-card-icon { display: none; }
-    .summary-card span, .summary-card strong, .summary-card small { display: block; overflow-wrap: anywhere; }
+    .summary-card > div > span, .summary-card strong, .summary-card small { display: block; overflow-wrap: anywhere; }
     .summary-card span { color: var(--detail-muted); font-size: 13px; margin-bottom: 3px; }
-    .summary-card small { margin-top: 4px; }
-    .workspace-grid, .approval-route-panel, .softcopy-record-section, .revisions-section { border-top: 1px solid var(--detail-border); padding: 20px 0; }
+    .summary-card small { margin-top: 4px; font-size: 12px; }
+    .workspace-grid, .approval-route-panel, .softcopy-record-section, .revisions-section { padding: 0; }
+    .info-panel, .digital-visual, .physical-visual, .route-content { padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+    .softcopy-record-section { margin-top: 28px; border-top: 1px solid var(--detail-border); padding-top: 24px; }
+    .detail-tabs { --p-tabs-tablist-background: var(--detail-surface); --p-tabs-tablist-border-color: var(--detail-border); --p-tabs-tab-color: var(--detail-muted); --p-tabs-tab-active-color: var(--detail-accent); --p-tabs-tab-active-border-color: var(--detail-accent); --p-tabs-active-bar-background: var(--detail-accent); --p-tabs-tab-hover-color: var(--detail-text); --p-tabs-tab-hover-background: var(--detail-subtle); }
+    .p-tab { display: flex; gap: 8px; padding: 14px 18px; font-size: 13px; font-weight: 600; }
+    .p-tab[aria-selected] { background: transparent; color: var(--detail-muted); }
+    .p-tab[aria-selected="true"] { color: var(--detail-accent); border-bottom-color: var(--detail-accent); }
+    .p-tabpanels { padding: 24px 0 28px; background: transparent; color: var(--detail-text); }
+    .tab-count { padding: 1px 7px; border-radius: 6px; font-size: 11px; background: var(--detail-subtle); color: var(--detail-muted); }
+    .p-tab:focus-visible { outline: 2px solid var(--detail-accent); outline-offset: -3px; }
+    .p-tablist { position: sticky; top: 0; z-index: 2; background: var(--detail-surface); }
+
     .section-heading, .approval-route-heading, .evidence-heading { display: flex; align-items: center; gap: 12px; }
     .section-icon { color: var(--detail-muted); font-size: 18px; }
     .section-heading > div > span, .approval-route-heading > div > span, .evidence-heading > div > span, .revision-heading > div > span { display: none; }
     .section-subtitle { display: block; margin-top: 4px; }
-    .storage-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 16px; background: var(--detail-subtle); border-radius: 8px; padding: 16px; margin: 16px 0 0; }
+    .storage-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 16px; padding: 0 0 18px; margin: 20px 0 0; border-bottom: 1px solid var(--detail-border); }
     .storage-fields > div { min-width: 0; }
     dt { color: var(--detail-muted); font-size: 13px; }
     dd { margin: 4px 0 0; font-weight: 600; overflow-wrap: anywhere; }
-    .digital-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+    .digital-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; padding: 18px; border: 1px solid var(--detail-border); border-radius: 12px; }
     .current-file-name { display: flex; align-items: center; gap: 10px; width: 100%; margin-bottom: 2px; overflow-wrap: anywhere; }
-    .current-file-name i { color: var(--detail-accent); }
+    .current-file-name strong { min-width: 0; white-space: normal; font-size: 14px; color: var(--detail-text); }
+    .current-file-name i { color: var(--detail-accent); background: var(--detail-subtle); border-radius: 8px; padding: 10px; font-size: 20px; }
     .digital-file-actions > button:first-of-type { background: #991b1b; border-color: #991b1b; color: #fff; }
     .digital-file-actions > button:first-of-type:hover { background: #7f1d1d; }
-    .controlled-file-note, .download-error { flex-basis: 100%; }
+    .controlled-file-note, .download-error { flex-basis: 100%; font-size: 12px; }
     .download-error, .workflow-reassign-error { color: var(--detail-accent); }
     .access-note, .empty-state { margin-top: 16px; padding: 14px; border-radius: 8px; background: var(--detail-subtle); color: var(--detail-muted); }
     .retention-detail, .disposal-note { display: flex; gap: 10px; padding: 14px; margin-top: 16px; border: 1px solid var(--detail-border); border-radius: 8px; background: var(--detail-subtle); }
@@ -93,12 +117,14 @@
     .approval-route-list { margin-top: 16px; }
     .approval-route-step { display: grid; grid-template-columns: 30px minmax(0, 1fr) minmax(0, 290px); align-items: start; gap: 14px; padding: 14px 0; }
     .approval-route-step + .approval-route-step { border-top: 1px solid var(--detail-border); }
+    .approval-route-step.current { background: var(--detail-subtle); border-radius: 10px; }
+    .approval-route-step { padding: 18px 12px; }
     .approval-step-number { display: grid; place-items: center; height: 30px; border: 1px solid var(--detail-border); border-radius: 50%; font-weight: 600; background: var(--detail-subtle); }
     .completed .approval-step-number { color: #186138; background: #edf9f1; border-color: #a9d5b8; }
     .current .approval-step-number { background: #991b1b; color: #fff; border-color: #991b1b; }
     .approval-step-copy { display: grid; gap: 3px; overflow-wrap: anywhere; }
     .approval-step-copy > span { color: var(--detail-muted); font-size: 13px; }
-    .workflow-reassign-controls { font-size: 13px; }
+    .workflow-reassign-controls { font-size: 13px; min-width: 0; }
     .workflow-reassign-controls summary { cursor: pointer; padding: 9px 4px; color: var(--detail-accent); }
     .workflow-reassign-controls label { display: block; margin: 12px 0 4px; }
     .workflow-reassign-controls select, .workflow-reassign-controls input { width: 100%; min-height: 40px; padding: 8px; background: var(--detail-surface); color: var(--detail-text); border: 1px solid var(--detail-border); border-radius: 6px; }
@@ -146,13 +172,16 @@
     .no-revisions > i { font-size: 24px; }
 }
 @media (max-width: 700px) {
-    .document-details-dialog { max-height: 96dvh; }
+    .document-details-dialog { height: 96dvh; max-height: 96dvh; border-radius: 14px; }
     .document-details-dialog .p-dialog-header, .document-details-dialog .p-dialog-footer { padding: 14px 16px; }
     .document-details-dialog .p-dialog-content { padding: 0 16px 16px; }
     .document-details-dialog .document-detail-shell {
         .document-hero { flex-wrap: wrap; gap: 12px; padding-top: 20px; }
-        .hero-badges { flex-basis: 100%; text-align: left; }
-        .summary-strip { gap: 16px; }
+        .hero-badges { flex-basis: 100%; max-width: none; text-align: left; }
+        .summary-strip { gap: 16px; padding: 16px; margin-bottom: 16px; }
+        .p-tab { padding: 12px 10px; gap: 6px; font-size: 12px; }
+        .p-tab > i { display: none; }
+        .p-tabpanels { padding-top: 20px; }
         .summary-card { flex-basis: calc(50% - 16px); }
         .metadata-grid, .revision-detail-grid { grid-template-columns: 1fr; }
         .approval-route-step { grid-template-columns: 30px minmax(0, 1fr); }
