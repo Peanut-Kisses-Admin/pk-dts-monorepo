@@ -82,7 +82,7 @@ services:
     build:
       context: ../pk-dts-frontend
       dockerfile: Dockerfile.dev
-    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "1000", "--hmr"]
+    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll=1000", "--live-reload"]
     init: true
     restart: unless-stopped
     environment:
