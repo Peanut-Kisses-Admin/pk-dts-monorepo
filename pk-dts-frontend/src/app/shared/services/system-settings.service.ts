@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs';
+import { AuthService } from '@/app/auth/auth.service';
 import { BACKEND_API_BASE_URL } from '@/app/config/api-config';
 
 export type DocumentViewMode = 'list' | 'grid' | 'folder';
@@ -101,6 +102,7 @@ interface ApiResponseEnvelope<T> {
 export class SystemSettingsService {
     private readonly http = inject(HttpClient);
     private readonly router = inject(Router);
+    private readonly auth = inject(AuthService);
     private readonly settingsState = signal<SystemSettings>(this.read());
     readonly settings = this.settingsState.asReadonly();
 
@@ -196,7 +198,7 @@ export class SystemSettingsService {
 
     private normalizeSettings(settings: Partial<SystemSettings>): SystemSettings {
         return {
-            // Retained in the API model for backward compatibility only. Actual document layouts are remembered per page.
+            // Retained in the API model for backward compatibility only. Actual document layouts are remembered per user and page.
             defaultDocumentView: DEFAULT_SYSTEM_SETTINGS.defaultDocumentView,
             documentRowsPerPage: [10, 20, 50].includes(Number(settings.documentRowsPerPage)) ? Number(settings.documentRowsPerPage) : DEFAULT_SYSTEM_SETTINGS.documentRowsPerPage,
             officeOpenMode: settings.officeOpenMode === 'browser' ? 'browser' : 'desktop',
@@ -267,7 +269,8 @@ export class SystemSettingsService {
 
     private pageDocumentViewStorageKey(url: string) {
         const path = this.normalizePagePath(url);
-        return `${WORKSPACE_VIEW_STORAGE_PREFIX}:${encodeURIComponent(path)}`;
+        const userKey = this.auth.user()?.user_id || this.auth.user()?.username || 'anonymous';
+        return `${WORKSPACE_VIEW_STORAGE_PREFIX}:${encodeURIComponent(String(userKey))}:${encodeURIComponent(path)}`;
     }
 
     private currentPagePath() {
