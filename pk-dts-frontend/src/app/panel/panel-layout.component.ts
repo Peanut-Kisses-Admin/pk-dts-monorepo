@@ -118,11 +118,6 @@ interface PanelNavCategory {
                                 </div>
                             </section>
                         </div>
-                        <button type="button" class="theme-toggle" [attr.aria-pressed]="settings().colorMode === 'dark'" [title]="settings().colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'" (click)="toggleColorMode()">
-                            <i class="pi" [ngClass]="settings().colorMode === 'dark' ? 'pi-sun' : 'pi-moon'"></i>
-                            <span class="theme-toggle-label">{{ settings().colorMode === 'dark' ? 'Light mode' : 'Dark mode' }}</span>
-                            <span class="sr-only">{{ settings().colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}</span>
-                        </button>
                         <div class="topbar-account">
                             <div class="topbar-avatar">
                                 <i class="pi pi-user"></i>
@@ -315,10 +310,6 @@ export class PanelLayoutComponent implements OnInit, OnDestroy {
     notificationTime(value: string) { const date = new Date(value); const seconds = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000)); if (seconds < 60) return 'Just now'; if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`; if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`; return date.toLocaleDateString(); }
 
     @HostListener('document:click') closeNotifications() { this.notificationsOpen.set(false); }
-
-    toggleColorMode() {
-        this.systemSettings.toggleColorMode();
-    }
 
     @HostListener('window:resize')
     onResize() {
