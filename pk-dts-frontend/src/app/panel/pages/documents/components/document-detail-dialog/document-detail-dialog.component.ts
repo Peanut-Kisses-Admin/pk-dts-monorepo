@@ -378,6 +378,7 @@ export class DocumentDetailDialogComponent implements OnChanges, OnDestroy {
         const requester = document.requested_by_name || this.fullName(document.requester) || this.fullName(document.creator);
         return [
             this.detailRow('Document number', document.document_number, false, true),
+            this.detailRow('Series No.', document.softcopy?.series_number, false, true),
             this.detailRow('Document title', document.document_title, true, true),
             this.detailRow('Document type', document.document_type),
             this.detailRow('Request status', this.statusLabel(document.status)),
