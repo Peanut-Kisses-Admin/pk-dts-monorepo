@@ -11,7 +11,13 @@ import { ResponseInterceptor } from "./common/interceptors/response.interceptor"
 import { uploadsRoot } from "./config/upload-paths";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // System branding images are stored as validated data URLs in settings JSON.
+  // A 2 MB source image expands when base64 encoded, so the default ~100 KB
+  // Express JSON limit is too small for the limits exposed by the frontend.
+  app.use(express.json({ limit: "5mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
   app.enableCors();
   if (!existsSync(uploadsRoot)) {
