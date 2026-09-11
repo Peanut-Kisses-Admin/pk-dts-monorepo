@@ -31,6 +31,7 @@ export class WorkflowBuilderPage implements OnInit {
     selectedVersion?: WorkflowVersion;
     graph: WorkflowGraph = this.blankGraph();
     loading = true;
+    referenceDataLoading = false;
     saving = false;
     dirty = false;
     message = '';
@@ -42,7 +43,13 @@ export class WorkflowBuilderPage implements OnInit {
     readonly outcomes: WorkflowOutcome[] = ['APPROVE', 'REJECT', 'RETURN', 'DEFAULT'];
     readonly conditionFields: WorkflowCondition['field'][] = ['document_type', 'action_requested', 'business_document_type', 'requester_type'];
 
-    ngOnInit() { this.load(); }
+    private referenceDataLoaded = false;
+    private edgeLookup = new Map<string, WorkflowEdge>();
+
+    ngOnInit() {
+        this.loadReferenceData();
+        this.load();
+    }
 
     get canConfigure() { return this.auth.hasPermission('document-workflow.configure'); }
     get canPublish() { return this.auth.hasPermission('document-workflow.publish'); }
@@ -51,21 +58,10 @@ export class WorkflowBuilderPage implements OnInit {
 
     load(selectDefinitionId?: string, selectVersionId?: string) {
         this.loading = true;
-        forkJoin({
-            definitions: this.workflowsApi.list(true),
-            users: this.usersApi.listUsers(1, 1000),
-            roles: this.accessApi.listRoles(),
-            permissions: this.accessApi.listPermissions()
-        }).subscribe({
-            next: ({ definitions, users, roles, permissions }) => {
-                this.definitions = definitions;
-                this.users = users.items || [];
-                this.roles = roles;
-                this.permissions = permissions;
-                const definition = definitions.find((item) => item.workflow_definition_id === selectDefinitionId)
-                    || definitions.find((item) => item.workflow_definition_id === this.selectedDefinition?.workflow_definition_id)
-                    || definitions[0];
-                this.selectDefinition(definition, selectVersionId);
+        this.loadReferenceData();
+        this.workflowsApi.list(true).subscribe({
+            next: (definitions) => {
+                this.applyDefinitions(definitions, selectDefinitionId, selectVersionId);
                 this.loading = false;
             },
             error: (error) => { this.error = this.errorText(error); this.loading = false; }
@@ -83,6 +79,7 @@ export class WorkflowBuilderPage implements OnInit {
         if (this.dirty && !confirm('Discard unsaved workflow changes?')) return;
         this.selectedVersion = version;
         this.graph = version ? this.copyGraph(version.graph) : this.blankGraph();
+        this.rebuildEdgeLookup();
         this.dirty = false;
         this.clearFeedback();
     }
@@ -131,6 +128,7 @@ export class WorkflowBuilderPage implements OnInit {
                 this.saving = false;
                 this.selectedVersion = { ...this.selectedVersion!, ...version };
                 this.graph = this.copyGraph(version.graph);
+                this.rebuildEdgeLookup();
                 this.dirty = false;
                 this.message = 'Draft saved. Requests already in progress remain bound to their original snapshot.';
             },
@@ -174,6 +172,7 @@ export class WorkflowBuilderPage implements OnInit {
         if (!this.editable || this.graph.nodes.length === 1) return;
         this.graph.nodes = this.graph.nodes.filter((item) => item.key !== node.key);
         this.graph.edges = this.graph.edges.filter((edge) => edge.from !== node.key && edge.to !== node.key);
+        this.rebuildEdgeLookup();
         if (this.graph.start_node_key === node.key) this.graph.start_node_key = this.graph.nodes[0].key;
         this.markDirty();
     }
@@ -185,17 +184,18 @@ export class WorkflowBuilderPage implements OnInit {
     }
 
     target(node: WorkflowNode, outcome: WorkflowOutcome) {
-        return this.graph.edges.find((edge) => edge.from === node.key && edge.outcome === outcome)?.to || '';
+        return this.edge(node, outcome)?.to || '';
     }
 
     setTarget(node: WorkflowNode, outcome: WorkflowOutcome, target: string) {
         this.graph.edges = this.graph.edges.filter((edge) => !(edge.from === node.key && edge.outcome === outcome));
         if (target) this.graph.edges.push({ key: this.uniqueEdgeKey(node.key, outcome), from: node.key, to: target, outcome });
+        this.rebuildEdgeLookup();
         this.markDirty();
     }
 
     conditions(node: WorkflowNode, outcome: WorkflowOutcome) {
-        return this.graph.edges.find((edge) => edge.from === node.key && edge.outcome === outcome)?.conditions || [];
+        return this.edge(node, outcome)?.conditions || [];
     }
 
     addCondition(node: WorkflowNode, outcome: WorkflowOutcome) {
@@ -231,7 +231,57 @@ export class WorkflowBuilderPage implements OnInit {
     outcomeLabel(outcome: WorkflowOutcome) { return ({ APPROVE: 'Approve', REJECT: 'Reject', RETURN: 'Return', DEFAULT: 'Default' })[outcome]; }
     markDirty() { if (this.editable) { this.dirty = true; this.clearFeedback(); } }
 
-    private edge(node: WorkflowNode, outcome: WorkflowOutcome) { return this.graph.edges.find((item) => item.from === node.key && item.outcome === outcome); }
+    trackDefinition(_index: number, definition: WorkflowDefinition) { return definition.workflow_definition_id; }
+    trackVersion(_index: number, version: WorkflowVersion) { return version.workflow_version_id; }
+    trackNode(_index: number, node: WorkflowNode) { return node.key; }
+    trackUser(_index: number, user: UserAccountSummary) { return user.user_id; }
+    trackRole(_index: number, role: Role) { return role.role_id; }
+    trackPermission(_index: number, permission: Permission) { return permission.permission_id; }
+    trackOutcome(_index: number, outcome: WorkflowOutcome) { return outcome; }
+    trackConditionField(_index: number, field: WorkflowCondition['field']) { return field; }
+
+    private loadReferenceData() {
+        if (this.referenceDataLoaded || this.referenceDataLoading) return;
+        this.referenceDataLoading = true;
+        forkJoin({
+            users: this.usersApi.listUsers(1, 1000),
+            roles: this.accessApi.listRoles(),
+            permissions: this.accessApi.listPermissions()
+        }).subscribe({
+            next: ({ users, roles, permissions }) => {
+                this.users = users.items || [];
+                this.roles = roles;
+                this.permissions = permissions;
+                this.referenceDataLoaded = true;
+                this.referenceDataLoading = false;
+            },
+            error: (error) => {
+                this.referenceDataLoading = false;
+                this.error = this.errorText(error);
+            }
+        });
+    }
+
+    private applyDefinitions(definitions: WorkflowDefinition[], selectDefinitionId?: string, selectVersionId?: string) {
+        this.definitions = definitions;
+        const definition = definitions.find((item) => item.workflow_definition_id === selectDefinitionId)
+            || definitions.find((item) => item.workflow_definition_id === this.selectedDefinition?.workflow_definition_id)
+            || definitions[0];
+        this.selectDefinition(definition, selectVersionId);
+    }
+
+    private edge(node: WorkflowNode, outcome: WorkflowOutcome) {
+        return this.edgeLookup.get(this.edgeLookupKey(node.key, outcome));
+    }
+
+    private rebuildEdgeLookup() {
+        this.edgeLookup.clear();
+        for (const edge of this.graph.edges) {
+            this.edgeLookup.set(this.edgeLookupKey(edge.from, edge.outcome), edge);
+        }
+    }
+
+    private edgeLookupKey(nodeKey: string, outcome: WorkflowOutcome) { return `${nodeKey}:${outcome}`; }
     private clearFeedback() { this.message = ''; this.error = ''; }
     private uniqueKey(prefix: string) { let index = 1; while (this.graph.nodes.some((node) => node.key === `${prefix}-${index}`)) index++; return `${prefix}-${index}`; }
     private workflowKeyFromName(name: string) { return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 88); }
