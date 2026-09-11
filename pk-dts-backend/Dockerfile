@@ -1,27 +1,11 @@
-FROM node:20-bookworm-slim AS build
+FROM node:20-bookworm AS build
 
 WORKDIR /app
 
-RUN set -eux; \
-    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; do \
-      if [ -f "$source_file" ]; then \
-        sed -i 's|http://deb.debian.org|https://deb.debian.org|g' "$source_file"; \
-      fi; \
-    done; \
-    attempt=1; \
-    until apt-get -o Acquire::Retries=3 -o Acquire::https::Timeout=30 update \
-      && apt-get install -y --no-install-recommends openssl ca-certificates; do \
-      if [ "$attempt" -ge 4 ]; then \
-        echo "apt package installation failed after ${attempt} attempts" >&2; \
-        exit 1; \
-      fi; \
-      delay=$((attempt * 10)); \
-      echo "apt package installation failed; retrying in ${delay}s..."; \
-      rm -rf /var/lib/apt/lists/*; \
-      sleep "$delay"; \
-      attempt=$((attempt + 1)); \
-    done; \
-    rm -rf /var/lib/apt/lists/*
+# Use the full Bookworm Node image so OpenSSL and CA certificates are already
+# available. This avoids reaching Debian package mirrors during every build,
+# which is unreliable on networks that block or intermittently fail apt traffic.
+RUN openssl version && test -f /etc/ssl/certs/ca-certificates.crt
 
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true \
     npm_config_fetch_retries=5 \
@@ -47,30 +31,13 @@ ENV PRISMA_SCHEMA_PATH=prisma/schema.postgresql.prisma
 RUN node scripts/prisma-env.js generate \
     && npm run build
 
-FROM node:20-bookworm-slim AS runtime
+FROM node:20-bookworm AS runtime
 
 WORKDIR /app
 
-RUN set -eux; \
-    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; do \
-      if [ -f "$source_file" ]; then \
-        sed -i 's|http://deb.debian.org|https://deb.debian.org|g' "$source_file"; \
-      fi; \
-    done; \
-    attempt=1; \
-    until apt-get -o Acquire::Retries=3 -o Acquire::https::Timeout=30 update \
-      && apt-get install -y --no-install-recommends openssl ca-certificates; do \
-      if [ "$attempt" -ge 4 ]; then \
-        echo "apt package installation failed after ${attempt} attempts" >&2; \
-        exit 1; \
-      fi; \
-      delay=$((attempt * 10)); \
-      echo "apt package installation failed; retrying in ${delay}s..."; \
-      rm -rf /var/lib/apt/lists/*; \
-      sleep "$delay"; \
-      attempt=$((attempt + 1)); \
-    done; \
-    rm -rf /var/lib/apt/lists/*
+# Keep runtime independent from apt mirrors as well. Prisma requires OpenSSL,
+# and the non-slim Bookworm image already provides the required system tooling.
+RUN openssl version && test -f /etc/ssl/certs/ca-certificates.crt
 
 COPY --from=build /app /app
 
