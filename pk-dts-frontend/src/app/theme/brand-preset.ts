@@ -1,59 +1,57 @@
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
-const redScale = {
-    50: '#fef2f2',
-    100: '#fee2e2',
-    200: '#fecaca',
-    300: '#fca5a5',
-    400: '#f87171',
-    500: '#ef4444',
-    600: '#dc2626',
-    700: '#b91c1c',
-    800: '#991b1b',
-    900: '#7f1d1d',
-    950: '#450a0a'
+/**
+ * Single application theme source of truth.
+ * The product intentionally supports one visual mode only: light + maroon.
+ */
+export const MAROON_PALETTE = {
+    50: '#fff5f5',
+    100: '#ffe3e3',
+    200: '#ffc9c9',
+    300: '#f2a3a3',
+    400: '#c85e60',
+    500: '#800000',
+    600: '#700000',
+    700: '#600000',
+    800: '#500000',
+    900: '#3f0000',
+    950: '#290000'
 };
 
-const lightSurface = {
+export const LIGHT_SURFACE_PALETTE = {
     0: '#ffffff',
-    50: '#fafafa',
-    100: '#f5f5f5',
-    200: '#e5e5e5',
-    300: '#d4d4d4',
-    400: '#a3a3a3',
-    500: '#737373',
-    600: '#525252',
-    700: '#404040',
-    800: '#262626',
-    900: '#171717',
-    950: '#0a0a0a'
-};
-
-const darkSurface = {
-    0: '#09090b',
-    50: '#111111',
-    100: '#171717',
-    200: '#262626',
-    300: '#404040',
-    400: '#525252',
-    500: '#737373',
-    600: '#a3a3a3',
-    700: '#d4d4d8',
-    800: '#e5e5e5',
-    900: '#f5f5f5',
-    950: '#ffffff'
+    50: '#fcf9f9',
+    100: '#f8f2f2',
+    200: '#eee3e3',
+    300: '#dfcece',
+    400: '#b9a4a4',
+    500: '#897474',
+    600: '#695757',
+    700: '#514242',
+    800: '#352a2a',
+    900: '#241b1b',
+    950: '#160f0f'
 };
 
 export const BrandPreset = definePreset(Aura, {
     semantic: {
-        primary: redScale,
+        primary: MAROON_PALETTE,
         colorScheme: {
             light: {
-                surface: lightSurface
-            },
-            dark: {
-                surface: darkSurface
+                surface: LIGHT_SURFACE_PALETTE,
+                primary: {
+                    color: '{primary.500}',
+                    contrastColor: '#ffffff',
+                    hoverColor: '{primary.600}',
+                    activeColor: '{primary.700}'
+                },
+                highlight: {
+                    background: '{primary.50}',
+                    focusBackground: '{primary.100}',
+                    color: '{primary.700}',
+                    focusColor: '{primary.800}'
+                }
             }
         }
     }
