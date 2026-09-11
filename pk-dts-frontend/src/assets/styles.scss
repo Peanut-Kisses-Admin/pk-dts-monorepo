@@ -91,24 +91,53 @@ html body .document-details-dialog.p-dialog .p-dialog-footer {
     border-top-color: var(--app-border) !important;
 }
 
+/* Keep the modal chrome neutral; the branded background belongs to the document hero below it. */
 html body .document-details-dialog.p-dialog .p-dialog-header {
-    background: var(--brand-primary) !important;
-    border-bottom-color: var(--brand-primary) !important;
+    background: var(--app-surface) !important;
+    border-bottom-color: var(--app-border) !important;
 }
 
-html body .document-details-dialog.p-dialog .p-dialog-title,
+html body .document-details-dialog.p-dialog .p-dialog-title {
+    color: var(--app-heading) !important;
+}
+
 html body .document-details-dialog.p-dialog .p-dialog-header-close {
-    color: #ffffff !important;
+    color: var(--app-text-muted) !important;
 }
 
 html body .document-details-dialog.p-dialog .p-dialog-header-close:hover {
-    background: rgba(255, 255, 255, 0.14) !important;
-    color: #ffffff !important;
+    background: var(--app-surface-soft) !important;
+    color: var(--app-heading) !important;
 }
 
 html body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible {
-    outline: 2px solid #ffffff !important;
+    outline: 2px solid var(--brand-primary) !important;
     outline-offset: 2px;
+}
+
+/* Start the brand background at the actual document identity section. */
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero {
+    background: var(--brand-primary) !important;
+    border-bottom-color: var(--brand-primary) !important;
+    color: #ffffff !important;
+}
+
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-kicker,
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-copy h2,
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-meta,
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-meta i {
+    color: #ffffff !important;
+}
+
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-kicker,
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-meta {
+    opacity: 0.88;
+}
+
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-icon {
+    background: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.78) !important;
+    color: var(--brand-primary) !important;
 }
 
 @media (max-width: 640px) {
