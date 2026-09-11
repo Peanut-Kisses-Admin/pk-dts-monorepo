@@ -3,15 +3,17 @@ import Aura from '@primeuix/themes/aura';
 
 /**
  * Single application theme source of truth.
- * The product intentionally supports one visual mode only: light + maroon.
+ * The product intentionally supports one visual mode only: light + deep red.
  */
+export const BRAND_DEEP_RED = '#800000';
+
 export const MAROON_PALETTE = {
     50: '#fff5f5',
     100: '#ffe3e3',
     200: '#ffc9c9',
     300: '#f2a3a3',
     400: '#c85e60',
-    500: '#800000',
+    500: BRAND_DEEP_RED,
     600: '#700000',
     700: '#600000',
     800: '#500000',
