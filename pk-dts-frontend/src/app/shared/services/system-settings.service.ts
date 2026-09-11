@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { map, tap } from 'rxjs';
+import { NavigationStart, Router } from '@angular/router';
+import { filter, map, tap } from 'rxjs';
+import { AuthService } from '@/app/auth/auth.service';
 import { BACKEND_API_BASE_URL } from '@/app/config/api-config';
 
 export type DocumentViewMode = 'list' | 'grid' | 'folder';
@@ -72,6 +74,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
 };
 
 const STORAGE_KEY = 'dts.system-settings.v3';
+const WORKSPACE_VIEW_STORAGE_PREFIX = 'dts.workspace-view.v1';
 const LEGACY_STORAGE_KEYS = ['dms.system-settings.v2', 'dms.system-settings.v1'] as const;
 const LEGACY_SYSTEM_TITLE = 'Document Tracking and Management System';
 const LEGACY_SYSTEM_SHORT_TITLE = 'Document Management';
@@ -98,6 +101,8 @@ interface ApiResponseEnvelope<T> {
 @Injectable({ providedIn: 'root' })
 export class SystemSettingsService {
     private readonly http = inject(HttpClient);
+    private readonly router = inject(Router);
+    private readonly auth = inject(AuthService);
     private readonly settingsState = signal<SystemSettings>(this.read());
     readonly settings = this.settingsState.asReadonly();
 
@@ -115,6 +120,10 @@ export class SystemSettingsService {
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') this.refreshAppearance();
             });
+            document.addEventListener('click', this.captureDocumentViewSelection);
+            this.router.events
+                .pipe(filter((event): event is NavigationStart => event instanceof NavigationStart))
+                .subscribe((event) => this.applyPageDocumentView(event.url));
         }
     }
 
@@ -126,8 +135,9 @@ export class SystemSettingsService {
         } catch {
             throw new Error('The uploaded branding images exceed this browser storage capacity. Choose smaller image files.');
         }
-        this.settingsState.set(normalized);
-        this.applyBrowserBranding(normalized);
+        const pageSettings = this.withPageDocumentView(normalized);
+        this.settingsState.set(pageSettings);
+        this.applyBrowserBranding(pageSettings);
     }
 
     reset() {
@@ -136,7 +146,7 @@ export class SystemSettingsService {
 
     // Kept for compatibility with older callers. The application is permanently light-only.
     toggleColorMode() {
-        const settings = this.normalizeSettings(this.settingsState());
+        const settings = this.withPageDocumentView(this.normalizeSettings(this.settingsState()));
         this.settingsState.set(settings);
         this.applyBrowserBranding(settings);
     }
@@ -180,15 +190,16 @@ export class SystemSettingsService {
         try {
             const storedValue = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS].map((key) => localStorage.getItem(key)).find(Boolean) || '{}';
             const stored = JSON.parse(storedValue) as Partial<SystemSettings>;
-            return this.normalizeSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...stored });
+            return this.withPageDocumentView(this.normalizeSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...stored }));
         } catch {
-            return { ...DEFAULT_SYSTEM_SETTINGS };
+            return this.withPageDocumentView({ ...DEFAULT_SYSTEM_SETTINGS });
         }
     }
 
     private normalizeSettings(settings: Partial<SystemSettings>): SystemSettings {
         return {
-            defaultDocumentView: this.documentViewMode(settings.defaultDocumentView),
+            // Retained in the API model for backward compatibility only. Actual document layouts are remembered per user and page.
+            defaultDocumentView: DEFAULT_SYSTEM_SETTINGS.defaultDocumentView,
             documentRowsPerPage: [10, 20, 50].includes(Number(settings.documentRowsPerPage)) ? Number(settings.documentRowsPerPage) : DEFAULT_SYSTEM_SETTINGS.documentRowsPerPage,
             officeOpenMode: settings.officeOpenMode === 'browser' ? 'browser' : 'desktop',
             automaticPrintDialog: settings.automaticPrintDialog !== false,
@@ -211,6 +222,67 @@ export class SystemSettingsService {
             assistantWelcomeText: this.text(settings.assistantWelcomeText, DEFAULT_SYSTEM_SETTINGS.assistantWelcomeText, 300),
             footerText: this.brandingText(settings.footerText, LEGACY_FOOTER_TEXT, DEFAULT_SYSTEM_SETTINGS.footerText, 100)
         };
+    }
+
+    private readonly captureDocumentViewSelection = (event: Event) => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest<HTMLButtonElement>('[role="group"][aria-label="Document view"] button');
+        if (!button) return;
+
+        const mode = button.querySelector('.pi-list')
+            ? 'list'
+            : button.querySelector('.pi-th-large')
+              ? 'grid'
+              : button.querySelector('.pi-folder-open')
+                ? 'folder'
+                : null;
+        if (!mode) return;
+
+        this.rememberPageDocumentView(mode);
+    };
+
+    private applyPageDocumentView(url: string) {
+        const mode = this.pageDocumentView(url);
+        this.settingsState.update((settings) => (settings.defaultDocumentView === mode ? settings : { ...settings, defaultDocumentView: mode }));
+    }
+
+    private rememberPageDocumentView(mode: DocumentViewMode) {
+        try {
+            localStorage.setItem(this.pageDocumentViewStorageKey(this.currentPagePath()), mode);
+        } catch {
+            // Keep the clicked layout for this session even when browser storage is unavailable.
+        }
+        this.settingsState.update((settings) => ({ ...settings, defaultDocumentView: mode }));
+    }
+
+    private withPageDocumentView(settings: SystemSettings, url = this.currentPagePath()): SystemSettings {
+        return { ...settings, defaultDocumentView: this.pageDocumentView(url) };
+    }
+
+    private pageDocumentView(url: string): DocumentViewMode {
+        try {
+            return this.documentViewMode(localStorage.getItem(this.pageDocumentViewStorageKey(url)));
+        } catch {
+            return DEFAULT_SYSTEM_SETTINGS.defaultDocumentView;
+        }
+    }
+
+    private pageDocumentViewStorageKey(url: string) {
+        const path = this.normalizePagePath(url);
+        const userKey = this.auth.user()?.user_id || this.auth.user()?.username || 'anonymous';
+        return `${WORKSPACE_VIEW_STORAGE_PREFIX}:${encodeURIComponent(String(userKey))}:${encodeURIComponent(path)}`;
+    }
+
+    private currentPagePath() {
+        return typeof window === 'undefined' ? '/' : window.location.pathname;
+    }
+
+    private normalizePagePath(url: string) {
+        const path = String(url || '/')
+            .split('?')[0]
+            .split('#')[0]
+            .replace(/^\/+|\/+$/g, '');
+        return path || 'root';
     }
 
     private text(value: unknown, fallback: string, maxLength: number) {
@@ -238,12 +310,13 @@ export class SystemSettingsService {
 
     private applyServerAppearance(appearance: AppearanceSettings & Partial<SystemSettings>) {
         const incoming = appearance.settings || appearance;
-        const settings = this.normalizeSettings({ ...this.settingsState(), ...incoming });
+        const normalized = this.normalizeSettings({ ...this.settingsState(), ...incoming });
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
         } catch {
             // Keep synchronized settings in memory when browser storage is unavailable.
         }
+        const settings = this.withPageDocumentView(normalized);
         this.settingsState.set(settings);
         this.applyBrowserBranding(settings);
     }

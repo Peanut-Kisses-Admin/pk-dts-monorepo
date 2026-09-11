@@ -18,18 +18,12 @@ import { DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSettingsService } from '
                 <nav class="section-nav" aria-label="Settings sections">
                     <button type="button" [class.active]="activeTab() === 'branding'" (click)="activeTab.set('branding')"><i class="pi pi-palette"></i> Branding</button>
                     <button type="button" [class.active]="activeTab() === 'login'" (click)="activeTab.set('login')"><i class="pi pi-image"></i> Login page</button>
-                    <button type="button" [class.active]="activeTab() === 'documents'" (click)="activeTab.set('documents')"><i class="pi pi-file"></i> Documents</button>
                     <button type="button" [class.active]="activeTab() === 'infrastructure'" (click)="activeTab.set('infrastructure')"><i class="pi pi-server"></i> Connections</button>
                 </nav>
                 <div class="top-actions" aria-label="System settings actions">
                     <p-button styleClass="settings-reset" label="Defaults" icon="pi pi-refresh" severity="secondary" [outlined]="true" [disabled]="saving()" (onClick)="restoreDefaults()" />
                     <p-button styleClass="settings-save" label="Save changes" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
                 </div>
-            </div>
-
-            <div class="light-mode-note">
-                <i class="pi pi-sun"></i>
-                <div><strong>Light mode is fixed system-wide</strong><span>Appearance switching has been removed so all users and devices use the same light interface.</span></div>
             </div>
 
             <div class="settings-grid">
@@ -92,42 +86,6 @@ import { DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSettingsService } from '
                     </div>
                 </article>
 
-                <article *ngIf="activeTab() === 'documents'" id="documents" class="setting-card span-2">
-                    <div class="card-heading">
-                        <div class="card-icon"><i class="pi pi-table"></i></div>
-                        <div>
-                            <h2>Workspace experience</h2>
-                            <p>Default table, card grid, paging, Office opener, and printing behavior across supported pages.</p>
-                        </div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="field">
-                            <label for="default-view">Default view</label>
-                            <select id="default-view" [(ngModel)]="form.defaultDocumentView">
-                                <option value="list">Table list</option>
-                                <option value="grid">Card grid</option>
-                                <option value="folder">Folders</option>
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="rows-per-page">Records per page</label>
-                            <select id="rows-per-page" [(ngModel)]="form.documentRowsPerPage">
-                                <option [ngValue]="10">10 records</option>
-                                <option [ngValue]="20">20 records</option>
-                                <option [ngValue]="50">50 records</option>
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="office-opener">Office file opener</label>
-                            <select id="office-opener" [(ngModel)]="form.officeOpenMode">
-                                <option value="desktop">Installed desktop app</option>
-                                <option value="browser">Browser preview</option>
-                            </select>
-                        </div>
-                    </div>
-                    <label class="check-row"><input type="checkbox" [(ngModel)]="form.automaticPrintDialog" /><span><strong>Automatic print dialog</strong><small>Show the browser print dialog after preparing a file.</small></span></label>
-                </article>
-
                 <article *ngIf="activeTab() === 'infrastructure'" class="setting-card span-2">
                     <div class="card-heading">
                         <div class="card-icon"><i class="pi pi-server"></i></div>
@@ -153,11 +111,6 @@ import { DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSettingsService } from '
             .section-nav button { display: inline-flex; align-items: center; gap: .45rem; border: 0; border-radius: .8rem; background: transparent; padding: .72rem .9rem; color: #64748b; font-weight: 800; cursor: pointer; }
             .section-nav button.active { background: var(--dts-accent-soft, #fce7e7); color: var(--dts-accent-deep, #800000); }
             .top-actions { display: flex; justify-content: flex-end; gap: .65rem; flex-wrap: wrap; }
-            .light-mode-note { display: flex; align-items: center; gap: .8rem; border: 1px solid #e5e7eb; border-left: 4px solid var(--dts-accent, #800000); border-radius: 1rem; background: #fff; padding: .9rem 1rem; }
-            .light-mode-note > i { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border-radius: .75rem; background: var(--dts-accent-soft, #fce7e7); color: var(--dts-accent-deep, #800000); }
-            .light-mode-note div { display: grid; gap: .15rem; }
-            .light-mode-note strong { font-size: .82rem; }
-            .light-mode-note span { color: #64748b; font-size: .74rem; }
             .saved-message { display: flex; align-items: center; gap: .55rem; border: 1px solid #bbf7d0; border-radius: 1rem; background: #f0fdf4; padding: .85rem 1rem; color: #166534; font-weight: 800; }
             .saved-message.error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
             .settings-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.25rem; }
@@ -190,10 +143,6 @@ import { DEFAULT_SYSTEM_SETTINGS, SystemSettings, SystemSettingsService } from '
             .cover-preview span { font-size: .68rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
             .cover-preview strong { margin: .45rem 0; font-size: 1.35rem; }
             .cover-preview small { color: #e2e8f0; line-height: 1.55; }
-            .check-row { display: flex; align-items: flex-start; gap: .75rem; border: 1px solid #e5e7eb; border-radius: 1rem; background: #f9fafb; padding: 1rem; cursor: pointer; }
-            .check-row input { margin-top: .2rem; accent-color: var(--dts-accent, #800000); }
-            .check-row span { display: grid; gap: .25rem; }
-            .check-row small { color: #64748b; line-height: 1.45; }
             .security-note { display: flex; align-items: flex-start; gap: .65rem; border: 1px solid #e5e7eb; border-radius: .9rem; background: #f8fafc; padding: .8rem; color: #475569; font-size: .72rem; line-height: 1.55; }
             .security-note i { margin-top: .15rem; color: var(--dts-accent-deep, #800000); }
             .image-message { display: flex; align-items: center; gap: .5rem; border: 1px solid #bbf7d0; border-radius: .8rem; background: #f0fdf4; padding: .7rem .85rem; color: #166534; font-size: .75rem; font-weight: 800; }
@@ -213,7 +162,7 @@ export class SystemSettingsPage {
     saveError = signal('');
     imageMessage = signal('');
     imageError = signal(false);
-    activeTab = signal<'branding' | 'login' | 'documents' | 'infrastructure'>('branding');
+    activeTab = signal<'branding' | 'login' | 'infrastructure'>('branding');
     readonly backendApiUrl = BACKEND_API_BASE_URL;
     readonly backupApiUrl = `${BACKEND_API_BASE_URL}/backup-restore`;
 
@@ -281,7 +230,13 @@ export class SystemSettingsPage {
     }
 
     restoreDefaults() {
-        this.form = { ...DEFAULT_SYSTEM_SETTINGS };
+        const workspacePreferences = {
+            defaultDocumentView: this.form.defaultDocumentView,
+            documentRowsPerPage: this.form.documentRowsPerPage,
+            officeOpenMode: this.form.officeOpenMode,
+            automaticPrintDialog: this.form.automaticPrintDialog
+        };
+        this.form = { ...DEFAULT_SYSTEM_SETTINGS, ...workspacePreferences };
         this.save();
     }
 
