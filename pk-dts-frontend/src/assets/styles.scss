@@ -140,6 +140,165 @@ html body .document-details-dialog.p-dialog .document-detail-shell .document-her
     color: var(--brand-primary) !important;
 }
 
+/* Completed / Released: prominent but compact success badge on the branded hero. */
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .status-badge[data-status='Completed'] {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 7px 13px 7px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.72) !important;
+    border-radius: 999px;
+    background: #ecfdf3 !important;
+    color: #047857 !important;
+    box-shadow: 0 8px 20px rgba(31, 20, 20, 0.18), inset 0 0 0 1px rgba(4, 120, 87, 0.06);
+    font-size: 12px;
+    font-weight: 850;
+    letter-spacing: 0.015em;
+}
+
+html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .status-badge[data-status='Completed']::before {
+    content: '✓';
+    display: inline-grid;
+    place-items: center;
+    width: 21px;
+    height: 21px;
+    flex: 0 0 21px;
+    border-radius: 50%;
+    background: #059669;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.26);
+}
+
+/* Physical storage map: animate each storage reference as a connected route. */
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 26px;
+    overflow: visible;
+}
+
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div {
+    position: relative;
+    z-index: 1;
+    min-height: 82px;
+    padding: 14px 14px 13px 17px;
+    overflow: visible;
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 16%, var(--app-border));
+    border-radius: 13px;
+    background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--brand-soft) 36%, #ffffff) 100%);
+    box-shadow: 0 8px 22px rgba(64, 0, 0, 0.06);
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    animation: physicalMapNodeIn 420ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: -5px;
+    width: 10px;
+    height: 10px;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    background: var(--brand-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 16%, transparent), 0 2px 6px rgba(64, 0, 0, 0.18);
+    animation: physicalMapPinPulse 1.8s ease-in-out infinite;
+}
+
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: 40px;
+    left: calc(100% + 1px);
+    width: 27px;
+    height: 3px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 22%, var(--app-border)));
+    transform: scaleX(0);
+    transform-origin: left center;
+    animation: physicalMapConnector 360ms ease forwards;
+}
+
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div dt {
+    color: var(--brand-primary);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+}
+
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div dd {
+    margin-top: 7px;
+    color: var(--app-heading);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(1) { animation-delay: 80ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(1)::after { animation-delay: 380ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(2) { animation-delay: 520ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(2)::after { animation-delay: 820ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(3) { animation-delay: 960ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(3)::after { animation-delay: 1260ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(4) { animation-delay: 1400ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(4)::after { animation-delay: 1700ms; }
+html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:nth-child(5) { animation-delay: 1840ms; }
+
+@keyframes physicalMapNodeIn {
+    0% { opacity: 0; transform: translateY(10px) scale(.985); }
+    70% { opacity: 1; transform: translateY(-2px) scale(1.008); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes physicalMapConnector {
+    from { transform: scaleX(0); opacity: .25; }
+    to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes physicalMapPinPulse {
+    0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent), 0 2px 6px rgba(64, 0, 0, .16); }
+    50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--brand-primary) 5%, transparent), 0 3px 8px rgba(64, 0, 0, .22); }
+}
+
+@media (max-width: 760px) {
+    html body .document-details-dialog.p-dialog .physical-visual .storage-fields {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:not(:last-child)::after {
+        top: calc(100% + 1px);
+        left: 28px;
+        width: 3px;
+        height: 19px;
+        transform: scaleY(0);
+        transform-origin: top center;
+        animation-name: physicalMapConnectorVertical;
+    }
+}
+
+@keyframes physicalMapConnectorVertical {
+    from { transform: scaleY(0); opacity: .25; }
+    to { transform: scaleY(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div,
+    html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div::before,
+    html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div::after {
+        animation: none !important;
+        opacity: 1;
+        transform: none;
+    }
+}
+
 @media (max-width: 640px) {
     .documents-page {
         .advanced-filter-head { align-items:flex-start }
