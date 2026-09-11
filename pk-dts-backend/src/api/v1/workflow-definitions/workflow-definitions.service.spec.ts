@@ -36,6 +36,18 @@ describe("WorkflowDefinitionsService", () => {
     const service = new WorkflowDefinitionsService(prisma);
     await expect(service.updateVersion("1", "2", { graph })).rejects.toBeInstanceOf(ConflictException);
   });
+
+  it("caches repeated workflow-list reads and avoids expensive document counts", async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const service = new WorkflowDefinitionsService({ workflowDefinition: { findMany } } as any);
+
+    await service.list(true);
+    await service.list(true);
+
+    expect(findMany).toHaveBeenCalledTimes(1);
+    expect(findMany.mock.calls[0][0].include.versions).not.toHaveProperty("include");
+  });
+
   it('looks up only the current published system default for the request action', async () => {
     const findFirst = jest.fn().mockResolvedValue({ workflow_version_id: 3n });
     const service = new WorkflowDefinitionsService({ workflowVersion: { findFirst } } as any);
