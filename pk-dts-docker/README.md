@@ -26,41 +26,53 @@ Open `http://localhost:3000`.
 
 The production stack keeps the Angular frontend, Nest backend, PostgreSQL, and Redis behind the Nginx gateway. Persistent PostgreSQL data, uploads, and backups remain under `data/` and `backups/`.
 
-## Development with hot reload
+> `compose.yaml` is the production/static stack. Source code pulled from Git is not bind-mounted into those containers, so production requires an image rebuild to receive application code changes.
 
-The development stack is separate from production and is designed for active coding.
+## Development with automatic hot reload
 
-### First start
+The development stack is separate from production and is designed so normal source changes from editing, branch switching, or `git pull` are picked up automatically.
 
-Build the development dependency images once:
+### One-time development rebuild
+
+If your current development containers are stale or are not detecting changes, recreate them once:
 
 ```powershell
 cd pk-dts-docker
-docker compose -f compose.dev.yaml up -d --build
+docker compose -f compose.dev.yaml down
+docker compose -f compose.dev.yaml up -d --build --force-recreate
 ```
 
 Open:
 
-- Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:3001/api/v1`
+- Frontend: `http://localhost:3400`
+- Backend API: `http://localhost:3401/api/v1`
 
-### Normal development
+After this one-time setup, do not rebuild for normal source changes.
 
-After the first build, do **not** rebuild for normal source changes:
+### Normal workflow after a merged pull request
+
+Pull the latest code from the repository:
+
+```powershell
+git switch main
+git pull origin main
+```
+
+That is normally all you need. Leave `compose.dev.yaml` running.
+
+The development containers bind-mount the complete application source trees:
+
+- Angular `.ts`, `.html`, `.scss`, and asset changes are detected by polling and applied through HMR/live reload.
+- NestJS `.ts` changes are detected by watch mode and the API recompiles/restarts automatically.
+- A bulk file update from `git pull`, checkout, or branch switch is visible immediately inside the containers because the host source folders are mounted directly into `/app`.
+- Docker-managed `node_modules` volumes prevent Windows/Linux dependency conflicts.
+- Normal application source changes do not require `docker compose build`, `--build`, or container recreation.
+
+Do not start development with plain `docker compose up -d`; that uses `compose.yaml`, which is the production/static stack. For development always use:
 
 ```powershell
 docker compose -f compose.dev.yaml up -d
 ```
-
-Edit files normally in `pk-dts-frontend` or `pk-dts-backend`.
-
-The development containers bind-mount the complete application source trees:
-
-- Angular `.ts`, `.html`, `.scss`, and asset changes use HMR/live reload.
-- NestJS `.ts` changes use `start:dev` watch mode and restart the API automatically.
-- Project configuration and scripts are visible inside the containers because the whole project is mounted.
-- Docker-managed `node_modules` volumes prevent Windows/Linux dependency conflicts.
-- Application source changes do not require `docker compose build`.
 
 Watch development logs with:
 
@@ -68,9 +80,23 @@ Watch development logs with:
 docker compose -f compose.dev.yaml logs -f frontend backend
 ```
 
-### Restart without rebuilding
+### If the browser still shows old code
 
-Some configuration changes are read only when the development server starts. Restart the affected service without rebuilding:
+First verify that the dev stack is the one running:
+
+```powershell
+docker compose -f compose.dev.yaml ps
+```
+
+Then check that Angular/Nest detected the file update:
+
+```powershell
+docker compose -f compose.dev.yaml logs --tail=100 frontend backend
+```
+
+A hard browser refresh (`Ctrl+F5`) can clear a stale browser asset, but it should not require a Docker rebuild.
+
+For configuration files that are read only at process startup, restart the affected service without rebuilding:
 
 ```powershell
 docker compose -f compose.dev.yaml restart frontend
@@ -88,9 +114,9 @@ For Prisma schema changes, restarting the backend regenerates the Prisma client 
 docker compose -f compose.dev.yaml restart backend
 ```
 
-### When a rebuild is required
+### When a rebuild is still required
 
-Rebuild only when dependencies or the development image itself change, for example:
+A Docker rebuild is only required when the development image or installed dependency set itself changes, for example:
 
 - `package.json`
 - `package-lock.json`
