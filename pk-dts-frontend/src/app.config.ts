@@ -13,6 +13,6 @@ export const appConfig: ApplicationConfig = {
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
         provideHttpClient(withFetch(), withInterceptors([authInterceptor, apiFeedbackInterceptor, requestCacheInterceptor])),
         provideZonelessChangeDetection(),
-        providePrimeNG({ theme: { preset: BrandPreset, options: { darkModeSelector: '.app-dark' } } })
+        providePrimeNG({ theme: { preset: BrandPreset, options: { darkModeSelector: false } } })
     ]
 };
