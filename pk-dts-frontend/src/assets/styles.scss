@@ -1,4 +1,4 @@
-/* Global application theme — one source of truth: light mode + maroon brand. */
+/* Global application theme — one source of truth: light mode + deep red brand. */
 @use 'primeicons/primeicons.css';
 @use '@/assets/layout/layout.scss';
 @use '@/assets/demo/demo.scss';
@@ -13,6 +13,7 @@
     --brand-primary-deep: var(--p-primary-800);
     --brand-soft: var(--p-primary-50);
     --brand-soft-strong: var(--p-primary-100);
+    --brand-contrast: var(--p-primary-contrast-color);
 
     --app-background: var(--p-surface-50);
     --app-surface: var(--p-surface-0);
@@ -26,9 +27,9 @@
     --app-text-muted: var(--p-surface-600);
     --app-text-faint: var(--p-surface-500);
 
-    --app-shadow-sm: 0 1px 2px rgba(64, 0, 0, 0.05);
-    --app-shadow-md: 0 8px 24px rgba(64, 0, 0, 0.08);
-    --app-shadow-lg: 0 24px 64px rgba(64, 0, 0, 0.14), 0 4px 16px rgba(64, 0, 0, 0.07);
+    --app-shadow-sm: 0 1px 2px color-mix(in srgb, var(--brand-primary) 8%, transparent);
+    --app-shadow-md: 0 8px 24px color-mix(in srgb, var(--brand-primary) 10%, transparent);
+    --app-shadow-lg: 0 24px 64px color-mix(in srgb, var(--brand-primary) 15%, transparent), 0 4px 16px color-mix(in srgb, var(--brand-primary) 8%, transparent);
 }
 
 html,
@@ -46,7 +47,7 @@ body {
     .filter-copy { margin-top:.15rem;color:var(--app-text-muted);font-size:.78rem }
     .filter-badges { display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:.45rem }
     .filter-badge { display:inline-flex;align-items:center;min-height:1.85rem;border-radius:999px;background:var(--app-surface-soft);padding:.35rem .65rem;color:var(--app-text-muted);font-size:.68rem;font-weight:800;letter-spacing:.03em }
-    .filter-badge:first-child { background:var(--brand-primary);color:#fff }
+    .filter-badge:first-child { background:var(--brand-primary);color:var(--brand-contrast) }
     .filter-section-label { display:flex;align-items:center;gap:.7rem;margin:1.15rem 0 .75rem }
     .filter-section-label>i { display:grid;place-items:center;width:2rem;height:2rem;border-radius:.65rem;background:var(--brand-soft);color:var(--brand-primary);font-size:.8rem }
     .filter-section-label span { display:grid;gap:.05rem }
@@ -61,7 +62,7 @@ body {
     .filter-meta { color:var(--app-text-muted);font-size:.72rem;line-height:1.5 }
 }
 
-/* Document Details modal inherits the centralized light-maroon application tokens. */
+/* Document Details modal is fully synchronized to the centralized deep-red theme. */
 html body .document-details-dialog.p-dialog {
     --detail-surface: var(--app-surface) !important;
     --detail-surface-raised: var(--app-surface) !important;
@@ -76,6 +77,12 @@ html body .document-details-dialog.p-dialog {
     --detail-accent: var(--brand-primary) !important;
     --detail-accent-strong: var(--brand-primary-hover) !important;
     --detail-accent-soft: var(--brand-soft) !important;
+    --detail-success: var(--brand-primary) !important;
+    --detail-success-soft: var(--brand-soft) !important;
+    --detail-warning: var(--brand-primary) !important;
+    --detail-warning-soft: var(--brand-soft) !important;
+    --detail-danger: var(--brand-primary-deep) !important;
+    --detail-danger-soft: var(--brand-soft-strong) !important;
     --detail-shadow: var(--app-shadow-lg) !important;
     background: var(--app-surface) !important;
     color: var(--app-text) !important;
@@ -115,20 +122,20 @@ html body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible
     outline-offset: 2px;
 }
 
-/* Modern branded hero: rich without looking heavy. */
+/* Modern branded hero: all color comes from the centralized deep-red scale. */
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero {
     background:
-        radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.10), transparent 26%),
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--app-surface) 10%, transparent), transparent 26%),
         linear-gradient(135deg, var(--brand-primary-deep) 0%, var(--brand-primary) 58%, var(--brand-primary-hover) 100%) !important;
-    border-bottom-color: color-mix(in srgb, var(--brand-primary) 72%, #000) !important;
-    color: #ffffff !important;
+    border-bottom-color: var(--brand-primary-deep) !important;
+    color: var(--brand-contrast) !important;
 }
 
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-kicker,
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-copy h2,
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-meta,
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-meta i {
-    color: #ffffff !important;
+    color: var(--brand-contrast) !important;
 }
 
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-kicker {
@@ -141,24 +148,24 @@ html body .document-details-dialog.p-dialog .document-detail-shell .document-her
 }
 
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .hero-icon {
-    background: rgba(255, 255, 255, .96) !important;
-    border-color: rgba(255, 255, 255, .62) !important;
+    background: var(--app-surface) !important;
+    border-color: color-mix(in srgb, var(--app-surface) 62%, transparent) !important;
     color: var(--brand-primary) !important;
-    box-shadow: 0 8px 24px rgba(32, 0, 0, .14);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-primary-deep) 18%, transparent);
 }
 
-/* Completed / Released: crisp product-grade success pill. */
+/* Completed / Released uses the same centralized deep red instead of a separate green palette. */
 html body .document-details-dialog.p-dialog .document-detail-shell .document-hero .status-badge[data-status='Completed'] {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     min-height: 34px;
     padding: 6px 12px 6px 7px;
-    border: 1px solid rgba(255, 255, 255, .70) !important;
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, var(--app-surface)) !important;
     border-radius: 999px;
-    background: rgba(255, 255, 255, .96) !important;
-    color: #067647 !important;
-    box-shadow: 0 6px 18px rgba(31, 20, 20, .14);
+    background: var(--app-surface) !important;
+    color: var(--brand-primary) !important;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--brand-primary-deep) 16%, transparent);
     font-size: 11.5px;
     font-weight: 800;
     letter-spacing: .01em;
@@ -173,14 +180,14 @@ html body .document-details-dialog.p-dialog .document-detail-shell .document-her
     height: 20px;
     flex: 0 0 20px;
     border-radius: 50%;
-    background: #079455;
-    color: #ffffff;
+    background: var(--brand-primary);
+    color: var(--brand-contrast);
     font-size: 11px;
     font-weight: 900;
-    box-shadow: 0 1px 2px rgba(7, 148, 85, .20);
+    box-shadow: var(--app-shadow-sm);
 }
 
-/* Physical storage route: clean, map-like, and easy to scan. */
+/* Physical storage route: clean, map-like, and synchronized to the same theme. */
 html body .document-details-dialog.p-dialog .physical-visual .storage-fields {
     position: relative;
     display: grid;
@@ -198,8 +205,8 @@ html body .document-details-dialog.p-dialog .physical-visual .storage-fields > d
     overflow: visible;
     border: 1px solid color-mix(in srgb, var(--brand-primary) 12%, var(--app-border));
     border-radius: 14px;
-    background: rgba(255, 255, 255, .98);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px rgba(64, 0, 0, .045);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm), var(--app-shadow-md);
     opacity: 0;
     transform: translateY(8px);
     animation: physicalMapNodeIn 360ms cubic-bezier(.2,.8,.2,1) forwards;
@@ -208,7 +215,7 @@ html body .document-details-dialog.p-dialog .physical-visual .storage-fields > d
 
 html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:hover {
     border-color: color-mix(in srgb, var(--brand-primary) 24%, var(--app-border));
-    box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 12px 30px rgba(64, 0, 0, .07);
+    box-shadow: var(--app-shadow-sm), 0 12px 30px color-mix(in srgb, var(--brand-primary) 9%, transparent);
     transform: translateY(-1px);
 }
 
@@ -220,7 +227,7 @@ html body .document-details-dialog.p-dialog .physical-visual .storage-fields > d
     left: -5px;
     width: 9px;
     height: 9px;
-    border: 3px solid #ffffff;
+    border: 3px solid var(--app-surface);
     border-radius: 50%;
     background: var(--brand-primary);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary) 12%, transparent);
@@ -236,14 +243,14 @@ html body .document-details-dialog.p-dialog .physical-visual .storage-fields > d
     width: 19px;
     height: 2px;
     border-radius: 99px;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--brand-primary) 68%, #fff), var(--app-border));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--brand-primary) 68%, var(--app-surface)), var(--app-border));
     transform: scaleX(0);
     transform-origin: left center;
     animation: physicalMapConnector 300ms ease forwards;
 }
 
 html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div dt {
-    color: var(--app-text-muted);
+    color: var(--brand-primary);
     font-size: 9.5px;
     font-weight: 800;
     letter-spacing: .095em;
@@ -258,14 +265,15 @@ html body .document-details-dialog.p-dialog .physical-visual .storage-fields > d
     line-height: 1.35;
 }
 
-/* The destination card reads as the final stop without becoming visually loud. */
+/* The destination card reads as the final stop using only centralized brand tokens. */
 html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:last-child {
-    border-color: color-mix(in srgb, var(--brand-primary) 24%, var(--app-border));
-    background: linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--brand-soft) 30%, #ffffff) 100%);
+    border-color: color-mix(in srgb, var(--brand-primary) 26%, var(--app-border));
+    background: linear-gradient(180deg, var(--app-surface) 0%, color-mix(in srgb, var(--brand-soft) 34%, var(--app-surface)) 100%);
 }
 
 html body .document-details-dialog.p-dialog .physical-visual .storage-fields > div:last-child::before {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 9%, transparent);
+    background: var(--brand-primary-deep);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 10%, transparent);
 }
 
 /* Fast sequential motion: gives direction without slowing the user down. */
