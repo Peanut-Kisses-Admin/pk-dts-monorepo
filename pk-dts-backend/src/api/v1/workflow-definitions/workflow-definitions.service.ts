@@ -10,27 +10,32 @@ import { UpdateWorkflowVersionDto } from "./dto/update-workflow-version.dto";
 import { WorkflowCondition, WorkflowGraph, WorkflowGraphEdge, WorkflowGraphNode } from "./workflow-graph.types";
 
 const WORKFLOW_INCLUDE = {
-  created_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
   versions: {
     orderBy: { version_number: "desc" as const },
-    include: {
-      created_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
-      published_by: { select: { user_id: true, firstname: true, lastname: true, username: true } },
-      _count: { select: { documents: true } },
-    },
   },
 };
 
+type WorkflowDefinitionWithVersions = Prisma.WorkflowDefinitionGetPayload<{ include: typeof WORKFLOW_INCLUDE }>;
+const WORKFLOW_LIST_CACHE_TTL_MS = 15_000;
+
 @Injectable()
 export class WorkflowDefinitionsService {
+  private readonly listCache = new Map<string, { expiresAt: number; value: WorkflowDefinitionWithVersions[] }>();
+
   constructor(private readonly prisma: PrismaService) {}
 
-  list(includeInactive = false) {
-    return this.prisma.workflowDefinition.findMany({
+  async list(includeInactive = false) {
+    const cacheKey = includeInactive ? "all" : "active";
+    const cached = this.listCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+    const value = await this.prisma.workflowDefinition.findMany({
       where: includeInactive ? undefined : { is_active: true },
       include: WORKFLOW_INCLUDE,
       orderBy: [{ document_type: "asc" }, { name: "asc" }],
     });
+    this.listCache.set(cacheKey, { expiresAt: Date.now() + WORKFLOW_LIST_CACHE_TTL_MS, value });
+    return value;
   }
 
   async publishedDefault(documentType: string, action?: string) {
@@ -61,7 +66,7 @@ export class WorkflowDefinitionsService {
   async create(dto: CreateWorkflowDefinitionDto, actor: AuthenticatedUser) {
     const graph = await this.validateGraph(dto.graph);
     const actorId = toBigIntId(actor.user_id, "current_user_id");
-    return this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       const definition = await tx.workflowDefinition.create({
         data: {
           workflow_key: dto.workflow_key.trim().toLowerCase(),
@@ -81,6 +86,8 @@ export class WorkflowDefinitionsService {
       });
       return tx.workflowDefinition.findUnique({ where: { workflow_definition_id: definition.workflow_definition_id }, include: WORKFLOW_INCLUDE });
     });
+    this.invalidateListCache();
+    return created;
   }
 
   async createVersion(id: string, dto: CreateWorkflowVersionDto, actor: AuthenticatedUser) {
@@ -92,7 +99,7 @@ export class WorkflowDefinitionsService {
     if (!definition) throw new NotFoundException("Workflow definition was not found.");
     const latest = definition.versions[0];
     const graph = await this.validateGraph(dto.graph ?? latest?.graph);
-    return this.prisma.workflowVersion.create({
+    const version = await this.prisma.workflowVersion.create({
       data: {
         workflow_definition_id: definitionId,
         version_number: (latest?.version_number ?? 0) + 1,
@@ -100,6 +107,8 @@ export class WorkflowDefinitionsService {
         created_by_user_id: toBigIntId(actor.user_id, "current_user_id"),
       },
     });
+    this.invalidateListCache();
+    return version;
   }
 
   async updateVersion(definitionIdValue: string, versionIdValue: string, dto: UpdateWorkflowVersionDto) {
@@ -109,16 +118,18 @@ export class WorkflowDefinitionsService {
     if (!version) throw new NotFoundException("Workflow version was not found.");
     if (version.status !== WorkflowVersionStatus.DRAFT) throw new ConflictException("Published workflow versions are immutable. Create a new draft version instead.");
     const graph = await this.validateGraph(dto.graph);
-    return this.prisma.workflowVersion.update({
+    const updated = await this.prisma.workflowVersion.update({
       where: { workflow_version_id: versionId },
       data: { graph: graph as unknown as Prisma.InputJsonValue },
     });
+    this.invalidateListCache();
+    return updated;
   }
 
   async publish(definitionIdValue: string, versionIdValue: string, actor: AuthenticatedUser) {
     const definitionId = toBigIntId(definitionIdValue, "workflow_definition_id");
     const versionId = toBigIntId(versionIdValue, "workflow_version_id");
-    return this.prisma.$transaction(async (tx) => {
+    const published = await this.prisma.$transaction(async (tx) => {
       const version = await tx.workflowVersion.findFirst({ where: { workflow_version_id: versionId, workflow_definition_id: definitionId } });
       if (!version) throw new NotFoundException("Workflow version was not found.");
       if (version.status !== WorkflowVersionStatus.DRAFT) throw new ConflictException("Only a draft workflow version can be published.");
@@ -136,13 +147,17 @@ export class WorkflowDefinitionsService {
         },
       });
     });
+    this.invalidateListCache();
+    return published;
   }
 
   async setActive(id: string, isActive: boolean) {
     const workflowDefinitionId = toBigIntId(id, "workflow_definition_id");
     const result = await this.prisma.workflowDefinition.updateMany({ where: { workflow_definition_id: workflowDefinitionId }, data: { is_active: isActive } });
     if (!result.count) throw new NotFoundException("Workflow definition was not found.");
-    return this.prisma.workflowDefinition.findUnique({ where: { workflow_definition_id: workflowDefinitionId }, include: WORKFLOW_INCLUDE });
+    const definition = await this.prisma.workflowDefinition.findUnique({ where: { workflow_definition_id: workflowDefinitionId }, include: WORKFLOW_INCLUDE });
+    this.invalidateListCache();
+    return definition;
   }
 
   async validateGraph(value: unknown, database: Prisma.TransactionClient | PrismaService = this.prisma): Promise<WorkflowGraph> {
@@ -227,5 +242,9 @@ export class WorkflowDefinitionsService {
       visited.add(key);
     };
     nodes.forEach((node) => visit(node.key));
+  }
+
+  private invalidateListCache() {
+    this.listCache.clear();
   }
 }
