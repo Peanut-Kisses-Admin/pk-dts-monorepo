@@ -37,6 +37,17 @@
     .filter-section-label small,.filter-meta { color:#a3a3a3 }
 }
 
+/* Document Details modal: subtle SaaS canvas behind raised content cards. */
+html body .document-details-dialog.p-dialog .p-dialog-content,
+html body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels {
+    background: #f4f6fa !important;
+}
+
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-content,
+html.app-dark body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels {
+    background: #0d1117 !important;
+}
+
 @media (max-width: 640px) {
     .documents-page {
         .advanced-filter-head { align-items:flex-start }
