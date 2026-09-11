@@ -48,6 +48,32 @@ html.app-dark body .document-details-dialog.p-dialog .document-detail-shell .p-t
     background: #0d1117 !important;
 }
 
+/* Document Details modal: solid brand header with high-contrast controls. */
+html body .document-details-dialog.p-dialog .p-dialog-header,
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-header {
+    background: #991b1b !important;
+    border-bottom-color: #991b1b !important;
+}
+
+html body .document-details-dialog.p-dialog .p-dialog-title,
+html body .document-details-dialog.p-dialog .p-dialog-header-close,
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-title,
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-header-close {
+    color: #ffffff !important;
+}
+
+html body .document-details-dialog.p-dialog .p-dialog-header-close:hover,
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-header-close:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+    color: #ffffff !important;
+}
+
+html body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible,
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible {
+    outline: 2px solid #ffffff !important;
+    outline-offset: 2px;
+}
+
 @media (max-width: 640px) {
     .documents-page {
         .advanced-filter-head { align-items:flex-start }
