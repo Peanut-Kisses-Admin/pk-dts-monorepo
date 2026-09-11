@@ -2,7 +2,8 @@
 
 @plugin 'tailwindcss-primeui';
 
-@custom-variant dark (&:where([class*="app-dark"], [class*="app-dark"] *));
+/* Fixed light-mode product: keep legacy dark:* utilities inert. */
+@custom-variant dark (&:where(.theme-dark-disabled, .theme-dark-disabled *));
 
 @theme {
   --breakpoint-*: initial;
