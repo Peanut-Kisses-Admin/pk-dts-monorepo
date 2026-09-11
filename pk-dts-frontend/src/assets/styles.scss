@@ -37,22 +37,45 @@
     .filter-section-label small,.filter-meta { color:#a3a3a3 }
 }
 
-/* Document Details modal: subtle SaaS canvas behind raised content cards. */
-html body .document-details-dialog.p-dialog .p-dialog-content,
-html body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels {
-    background: #f4f6fa !important;
+/* Document Details modal: light-only maroon theme, even when the app is in dark mode. */
+html body .document-details-dialog.p-dialog,
+html.app-dark body .document-details-dialog.p-dialog {
+    --detail-surface: #ffffff !important;
+    --detail-surface-raised: #ffffff !important;
+    --detail-subtle: #faf6f6 !important;
+    --detail-subtle-strong: #f4e8e8 !important;
+    --detail-text: #2b1b1b !important;
+    --detail-heading: #1f1414 !important;
+    --detail-muted: #755f5f !important;
+    --detail-faint: #a58f8f !important;
+    --detail-border: #eadcdc !important;
+    --detail-border-strong: #d9c1c1 !important;
+    --detail-accent: #800000 !important;
+    --detail-accent-strong: #660000 !important;
+    --detail-accent-soft: #fff0f0 !important;
+    --detail-shadow: 0 24px 64px rgba(64, 0, 0, 0.14), 0 4px 16px rgba(64, 0, 0, 0.07) !important;
+    background: #ffffff !important;
+    color: #2b1b1b !important;
 }
 
+html body .document-details-dialog.p-dialog .p-dialog-content,
+html body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels,
 html.app-dark body .document-details-dialog.p-dialog .p-dialog-content,
 html.app-dark body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels {
-    background: #0d1117 !important;
+    background: #faf6f6 !important;
 }
 
-/* Document Details modal: solid brand header with high-contrast controls. */
+html body .document-details-dialog.p-dialog .p-dialog-footer,
+html.app-dark body .document-details-dialog.p-dialog .p-dialog-footer {
+    background: #ffffff !important;
+    border-top-color: #eadcdc !important;
+}
+
+/* Solid maroon modal header with high-contrast controls. */
 html body .document-details-dialog.p-dialog .p-dialog-header,
 html.app-dark body .document-details-dialog.p-dialog .p-dialog-header {
-    background: #991b1b !important;
-    border-bottom-color: #991b1b !important;
+    background: #800000 !important;
+    border-bottom-color: #800000 !important;
 }
 
 html body .document-details-dialog.p-dialog .p-dialog-title,
