@@ -50,6 +50,8 @@ services:
       db:
         condition: service_healthy
     volumes:
+      # The whole backend source tree is bind-mounted. A git pull updates /app
+      # immediately and Nest's watch mode recompiles/restarts without an image rebuild.
       - ../pk-dts-backend:/app
       - backend_node_modules:/app/node_modules
       - pk-dms-dev-backups:/app/backup-store
@@ -82,17 +84,20 @@ services:
     build:
       context: ../pk-dts-frontend
       dockerfile: Dockerfile.dev
-    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll=1000", "--live-reload"]
+    command: ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "500", "--hmr"]
     init: true
     restart: unless-stopped
     environment:
       BACKEND_API_BASE_URL: ${DEV_PUBLIC_API_URL:-http://localhost:3401/api/v1}
       CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "500"
       WATCHPACK_POLLING: "true"
     depends_on:
       backend:
         condition: service_healthy
     volumes:
+      # The whole frontend source tree is bind-mounted. Angular polls the mount,
+      # so branch switches and git pull updates are picked up automatically.
       - ../pk-dts-frontend:/app
       - frontend_node_modules:/app/node_modules
       - frontend_angular_cache:/app/.angular
