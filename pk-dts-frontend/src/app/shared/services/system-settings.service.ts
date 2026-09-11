@@ -51,7 +51,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     documentRowsPerPage: 10,
     officeOpenMode: 'desktop',
     automaticPrintDialog: true,
-    themeScope: 'device',
+    themeScope: 'shared',
     colorMode: 'light',
     colorTheme: 'default',
     systemTitle: 'Document Tracking System (DTS)',
@@ -73,8 +73,6 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
 
 const STORAGE_KEY = 'dts.system-settings.v3';
 const LEGACY_STORAGE_KEYS = ['dms.system-settings.v2', 'dms.system-settings.v1'] as const;
-const DEVICE_APPEARANCE_KEY = 'dts.device-appearance.v2';
-const LEGACY_DEVICE_APPEARANCE_KEY = 'dms.device-appearance.v1';
 const LEGACY_SYSTEM_TITLE = 'Document Tracking and Management System';
 const LEGACY_SYSTEM_SHORT_TITLE = 'Document Management';
 const LEGACY_FOOTER_TEXT = 'Document Tracking and Management System';
@@ -121,14 +119,82 @@ export class SystemSettingsService {
     }
 
     save(settings: SystemSettings) {
-        const normalized: SystemSettings = {
+        const normalized = this.normalizeSettings(settings);
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+        } catch {
+            throw new Error('The uploaded branding images exceed this browser storage capacity. Choose smaller image files.');
+        }
+        this.settingsState.set(normalized);
+        this.applyBrowserBranding(normalized);
+    }
+
+    reset() {
+        this.save({ ...DEFAULT_SYSTEM_SETTINGS });
+    }
+
+    // Kept for compatibility with older callers. The application is permanently light-only.
+    toggleColorMode() {
+        const settings = this.normalizeSettings(this.settingsState());
+        this.settingsState.set(settings);
+        this.applyBrowserBranding(settings);
+    }
+
+    defaultDataView(): 'list' | 'grid' {
+        return this.settingsState().defaultDocumentView === 'list' ? 'list' : 'grid';
+    }
+
+    defaultRowsPerPage(): number {
+        return this.settingsState().documentRowsPerPage;
+    }
+
+    updateAppearanceScope(settings: SystemSettings) {
+        const normalized = this.normalizeSettings(settings);
+        const payload: AppearanceSettings = {
+            themeScope: 'shared',
+            colorMode: 'light',
+            colorTheme: DEFAULT_SYSTEM_SETTINGS.colorTheme,
+            settings: normalized
+        };
+
+        return this.http.patch<ApiResponseEnvelope<AppearanceSettings> | AppearanceSettings>(APPEARANCE_API, payload).pipe(
+            map((response) => this.unwrapAppearance(response)),
+            tap((appearance) => this.applyServerAppearance(appearance))
+        );
+    }
+
+    refreshAppearance() {
+        this.http
+            .get<ApiResponseEnvelope<AppearanceSettings> | AppearanceSettings>(APPEARANCE_API)
+            .pipe(map((response) => this.unwrapAppearance(response)))
+            .subscribe({ next: (appearance) => this.applyServerAppearance(appearance), error: () => this.applyBrowserBranding(this.settingsState()) });
+    }
+
+    // Kept for compatibility. Appearance previews are disabled in the light-only UI.
+    previewAppearance(_colorMode: ColorMode, _colorTheme: ColorTheme) {
+        this.applyBrowserBranding(this.settingsState());
+    }
+
+    private read(): SystemSettings {
+        try {
+            const storedValue = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS].map((key) => localStorage.getItem(key)).find(Boolean) || '{}';
+            const stored = JSON.parse(storedValue) as Partial<SystemSettings>;
+            return this.normalizeSettings({ ...DEFAULT_SYSTEM_SETTINGS, ...stored });
+        } catch {
+            return { ...DEFAULT_SYSTEM_SETTINGS };
+        }
+    }
+
+    private normalizeSettings(settings: Partial<SystemSettings>): SystemSettings {
+        return {
             defaultDocumentView: this.documentViewMode(settings.defaultDocumentView),
-            documentRowsPerPage: [10, 20, 50].includes(Number(settings.documentRowsPerPage)) ? Number(settings.documentRowsPerPage) : 10,
+            documentRowsPerPage: [10, 20, 50].includes(Number(settings.documentRowsPerPage)) ? Number(settings.documentRowsPerPage) : DEFAULT_SYSTEM_SETTINGS.documentRowsPerPage,
             officeOpenMode: settings.officeOpenMode === 'browser' ? 'browser' : 'desktop',
             automaticPrintDialog: settings.automaticPrintDialog !== false,
-            themeScope: settings.themeScope === 'shared' ? 'shared' : 'device',
-            colorMode: settings.colorMode === 'dark' ? 'dark' : 'light',
-            colorTheme: this.colorTheme(settings.colorTheme),
+            themeScope: 'shared',
+            colorMode: 'light',
+            colorTheme: DEFAULT_SYSTEM_SETTINGS.colorTheme,
             systemTitle: this.brandingText(settings.systemTitle, LEGACY_SYSTEM_TITLE, DEFAULT_SYSTEM_SETTINGS.systemTitle, 100),
             systemShortTitle: this.brandingText(settings.systemShortTitle, LEGACY_SYSTEM_SHORT_TITLE, DEFAULT_SYSTEM_SETTINGS.systemShortTitle, 50),
             brandEyebrow: this.text(settings.brandEyebrow, DEFAULT_SYSTEM_SETTINGS.brandEyebrow, 40),
@@ -145,106 +211,6 @@ export class SystemSettingsService {
             assistantWelcomeText: this.text(settings.assistantWelcomeText, DEFAULT_SYSTEM_SETTINGS.assistantWelcomeText, 300),
             footerText: this.brandingText(settings.footerText, LEGACY_FOOTER_TEXT, DEFAULT_SYSTEM_SETTINGS.footerText, 100)
         };
-
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-            if (normalized.themeScope === 'device') {
-                localStorage.setItem(DEVICE_APPEARANCE_KEY, JSON.stringify({ colorMode: normalized.colorMode, colorTheme: normalized.colorTheme }));
-            }
-        } catch {
-            throw new Error('The uploaded branding images exceed this browser storage capacity. Choose smaller image files.');
-        }
-        this.settingsState.set(normalized);
-        this.applyBrowserBranding(normalized);
-    }
-
-    reset() {
-        this.save({ ...DEFAULT_SYSTEM_SETTINGS });
-    }
-
-    toggleColorMode() {
-        const previous = this.settingsState();
-        const next = { ...previous, colorMode: previous.colorMode === 'dark' ? ('light' as const) : ('dark' as const) };
-
-        if (previous.themeScope !== 'shared') {
-            this.save(next);
-            return;
-        }
-
-        this.settingsState.set(next);
-        this.applyBrowserBranding(next);
-        this.updateAppearanceScope(next).subscribe({
-            error: () => {
-                this.settingsState.set(previous);
-                this.applyBrowserBranding(previous);
-            }
-        });
-    }
-
-    defaultDataView(): 'list' | 'grid' {
-        return this.settingsState().defaultDocumentView === 'list' ? 'list' : 'grid';
-    }
-
-    defaultRowsPerPage(): number {
-        return this.settingsState().documentRowsPerPage;
-    }
-
-    updateAppearanceScope(settings: SystemSettings) {
-        const payload: AppearanceSettings = {
-            themeScope: settings.themeScope === 'shared' ? 'shared' : 'device',
-            colorMode: settings.colorMode === 'dark' ? 'dark' : 'light',
-            colorTheme: this.colorTheme(settings.colorTheme),
-            settings: { ...settings }
-        };
-
-        return this.http.patch<ApiResponseEnvelope<AppearanceSettings> | AppearanceSettings>(APPEARANCE_API, payload).pipe(
-            map((response) => this.unwrapAppearance(response)),
-            tap((appearance) => this.applyServerAppearance(appearance))
-        );
-    }
-
-    refreshAppearance() {
-        this.http
-            .get<ApiResponseEnvelope<AppearanceSettings> | AppearanceSettings>(APPEARANCE_API)
-            .pipe(map((response) => this.unwrapAppearance(response)))
-            .subscribe({ next: (appearance) => this.applyServerAppearance(appearance), error: () => undefined });
-    }
-
-    previewAppearance(colorMode: ColorMode, colorTheme: ColorTheme) {
-        this.applyBrowserBranding({ ...this.settingsState(), colorMode, colorTheme });
-    }
-
-    private read(): SystemSettings {
-        try {
-            const storedValue = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS].map((key) => localStorage.getItem(key)).find(Boolean) || '{}';
-            const stored = JSON.parse(storedValue) as Partial<SystemSettings>;
-            return {
-                defaultDocumentView: this.documentViewMode(stored.defaultDocumentView),
-                documentRowsPerPage: [10, 20, 50].includes(Number(stored.documentRowsPerPage)) ? Number(stored.documentRowsPerPage) : DEFAULT_SYSTEM_SETTINGS.documentRowsPerPage,
-                officeOpenMode: stored.officeOpenMode === 'browser' ? 'browser' : DEFAULT_SYSTEM_SETTINGS.officeOpenMode,
-                automaticPrintDialog: stored.automaticPrintDialog !== false,
-                themeScope: stored.themeScope === 'shared' ? 'shared' : DEFAULT_SYSTEM_SETTINGS.themeScope,
-                colorMode: stored.colorMode === 'dark' ? 'dark' : DEFAULT_SYSTEM_SETTINGS.colorMode,
-                colorTheme: this.colorTheme(stored.colorTheme),
-                systemTitle: this.brandingText(stored.systemTitle, LEGACY_SYSTEM_TITLE, DEFAULT_SYSTEM_SETTINGS.systemTitle, 100),
-                systemShortTitle: this.brandingText(stored.systemShortTitle, LEGACY_SYSTEM_SHORT_TITLE, DEFAULT_SYSTEM_SETTINGS.systemShortTitle, 50),
-                brandEyebrow: this.text(stored.brandEyebrow, DEFAULT_SYSTEM_SETTINGS.brandEyebrow, 40),
-                logoUrl: this.brandingAssetUrl(stored.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL, FORMER_BRAND_LOGO_URL, GENERATED_BRAND_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
-                faviconUrl: this.brandingAssetUrl(stored.faviconUrl, [LEGACY_FAVICON_URL, PREVIOUS_FAVICON_URL], DEFAULT_SYSTEM_SETTINGS.faviconUrl),
-                loginCoverUrl: this.coverUrl(stored.loginCoverUrl),
-                loginKicker: this.text(stored.loginKicker, DEFAULT_SYSTEM_SETTINGS.loginKicker, 60),
-                loginHeadline: this.text(stored.loginHeadline, DEFAULT_SYSTEM_SETTINGS.loginHeadline, 120),
-                loginDescription: this.text(stored.loginDescription, DEFAULT_SYSTEM_SETTINGS.loginDescription, 500),
-                loginWelcomeTitle: this.text(stored.loginWelcomeTitle, DEFAULT_SYSTEM_SETTINGS.loginWelcomeTitle, 60),
-                loginWelcomeSubtitle: this.text(stored.loginWelcomeSubtitle, DEFAULT_SYSTEM_SETTINGS.loginWelcomeSubtitle, 140),
-                assistantEnabled: stored.assistantEnabled !== false,
-                assistantTitle: this.text(stored.assistantTitle, DEFAULT_SYSTEM_SETTINGS.assistantTitle, 60),
-                assistantWelcomeText: this.text(stored.assistantWelcomeText, DEFAULT_SYSTEM_SETTINGS.assistantWelcomeText, 300),
-                footerText: this.brandingText(stored.footerText, LEGACY_FOOTER_TEXT, DEFAULT_SYSTEM_SETTINGS.footerText, 100)
-            };
-        } catch {
-            return { ...DEFAULT_SYSTEM_SETTINGS };
-        }
     }
 
     private text(value: unknown, fallback: string, maxLength: number) {
@@ -270,52 +236,16 @@ export class SystemSettingsService {
         return normalized.toLowerCase() === '/images/pk building.jpg' ? DEFAULT_SYSTEM_SETTINGS.loginCoverUrl : normalized;
     }
 
-    private colorTheme(value: unknown): ColorTheme {
-        return COLOR_THEME_OPTIONS.some((theme) => theme.id === value) ? (value as ColorTheme) : DEFAULT_SYSTEM_SETTINGS.colorTheme;
-    }
-
     private applyServerAppearance(appearance: AppearanceSettings & Partial<SystemSettings>) {
-        const current = this.settingsState();
-        if (appearance.themeScope === 'shared') {
-            const settings = this.migrateBranding({
-                ...current,
-                ...(appearance.settings || appearance),
-                themeScope: 'shared' as const,
-                colorMode: appearance.colorMode === 'dark' ? ('dark' as const) : ('light' as const),
-                colorTheme: this.colorTheme(appearance.colorTheme)
-            });
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-            } catch {
-                // Keep the synchronized in-memory settings when browser storage is unavailable.
-            }
-            this.settingsState.set(settings);
-            this.applyBrowserBranding(settings);
-            return;
+        const incoming = appearance.settings || appearance;
+        const settings = this.normalizeSettings({ ...this.settingsState(), ...incoming });
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } catch {
+            // Keep synchronized settings in memory when browser storage is unavailable.
         }
-
-        const deviceAppearance = this.readDeviceAppearance();
-        const settings = { ...current, themeScope: 'device' as const, ...deviceAppearance };
         this.settingsState.set(settings);
         this.applyBrowserBranding(settings);
-    }
-
-    private readDeviceAppearance(): Pick<SystemSettings, 'colorMode' | 'colorTheme'> {
-        try {
-            const stored = JSON.parse(
-                localStorage.getItem(DEVICE_APPEARANCE_KEY) ||
-                    localStorage.getItem(LEGACY_DEVICE_APPEARANCE_KEY) ||
-                    localStorage.getItem(STORAGE_KEY) ||
-                    LEGACY_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean) ||
-                    '{}'
-            ) as Partial<AppearanceSettings>;
-            return {
-                colorMode: stored.colorMode === 'dark' ? 'dark' : this.settingsState().colorMode,
-                colorTheme: stored.colorTheme ? this.colorTheme(stored.colorTheme) : this.settingsState().colorTheme
-            };
-        } catch {
-            return { colorMode: this.settingsState().colorMode, colorTheme: this.settingsState().colorTheme };
-        }
     }
 
     private unwrapAppearance(response: ApiResponseEnvelope<AppearanceSettings> | AppearanceSettings): AppearanceSettings {
@@ -331,27 +261,14 @@ export class SystemSettingsService {
     }
 
     private applyBrowserBranding(settings: SystemSettings) {
-        if (typeof document === 'undefined') {
-            return;
-        }
+        if (typeof document === 'undefined') return;
 
         document.title = settings.systemTitle;
-        document.documentElement.classList.toggle('app-dark', settings.colorMode === 'dark');
-        document.documentElement.dataset['dtsTheme'] = settings.colorTheme;
-        const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-        if (favicon) {
-            favicon.href = settings.faviconUrl;
-        }
-    }
+        document.documentElement.classList.remove('app-dark');
+        document.documentElement.dataset['dtsTheme'] = DEFAULT_SYSTEM_SETTINGS.colorTheme;
+        document.documentElement.style.colorScheme = 'light';
 
-    private migrateBranding(settings: SystemSettings): SystemSettings {
-        return {
-            ...settings,
-            systemTitle: this.brandingText(settings.systemTitle, LEGACY_SYSTEM_TITLE, DEFAULT_SYSTEM_SETTINGS.systemTitle, 100),
-            systemShortTitle: this.brandingText(settings.systemShortTitle, LEGACY_SYSTEM_SHORT_TITLE, DEFAULT_SYSTEM_SETTINGS.systemShortTitle, 50),
-            logoUrl: this.brandingAssetUrl(settings.logoUrl, [LEGACY_LOGO_URL, PREVIOUS_LOGO_URL, FORMER_BRAND_LOGO_URL, GENERATED_BRAND_LOGO_URL], DEFAULT_SYSTEM_SETTINGS.logoUrl),
-            faviconUrl: this.brandingAssetUrl(settings.faviconUrl, [LEGACY_FAVICON_URL, PREVIOUS_FAVICON_URL], DEFAULT_SYSTEM_SETTINGS.faviconUrl),
-            footerText: this.brandingText(settings.footerText, LEGACY_FOOTER_TEXT, DEFAULT_SYSTEM_SETTINGS.footerText, 100)
-        };
+        const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+        if (favicon) favicon.href = settings.faviconUrl;
     }
 }
