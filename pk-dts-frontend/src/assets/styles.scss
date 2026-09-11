@@ -1,98 +1,116 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global application theme — one source of truth: light mode + maroon brand. */
 @use 'primeicons/primeicons.css';
 @use '@/assets/layout/layout.scss';
 @use '@/assets/demo/demo.scss';
 
+:root {
+    color-scheme: light;
+
+    /* Brand */
+    --brand-primary: #800000;
+    --brand-primary-hover: #700000;
+    --brand-primary-active: #600000;
+    --brand-primary-deep: #500000;
+    --brand-soft: #fff5f5;
+    --brand-soft-strong: #ffe3e3;
+
+    /* Application surfaces */
+    --app-background: #f8f4f4;
+    --app-surface: #ffffff;
+    --app-surface-muted: #fcf9f9;
+    --app-surface-soft: #f8f2f2;
+    --app-border: #eadcdc;
+    --app-border-strong: #d9c1c1;
+
+    /* Typography */
+    --app-text: #2b1b1b;
+    --app-heading: #1f1414;
+    --app-text-muted: #755f5f;
+    --app-text-faint: #a58f8f;
+
+    /* Shared elevation */
+    --app-shadow-sm: 0 1px 2px rgba(64, 0, 0, 0.05);
+    --app-shadow-md: 0 8px 24px rgba(64, 0, 0, 0.08);
+    --app-shadow-lg: 0 24px 64px rgba(64, 0, 0, 0.14), 0 4px 16px rgba(64, 0, 0, 0.07);
+}
+
+html,
+body {
+    background: var(--app-background);
+    color: var(--app-text);
+}
+
 /* Document workspace: advanced-search panel */
 .documents-page {
-    .advanced-filter-head { display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;padding-bottom:1.1rem;border-bottom:1px solid #e5e7eb }
+    .advanced-filter-head { display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;padding-bottom:1.1rem;border-bottom:1px solid var(--app-border) }
     .advanced-filter-heading { display:flex;align-items:center;gap:.8rem;min-width:0 }
-    .advanced-filter-icon { display:grid;place-items:center;width:2.65rem;height:2.65rem;flex:0 0 auto;border-radius:.8rem;background:#fef2f2;color:#b91c1c }
-    .filter-title { color:#111827;font-size:1rem;font-weight:900 }
-    .filter-copy { margin-top:.15rem;color:#64748b;font-size:.78rem }
+    .advanced-filter-icon { display:grid;place-items:center;width:2.65rem;height:2.65rem;flex:0 0 auto;border-radius:.8rem;background:var(--brand-soft);color:var(--brand-primary) }
+    .filter-title { color:var(--app-heading);font-size:1rem;font-weight:900 }
+    .filter-copy { margin-top:.15rem;color:var(--app-text-muted);font-size:.78rem }
     .filter-badges { display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:.45rem }
-    .filter-badge { display:inline-flex;align-items:center;min-height:1.85rem;border-radius:999px;background:#f1f5f9;padding:.35rem .65rem;color:#475569;font-size:.68rem;font-weight:800;letter-spacing:.03em }
-    .filter-badge:first-child { background:#111827;color:#fff }
+    .filter-badge { display:inline-flex;align-items:center;min-height:1.85rem;border-radius:999px;background:var(--app-surface-soft);padding:.35rem .65rem;color:var(--app-text-muted);font-size:.68rem;font-weight:800;letter-spacing:.03em }
+    .filter-badge:first-child { background:var(--brand-primary);color:#fff }
     .filter-section-label { display:flex;align-items:center;gap:.7rem;margin:1.15rem 0 .75rem }
-    .filter-section-label>i { display:grid;place-items:center;width:2rem;height:2rem;border-radius:.65rem;background:#f1f5f9;color:#475569;font-size:.8rem }
+    .filter-section-label>i { display:grid;place-items:center;width:2rem;height:2rem;border-radius:.65rem;background:var(--brand-soft);color:var(--brand-primary);font-size:.8rem }
     .filter-section-label span { display:grid;gap:.05rem }
-    .filter-section-label strong { color:#1f2937;font-size:.8rem }
-    .filter-section-label small { color:#64748b;font-size:.68rem }
-    .filter-section-grid { display:grid;gap:1rem;border-radius:1rem;background:#f8fafc;padding:1rem }
+    .filter-section-label strong { color:var(--app-heading);font-size:.8rem }
+    .filter-section-label small { color:var(--app-text-muted);font-size:.68rem }
+    .filter-section-grid { display:grid;gap:1rem;border-radius:1rem;background:var(--app-surface-muted);padding:1rem;border:1px solid var(--app-border) }
     .document-filter-grid { grid-template-columns:repeat(3,minmax(0,1fr)) }
     .storage-filter-grid { grid-template-columns:repeat(4,minmax(0,1fr)) }
     .area-filter-grid { grid-template-columns:minmax(0,1fr) }
     .digital-filter-grid { grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);align-items:end }
-    .filter-footer { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e5e7eb }
-    .filter-meta { color:#64748b;font-size:.72rem;line-height:1.5 }
+    .filter-footer { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--app-border) }
+    .filter-meta { color:var(--app-text-muted);font-size:.72rem;line-height:1.5 }
 }
 
-.app-dark .documents-page {
-    .advanced-filter-head,.filter-footer { border-color:#333 }
-    .advanced-filter-icon { background:#3f1818;color:#fecaca }
-    .filter-title,.filter-section-label strong { color:#f5f5f5 }
-    .filter-section-label>i,.filter-badge { background:#292929;color:#d4d4d4 }
-    .filter-badge:first-child { background:#f5f5f5;color:#171717 }
-    .filter-section-grid { background:#101010 }
-    .filter-section-label small,.filter-meta { color:#a3a3a3 }
-}
-
-/* Document Details modal: light-only maroon theme, even when the app is in dark mode. */
-html body .document-details-dialog.p-dialog,
-html.app-dark body .document-details-dialog.p-dialog {
-    --detail-surface: #ffffff !important;
-    --detail-surface-raised: #ffffff !important;
-    --detail-subtle: #faf6f6 !important;
-    --detail-subtle-strong: #f4e8e8 !important;
-    --detail-text: #2b1b1b !important;
-    --detail-heading: #1f1414 !important;
-    --detail-muted: #755f5f !important;
-    --detail-faint: #a58f8f !important;
-    --detail-border: #eadcdc !important;
-    --detail-border-strong: #d9c1c1 !important;
-    --detail-accent: #800000 !important;
-    --detail-accent-strong: #660000 !important;
-    --detail-accent-soft: #fff0f0 !important;
-    --detail-shadow: 0 24px 64px rgba(64, 0, 0, 0.14), 0 4px 16px rgba(64, 0, 0, 0.07) !important;
-    background: #ffffff !important;
-    color: #2b1b1b !important;
+/* Document Details modal inherits the centralized light-maroon application tokens. */
+html body .document-details-dialog.p-dialog {
+    --detail-surface: var(--app-surface) !important;
+    --detail-surface-raised: var(--app-surface) !important;
+    --detail-subtle: var(--app-surface-muted) !important;
+    --detail-subtle-strong: var(--app-surface-soft) !important;
+    --detail-text: var(--app-text) !important;
+    --detail-heading: var(--app-heading) !important;
+    --detail-muted: var(--app-text-muted) !important;
+    --detail-faint: var(--app-text-faint) !important;
+    --detail-border: var(--app-border) !important;
+    --detail-border-strong: var(--app-border-strong) !important;
+    --detail-accent: var(--brand-primary) !important;
+    --detail-accent-strong: var(--brand-primary-hover) !important;
+    --detail-accent-soft: var(--brand-soft) !important;
+    --detail-shadow: var(--app-shadow-lg) !important;
+    background: var(--app-surface) !important;
+    color: var(--app-text) !important;
 }
 
 html body .document-details-dialog.p-dialog .p-dialog-content,
-html body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-content,
-html.app-dark body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels {
-    background: #faf6f6 !important;
+html body .document-details-dialog.p-dialog .document-detail-shell .p-tabpanels {
+    background: var(--app-surface-muted) !important;
 }
 
-html body .document-details-dialog.p-dialog .p-dialog-footer,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-footer {
-    background: #ffffff !important;
-    border-top-color: #eadcdc !important;
+html body .document-details-dialog.p-dialog .p-dialog-footer {
+    background: var(--app-surface) !important;
+    border-top-color: var(--app-border) !important;
 }
 
 /* Solid maroon modal header with high-contrast controls. */
-html body .document-details-dialog.p-dialog .p-dialog-header,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-header {
-    background: #800000 !important;
-    border-bottom-color: #800000 !important;
+html body .document-details-dialog.p-dialog .p-dialog-header {
+    background: var(--brand-primary) !important;
+    border-bottom-color: var(--brand-primary) !important;
 }
 
 html body .document-details-dialog.p-dialog .p-dialog-title,
-html body .document-details-dialog.p-dialog .p-dialog-header-close,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-title,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-header-close {
+html body .document-details-dialog.p-dialog .p-dialog-header-close {
     color: #ffffff !important;
 }
 
-html body .document-details-dialog.p-dialog .p-dialog-header-close:hover,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-header-close:hover {
+html body .document-details-dialog.p-dialog .p-dialog-header-close:hover {
     background: rgba(255, 255, 255, 0.14) !important;
     color: #ffffff !important;
 }
 
-html body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible,
-html.app-dark body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible {
+html body .document-details-dialog.p-dialog .p-dialog-header-close:focus-visible {
     outline: 2px solid #ffffff !important;
     outline-offset: 2px;
 }
