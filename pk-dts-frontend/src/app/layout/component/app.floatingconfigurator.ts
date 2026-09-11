@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 /**
- * Compatibility shell retained for any legacy template reference.
+ * Compatibility shell retained for legacy template references.
  * Theme switching and palette controls are intentionally removed.
  */
 @Component({
@@ -9,4 +9,6 @@ import { Component } from '@angular/core';
     standalone: true,
     template: ''
 })
-export class AppFloatingConfigurator {}
+export class AppFloatingConfigurator {
+    float = input<boolean>(true);
+}
