@@ -6,29 +6,26 @@
 :root {
     color-scheme: light;
 
-    /* Brand */
-    --brand-primary: #800000;
-    --brand-primary-hover: #700000;
-    --brand-primary-active: #600000;
-    --brand-primary-deep: #500000;
-    --brand-soft: #fff5f5;
-    --brand-soft-strong: #ffe3e3;
+    /* App tokens derive from the centralized PrimeNG BrandPreset. */
+    --brand-primary: var(--p-primary-500);
+    --brand-primary-hover: var(--p-primary-600);
+    --brand-primary-active: var(--p-primary-700);
+    --brand-primary-deep: var(--p-primary-800);
+    --brand-soft: var(--p-primary-50);
+    --brand-soft-strong: var(--p-primary-100);
 
-    /* Application surfaces */
-    --app-background: #f8f4f4;
-    --app-surface: #ffffff;
-    --app-surface-muted: #fcf9f9;
-    --app-surface-soft: #f8f2f2;
-    --app-border: #eadcdc;
-    --app-border-strong: #d9c1c1;
+    --app-background: var(--p-surface-50);
+    --app-surface: var(--p-surface-0);
+    --app-surface-muted: var(--p-surface-50);
+    --app-surface-soft: var(--p-surface-100);
+    --app-border: var(--p-surface-200);
+    --app-border-strong: var(--p-surface-300);
 
-    /* Typography */
-    --app-text: #2b1b1b;
-    --app-heading: #1f1414;
-    --app-text-muted: #755f5f;
-    --app-text-faint: #a58f8f;
+    --app-text: var(--p-surface-900);
+    --app-heading: var(--p-surface-950);
+    --app-text-muted: var(--p-surface-600);
+    --app-text-faint: var(--p-surface-500);
 
-    /* Shared elevation */
     --app-shadow-sm: 0 1px 2px rgba(64, 0, 0, 0.05);
     --app-shadow-md: 0 8px 24px rgba(64, 0, 0, 0.08);
     --app-shadow-lg: 0 24px 64px rgba(64, 0, 0, 0.14), 0 4px 16px rgba(64, 0, 0, 0.07);
@@ -94,7 +91,6 @@ html body .document-details-dialog.p-dialog .p-dialog-footer {
     border-top-color: var(--app-border) !important;
 }
 
-/* Solid maroon modal header with high-contrast controls. */
 html body .document-details-dialog.p-dialog .p-dialog-header {
     background: var(--brand-primary) !important;
     border-bottom-color: var(--brand-primary) !important;
