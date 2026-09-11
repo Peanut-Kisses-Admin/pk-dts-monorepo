@@ -2,9 +2,26 @@ FROM node:20-bookworm-slim AS build
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends openssl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; do \
+      if [ -f "$source_file" ]; then \
+        sed -i 's|http://deb.debian.org|https://deb.debian.org|g' "$source_file"; \
+      fi; \
+    done; \
+    attempt=1; \
+    until apt-get -o Acquire::Retries=3 -o Acquire::https::Timeout=30 update \
+      && apt-get install -y --no-install-recommends openssl ca-certificates; do \
+      if [ "$attempt" -ge 4 ]; then \
+        echo "apt package installation failed after ${attempt} attempts" >&2; \
+        exit 1; \
+      fi; \
+      delay=$((attempt * 10)); \
+      echo "apt package installation failed; retrying in ${delay}s..."; \
+      rm -rf /var/lib/apt/lists/*; \
+      sleep "$delay"; \
+      attempt=$((attempt + 1)); \
+    done; \
+    rm -rf /var/lib/apt/lists/*
 
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true \
     npm_config_fetch_retries=5 \
@@ -34,9 +51,26 @@ FROM node:20-bookworm-slim AS runtime
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends openssl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    for source_file in /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; do \
+      if [ -f "$source_file" ]; then \
+        sed -i 's|http://deb.debian.org|https://deb.debian.org|g' "$source_file"; \
+      fi; \
+    done; \
+    attempt=1; \
+    until apt-get -o Acquire::Retries=3 -o Acquire::https::Timeout=30 update \
+      && apt-get install -y --no-install-recommends openssl ca-certificates; do \
+      if [ "$attempt" -ge 4 ]; then \
+        echo "apt package installation failed after ${attempt} attempts" >&2; \
+        exit 1; \
+      fi; \
+      delay=$((attempt * 10)); \
+      echo "apt package installation failed; retrying in ${delay}s..."; \
+      rm -rf /var/lib/apt/lists/*; \
+      sleep "$delay"; \
+      attempt=$((attempt + 1)); \
+    done; \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app /app
 
